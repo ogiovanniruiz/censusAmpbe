@@ -63,27 +63,15 @@ const getAllUsers = async(userDetail) =>{
 
 const updateUser = async(userDetail) =>{
     
-    //console.log(userDetail.user)
-    //console.log(userDetail.newUserLevel)
-    //console.log(userDetail.userCampaign)
-
     var person = await Person.findOne({'user._id': userDetail.user._id});
 
-    //console.log(person)
-
     for (var i = 0; i < person.user.userCampaigns.length; i++){
-        console.log(person.user.userCampaigns[i].campaignID)
-        console.log(userDetail.userCampaign.campaignID)
         if (person.user.userCampaigns[i].campaignID === userDetail.userCampaign.campaignID){
-            console.log(person.user.userCampaigns[i])
             person.user.userCampaigns[i].level = userDetail.newUserLevel
         }
- 
+
     }
-
-    console.log(person)
-
-    
+  
     try{ return person.save()
     }catch(e){
         throw new Error(e.message)
