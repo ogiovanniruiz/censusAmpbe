@@ -1,7 +1,20 @@
 var Parcel = require('../models/parcels/parcel')
 
-const getParcels = async(parcelDetail) =>{    
-    try{return Parcel.find({"properties.address.city": parcelDetail.city, "properties.type": parcelDetail.type}).exec(); 
+const getParcels = async(parcelDetail) =>{
+
+    p0 = [parcelDetail.bounds._southWest.lng, parcelDetail.bounds._southWest.lat]
+    p1 = [parcelDetail.bounds._southWest.lng, parcelDetail.bounds._northEast.lat]
+    p2 = [parcelDetail.bounds._northEast.lng, parcelDetail.bounds._northEast.lat]
+    p3 = [parcelDetail.bounds._northEast.lng, parcelDetail.bounds._southWest.lat]
+
+    p4 = [parcelDetail.bounds._southWest.lng, parcelDetail.bounds._southWest.lat]
+    var arrayCoords = [p0, p1, p2, p3, p4]
+        
+    try{
+        
+        return Parcel.find({"properties.assessorCodes.primary": { $ne: null}, 
+                            "properties.type": parcelDetail.type, 
+                            "properties.location": {$geoWithin: { $geometry: {type: "Polygon" , coordinates: [arrayCoords] }}}})
     }catch(e){throw new Error(e.message)}
 }
 
@@ -14,7 +27,6 @@ const editParcel = async(parcelDetail) =>{
 }
 
 const createParcel = async(parcelDetail) =>{
-    console.log(parcelDetail)
     try{
         var parcel = new Parcel(parcelDetail);
         return parcel.save();
