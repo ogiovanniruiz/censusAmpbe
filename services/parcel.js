@@ -12,7 +12,9 @@ const getParcels = async(parcelDetail) =>{
         
     try{
         
-        return Parcel.find({"properties.assessorCodes.primary": { $ne: null}, 
+        
+        return Parcel.find({$and: [{"properties.assessorCodes.primary": { $ne: null}}, {"properties.assessorCodes.primary":{ $ne: 0}}], 
+                      
                             "properties.type": parcelDetail.type, 
                             "properties.location": {$geoWithin: { $geometry: {type: "Polygon" , coordinates: [arrayCoords] }}}})
     }catch(e){throw new Error(e.message)}
