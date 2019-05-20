@@ -11,24 +11,25 @@ const getParcels = async(parcelDetail) =>{
     var arrayCoords = [p0, p1, p2, p3, p4]
         
     try{
-        
-        
         return Parcel.find({$and: [{"properties.assessorCodes.primary": { $ne: null}}, {"properties.assessorCodes.primary":{ $ne: 0}}], 
-                      
-                            "properties.type": parcelDetail.type, 
-                            "properties.location": {$geoWithin: { $geometry: {type: "Polygon" , coordinates: [arrayCoords] }}}})
+                                    "properties.type": parcelDetail.type, 
+                                    "properties.location": {$geoWithin: { $geometry: {type: "Polygon" , coordinates: [arrayCoords] }}}})
     }catch(e){throw new Error(e.message)}
 }
 
 const editParcel = async(parcelDetail) =>{
+
     try{
-        var parcel = await Parcel.findOne({'properties.location.coordinates': parcelDetail.parcelData.location.coordinates});
-        parcel.properties['asset'] = parcelDetail.assetDetail
+        var parcel = await Parcel.findOne({'properties.location.coordinates': parcelDetail.location.coordinates});
+        parcel.properties['address'] = parcelDetail.address
         return parcel.save()
     } catch(e){throw new Error(e.message)}
+
+
 }
 
 const createParcel = async(parcelDetail) =>{
+    console.log(parcelDetail)
     try{
         var parcel = new Parcel(parcelDetail);
         return parcel.save();
