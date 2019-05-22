@@ -10,8 +10,8 @@ var parcelsRouter = require('./routes/parcels');
 var app = express();
 
 var mongoose = require('mongoose');
-var mongoDB = 'mongodb://127.0.0.1:27017/v2db?authSource=v2db&w=1';
-//var mongoDB = 'mongodb://192.168.1.124:27018/v2db?authSource=v2db&w=1';
+//var mongoDB = 'mongodb://127.0.0.1:27017/v2db?authSource=v2db&w=1';
+var mongoDB = 'mongodb://ieEmpowermentAdmin:siSePuede@mongo-census/v2db?authSource=admin';
 mongoose.connect(mongoDB, { useNewUrlParser: true });
 mongoose.Promise = global.Promise;
 var db = mongoose.connection;
@@ -22,8 +22,8 @@ const cors = require('cors');
 app.use(cors({
   methods: 'GET,POST,PATCH,DELETE,OPTIONS',
   optionsSuccessStatus: 200,
-  //origin: 'https://census.inlandempowerment.org'
-  origin: 'http://localhost:4200'
+  origin: 'https://census.inlandempowerment.org'
+  //origin: 'http://localhost:4200'
 }));
 
 app.use(logger('dev'));

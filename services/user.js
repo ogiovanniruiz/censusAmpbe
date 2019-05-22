@@ -1,8 +1,7 @@
 var Person = require('../models/people/person')
 
-
 const getUser = async(userDetail) =>{
-    try{ return Person.findOne({'user.loginEmail': userDetail.email, 'user.password': userDetail.password}).exec(); 
+    try{return Person.findOne({'user.loginEmail': userDetail.email, 'user.password': userDetail.password}).exec(); 
     }catch(e){
         throw new Error(e.message)
     }

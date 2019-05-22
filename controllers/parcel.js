@@ -16,7 +16,6 @@ const editParcel = async (req, res, next) => {
     }
 }
 
-
 const createParcel = async (req,res, next) =>{
     try {res.send(await parcelService.createParcel(req.body))
     } catch(e){

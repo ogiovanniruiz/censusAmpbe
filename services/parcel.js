@@ -9,11 +9,11 @@ const getParcels = async(parcelDetail) =>{
 
     p4 = [parcelDetail.bounds._southWest.lng, parcelDetail.bounds._southWest.lat]
     var arrayCoords = [p0, p1, p2, p3, p4]
-        
+
     try{
         return Parcel.find({$and: [{"properties.assessorCodes.primary": { $ne: null}}, {"properties.assessorCodes.primary":{ $ne: 0}}], 
-                                    "properties.type": parcelDetail.type, 
-                                    "properties.location": {$geoWithin: { $geometry: {type: "Polygon" , coordinates: [arrayCoords] }}}})
+                            "properties.type": parcelDetail.type, 
+                            "properties.location": {$geoWithin: { $geometry: {type: "Polygon" , coordinates: [arrayCoords] }}}})
     }catch(e){throw new Error(e.message)}
 }
 
