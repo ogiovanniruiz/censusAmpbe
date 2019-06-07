@@ -1,8 +1,17 @@
 const userService = require('../services/user.js')
 
-const getUser = async (req, res, next) => {
+const loginUser = async (req, res, next) => {
     try {
-        res.send(await userService.getUser(req.body))
+        res.send(await userService.loginUser(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const getUserProfile = async (req, res, next) => {
+    try {
+        res.send(await userService.getUserProfile(req.body))
     } catch(e) {
         console.log(e.message)
         res.sendStatus(500)
@@ -45,13 +54,31 @@ const getAllUsers= async (req, res, next) => {
     }
 }
 
-const updateUser= async (req, res, next) => {
+const updateUserLvl= async (req, res, next) => {
     try {
-        res.send(await userService.updateUser(req.body))
+        res.send(await userService.updateUserLvl(req.body))
     } catch(e) {
         console.log(e.message)
         res.sendStatus(500)
     }
 }
 
-module.exports = {getUser, registerUser, getOauth, registerOauth, getAllUsers, updateUser};
+const updateDevStatus= async (req, res, next) => {
+    try {
+        res.send(await userService.updateDevStatus(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const updateAssetMapLvl= async (req, res, next) => {
+    try {
+        res.send(await userService.updateAssetMapLvl(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {loginUser, registerUser, getOauth, registerOauth, getAllUsers, updateUserLvl, updateDevStatus, updateAssetMapLvl, getUserProfile};

@@ -8,6 +8,14 @@ const getParcels = async (req, res, next) => {
     }
 }
 
+const getAssets = async (req, res, next) => {
+    try { res.send(await parcelService.getAssets(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 const editParcel = async (req, res, next) => {
     try { res.send(await parcelService.editParcel(req.body))
     } catch(e) {
@@ -33,4 +41,15 @@ const createAsset = async (req,res,next) =>{
     }
 }
 
-module.exports = {getParcels, editParcel, createParcel, createAsset};
+const deleteAsset = async (req,res,next)=>{
+    try {res.send(await parcelService.deleteAsset(req.body))
+    } 
+    catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+
+
+}
+
+module.exports = {getParcels, editParcel, createParcel, createAsset, getAssets, deleteAsset};

@@ -1,19 +1,32 @@
 var Person = require('../models/people/person')
+var Campaign = require('../models/campaigns/campaign')
+const sha256 =  require('sha256')
 
-const getUser = async(userDetail) =>{
-    try{return Person.findOne({'user.loginEmail': userDetail.email, 'user.password': userDetail.password}).exec(); 
-    }catch(e){
+const loginUser = async(userDetail) =>{
+    
+    try { return Person.findOne({'user.loginEmail': userDetail.email, 'user.password': sha256(userDetail.password)}).exec(); 
+    } catch(e){
+        throw new Error(e.message)
+    }
+}
+
+const getUserProfile = async(userDetail) =>{
+
+    var person = await Person.findOne({'user._id': userDetail.user._id});
+    try { return person.save()
+    } catch(e){
         throw new Error(e.message)
     }
 }
 
 const registerUser = async(regDetail) => {
-    personDetail = {firstName: regDetail.firstName, 
+
+    var hashPassword = sha256(regDetail.password)
+
+    var personDetail = {firstName: regDetail.firstName, 
                     lastName: regDetail.lastName,
                     user: { loginEmail: regDetail.email, 
-                            password: regDetail.password,
-                            userCampaigns: [{campaignID: 0 , level: "TRIAL"}]
-                          },
+                            password: hashPassword},
                     phone:  regDetail.phone,
                     emails: regDetail.email,
                     creationInfo: {regType: "SELF"}
@@ -39,8 +52,7 @@ const getOauth= async(userDetail) =>{
 const registerOauth = async(regDetail) => {
     personDetail = {firstName: regDetail.given_name, 
                     lastName: regDetail.family_name,
-                    user: {loginEmail: regDetail.email,
-                           userCampaigns: [{campaignID: 000 , level: "TRIAL"}]},
+                    user: {loginEmail: regDetail.email},
                     emails: regDetail.email,
                     creationInfo: {regType: "SELF"}
                     }
@@ -60,22 +72,47 @@ const getAllUsers = async(userDetail) =>{
     }
 }
 
-const updateUser = async(userDetail) =>{
-    
-    var person = await Person.findOne({'user._id': userDetail.user._id});
+const updateUserLvl = async(userDetail) =>{
 
-    for (var i = 0; i < person.user.userCampaigns.length; i++){
-        if (person.user.userCampaigns[i].campaignID === userDetail.userCampaign.campaignID){
-            person.user.userCampaigns[i].level = userDetail.newUserLevel
-        }
+    var person = await Person.findOne({'user._id': userDetail.newUser._id});
+    var campaign = await Campaign.findOne({campaignID: userDetail.campaignID});
+    campaign.userIDs.push(userDetail.newUser._id)
+    var index = campaign.requests.map(function(e) { return e.loginEmail }).indexOf(person.user.loginEmail)
+    campaign.requests.splice(index, 1)
+    campaign.save()
 
+    person.user.userCampaigns.push({level:userDetail.newUserLvl, campaignID: userDetail.campaignID})
+   
+
+    try{ return person.save() 
+    }catch(e){
+        throw new Error(e.message)
     }
-  
+
+
+    
+}
+
+const updateDevStatus = async(userDetail)=>{
+    var person = await Person.findOne({'user._id': userDetail.user._id});
+    person.user.dev = userDetail.developer
     try{ return person.save()
     }catch(e){
         throw new Error(e.message)
     }
-    
 }
 
-module.exports = {getUser, registerUser, getOauth, registerOauth, getAllUsers, updateUser}
+
+const updateAssetMapLvl = async(userDetail)=>{
+    var person = await Person.findOne({'user._id': userDetail.user._id});
+    person.user.assetMapLvl = userDetail.newUserLevel
+    try{ return person.save()
+    }catch(e){
+        throw new Error(e.message)
+    }
+}
+
+
+
+
+module.exports = {loginUser, registerUser, getOauth, registerOauth, getAllUsers, updateUserLvl, updateDevStatus, updateAssetMapLvl, getUserProfile}

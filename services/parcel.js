@@ -17,6 +17,13 @@ const getParcels = async(parcelDetail) =>{
     }catch(e){throw new Error(e.message)}
 }
 
+const getAssets = async() =>{
+
+    try{
+        return Parcel.find({"properties.asset": { $exists: true}})
+    }catch(e){throw new Error(e.message)}
+}
+
 const editParcel = async(parcelDetail) =>{
 
     try{
@@ -29,7 +36,6 @@ const editParcel = async(parcelDetail) =>{
 }
 
 const createParcel = async(parcelDetail) =>{
-    console.log(parcelDetail)
     try{
         var parcel = new Parcel(parcelDetail);
         return parcel.save();
@@ -47,4 +53,13 @@ const createAsset = async(parcelDetail) => {
     } catch(e){throw new Error(e.message)}
 }
 
-module.exports = {getParcels, editParcel, createParcel, createAsset}
+const deleteAsset = async(assetDetail) => {
+    try{
+        var parcel = await Parcel.findOne({'properties.location.coordinates': assetDetail.properties.location.coordinates});
+        parcel.properties['asset'] = undefined
+        return parcel.save()
+    } catch(e){throw new Error(e.message)}
+
+}
+
+module.exports = {getParcels, editParcel, createParcel, createAsset, getAssets, deleteAsset}
