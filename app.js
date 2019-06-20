@@ -9,6 +9,7 @@ var parcelsRouter = require('./routes/parcels');
 var campaignsRouter = require('./routes/campaigns')
 var censustractRouter = require('./routes/censustracts')
 var targetRouter = require('./routes/targets')
+var orgRouter = require('./routes/organizations')
 
 var app = express();
 
@@ -42,5 +43,6 @@ app.use('/campaigns', campaignsRouter);
 app.use('/parcels', parcelsRouter);
 app.use('/censustracts', censustractRouter)
 app.use('/targets', targetRouter)
+app.use('/organizations', orgRouter)
 
 module.exports = app;

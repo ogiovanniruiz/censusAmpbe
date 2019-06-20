@@ -10,6 +10,17 @@ const loginUser = async(userDetail) =>{
     }
 }
 
+
+const deleteUser = async(userDetail) =>{
+
+    try{
+        return Person.remove({_id: userDetail._id}).exec();
+
+    } catch(e){
+        throw new Error(e.message)
+    }
+}
+
 const getUserProfile = async(userDetail) =>{
 
     var person = await Person.findOne({'user._id': userDetail.user._id});
@@ -115,4 +126,4 @@ const updateAssetMapLvl = async(userDetail)=>{
 
 
 
-module.exports = {loginUser, registerUser, getOauth, registerOauth, getAllUsers, updateUserLvl, updateDevStatus, updateAssetMapLvl, getUserProfile}
+module.exports = {loginUser, registerUser, getOauth, registerOauth, getAllUsers, updateUserLvl, updateDevStatus, updateAssetMapLvl, getUserProfile, deleteUser}

@@ -3,6 +3,7 @@ var Schema = mongoose.Schema;
 
 var Script = require('../campaigns/script')
 var UserCamp = require('./userCampaigns')
+var UserOrg = require('./userOrgs')
 
 var UserSchema = new Schema(
   {
@@ -11,6 +12,7 @@ var UserSchema = new Schema(
     loginEmail: {type: String},
     globalScripts: Script.schema,
     userCampaigns: [UserCamp.schema],
+    userOrgs: [UserOrg.schema],
     assetMapLvl: {type: String, enum: ['TRIAL', 'VOLUNTEER', 'ADMINISTRATOR'], default: "TRIAL"}
   }
 );

@@ -48,8 +48,15 @@ const deleteAsset = async (req,res,next)=>{
         console.log(e.message)
         res.sendStatus(500)
     }
-
-
 }
 
-module.exports = {getParcels, editParcel, createParcel, createAsset, getAssets, deleteAsset};
+const search = async (req,res,next)=>{
+    try {res.send(await parcelService.search(req.body))
+    } 
+    catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {getParcels, editParcel, createParcel, createAsset, getAssets, deleteAsset, search};

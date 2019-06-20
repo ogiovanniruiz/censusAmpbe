@@ -14,4 +14,6 @@ router.post('/getAllUsers', userController.getAllUsers)
 router.post('/updateUserLvl', userController.updateUserLvl);
 router.post('/updateDevStatus', userController.updateDevStatus);
 router.post('/updateAssetMapLvl', userController.updateAssetMapLvl)
+
+router.post('/deleteUser', userController.deleteUser);
 module.exports = router;

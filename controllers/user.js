@@ -81,4 +81,14 @@ const updateAssetMapLvl= async (req, res, next) => {
     }
 }
 
-module.exports = {loginUser, registerUser, getOauth, registerOauth, getAllUsers, updateUserLvl, updateDevStatus, updateAssetMapLvl, getUserProfile};
+const deleteUser = async(req,res,next)=>{
+
+    try {
+        res.send(await userService.deleteUser(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {loginUser, registerUser, getOauth, registerOauth, getAllUsers, updateUserLvl, updateDevStatus, updateAssetMapLvl, getUserProfile, deleteUser};

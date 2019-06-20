@@ -8,5 +8,6 @@ router.post('/createAsset', parcelController.createAsset);
 router.post('/createParcel', parcelController.createParcel);
 router.post('/getAssets', parcelController.getAssets);
 router.post('/deleteAsset', parcelController.deleteAsset);
+router.post('/search', parcelController.search)
 
 module.exports = router;
