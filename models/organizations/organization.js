@@ -4,9 +4,9 @@ var User = require('../people/user')
 
 var OrganizationSchema = new Schema(
   {
-    orgID: {type: Number},
     name: {type: String},
     userIDs: [{type: String}],
+    campaignIDs: [{type: String}],
     description: {type: String},
     active: {type: Boolean, default: true},
     requests: [{type: String}],

@@ -36,5 +36,41 @@ const requestCampaign = async (req, res, next) => {
     }
 }
 
+const getOrgCampaigns = async (req, res, next) => {
+    try {
+        res.send(await campaignService.getOrgCampaigns(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
 
-module.exports = {createCampaign, getAllCampaigns, getCampaign, requestCampaign};
+const getCampaignRequests = async (req, res, next) => {
+    try {
+        res.send(await campaignService.getCampaignRequests(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const manageCampaignRequest = async (req, res, next) => {
+    try {
+        res.send(await campaignService.manageCampaignRequest(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const removeOrg = async (req, res, next) => {
+    try {
+        res.send(await campaignService.removeOrg(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+
+module.exports = {createCampaign, getAllCampaigns, getCampaign, requestCampaign, getOrgCampaigns, getCampaignRequests, manageCampaignRequest,removeOrg};

@@ -1,28 +1,69 @@
 var Target = require('../models/targets/target');
 var Campaign = require('../models/campaigns/campaign'); 
+var CensusTract = require('../models/censustracts/censustract'); 
 
 const createTarget = async(targetDetail) =>{
-    
-    
-    console.log(targetDetail)
+    var tract = await CensusTract.findOne({'properties.geoid': targetDetail.tractData.geoid});
 
-    var campaign = await Campaign.findOne({'campaignID': targetDetail.campaignID});
-
-    var target = {title: targetDetail.tract.name,
+    var target = {
                   targetType: "APPLIED",
-                  params: targetDetail.tract.geoid}
+                  orgID: targetDetail.orgID,
+                  campaignID: targetDetail.campaignID}
 
-    campaign.targets.push(target)
-    console.log(campaign)
+    tract.properties.targets.push(target)
 
-    
     try {
-        //var target = new Target(targetDetail);
-        return campaign.save();
+         return tract.save();
     } catch(e){
         throw new Error(e.message)
     }
-    
+}
+
+const lockTarget = async(targetDetail) =>{
+
+    var tract = await CensusTract.findOne({'properties.geoid': targetDetail.tractData.geoid});
+
+    for(var i = 0; i < tract.properties.targets.length; i++){
+        if(tract.properties.targets[i].orgID != targetDetail.orgID){
+            tract.properties.targets.splice(i, 1)
+            console.log("REMOVED")
+        }
+    }
+
+    for(var i = 0; i < tract.properties.targets.length; i++){
+        if (tract.properties.targets[i].orgID === targetDetail.orgID){
+            tract.properties.targets[i].targetType = "LOCKED";
+            console.log("LOCKED")
+        }
+    }
+
+    try{
+        return tract.save();
+
+    } catch(e){
+
+        throw new Error(e.message)
+    }
+
+}
+
+const removeTarget = async(targetDetail) => {
+
+    var tract = await CensusTract.findOne({'properties.geoid': targetDetail.tractData.geoid});
+
+    for(var i = 0; i < tract.properties.targets.length; i++){
+        if(tract.properties.targets[i].orgID === targetDetail.orgID){
+            tract.properties.targets.splice(i, 1)
+        }
+    }
+    try{
+        return tract.save();
+
+    } catch(e){
+
+        throw new Error(e.message)
+    }
+
 }
 
 const getAllTargets = async(targetDetail) =>{
@@ -34,4 +75,4 @@ const getAllTargets = async(targetDetail) =>{
     }
 }
 
-module.exports = {createTarget, getAllTargets}
+module.exports = {createTarget, getAllTargets, removeTarget, lockTarget}

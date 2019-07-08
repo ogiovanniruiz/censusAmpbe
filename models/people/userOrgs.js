@@ -4,7 +4,7 @@ var Schema = mongoose.Schema;
 var UserOrgSchema = new Schema(
   {
     orgID: {type: String},
-    level: {type: String, enum: ['VOLUNTEER', 'LEAD'], default: "VOLUNTEER"}
+    level: {type: String, enum: ['VOLUNTEER', 'LEAD', 'ADMINISTRATOR'], default: "VOLUNTEER"}
   }
 );
 

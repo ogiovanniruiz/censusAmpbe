@@ -1,7 +1,6 @@
 var CensusTract = require('../models/censustracts/censustract'); 
 
 
-
 const getAllCensusTracts= async(tractDetail) =>{
     try {
 

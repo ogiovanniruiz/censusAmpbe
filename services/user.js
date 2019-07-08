@@ -2,8 +2,7 @@ var Person = require('../models/people/person')
 var Campaign = require('../models/campaigns/campaign')
 const sha256 =  require('sha256')
 
-const loginUser = async(userDetail) =>{
-    
+const loginUser = async(userDetail) => {
     try { return Person.findOne({'user.loginEmail': userDetail.email, 'user.password': sha256(userDetail.password)}).exec(); 
     } catch(e){
         throw new Error(e.message)
@@ -12,10 +11,8 @@ const loginUser = async(userDetail) =>{
 
 
 const deleteUser = async(userDetail) =>{
-
     try{
         return Person.remove({_id: userDetail._id}).exec();
-
     } catch(e){
         throw new Error(e.message)
     }
@@ -99,9 +96,6 @@ const updateUserLvl = async(userDetail) =>{
     }catch(e){
         throw new Error(e.message)
     }
-
-
-    
 }
 
 const updateDevStatus = async(userDetail)=>{
@@ -113,7 +107,6 @@ const updateDevStatus = async(userDetail)=>{
     }
 }
 
-
 const updateAssetMapLvl = async(userDetail)=>{
     var person = await Person.findOne({'user._id': userDetail.user._id});
     person.user.assetMapLvl = userDetail.newUserLevel
@@ -122,8 +115,5 @@ const updateAssetMapLvl = async(userDetail)=>{
         throw new Error(e.message)
     }
 }
-
-
-
 
 module.exports = {loginUser, registerUser, getOauth, registerOauth, getAllUsers, updateUserLvl, updateDevStatus, updateAssetMapLvl, getUserProfile, deleteUser}

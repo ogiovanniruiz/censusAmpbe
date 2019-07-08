@@ -11,13 +11,13 @@ var CampaignSchema = new Schema(
   {
     campaignID: {type: Number},
     name: {type: String},
-    userIDs: [{type: String}],
+    orgIDs: [{type: String}],
     description: {type: String},
     active: {type: Boolean, default: true},
-    requests: [User.schema],
+    requests: [{type: String}],
     //activities: [Activity.schema],
     //campaignScripts: [Script.schema],
-    targets: [Target.schema],
+    targets: [{type: String}],
     //nonResponses: [NonResponse.schema]
   }
 );

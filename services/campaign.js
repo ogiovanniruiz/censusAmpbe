@@ -1,53 +1,117 @@
 var Campaign = require('../models/campaigns/campaign'); 
 var Person = require('../models/people/person')
+var Organization = require('../models/organizations/organization')
+var mongoose = require('mongoose');
 
 const createCampaign = async(newCampaignDetail) =>{
     var campaignDetail = {name: newCampaignDetail.name,
                           description: newCampaignDetail.description,
-                          userIDs: [newCampaignDetail.userID]
+                          orgIDs: [newCampaignDetail.orgID]
     }
 
     var campaign = new Campaign(campaignDetail);
     campaign.save()
-
-    var person = await Person.findOne({'user._id': newCampaignDetail.userID})
-    person.user.userCampaigns.push({level: "ADMINISTRATOR", campaignID: campaign.campaignID})
+    
+    var org = await Organization.findOne({'_id': newCampaignDetail.orgID})
+    org.campaignIDs.push(campaign.campaignID)
 
     try {
-        return  person.save()        
-        
+        return org.save()
+          
     } catch(e){
         throw new Error(e.message)
     }
-}
 
+}
 
 const getAllCampaigns = async(userDetail) =>{
+    
     try {
-        return Campaign.find({userIDs: userDetail.userID}).exec(); 
+        var person = await Person.findOne({'user._id': userDetail.userID}).lean()
+        
+        var orgIDs = person.user.userOrgs.map(x => mongoose.Types.ObjectId(x.orgID))
+        var orgs = await Organization.find({_id: {$in: orgIDs}})
+        
+        var campaignIDs = orgs.map(x => x.campaignIDs)
+        const flatIDs = campaignIDs.flat(1);
+
+        return Campaign.find({campaignID: {$in: flatIDs}}).exec(); 
     } catch(e){
         throw new Error(e.message)
     }
 }
 
-const addCampaignUser = async(detail) =>{}
+const getOrgCampaigns = async(orgDetail) =>{
+    try{
+        var org = await Organization.findOne({_id: orgDetail.orgID})
+        var campaignIDs = org.campaignIDs;
+        return Campaign.find({campaignID: {$in: campaignIDs}}).exec(); 
+
+    } catch(e){
+        throw new Error(e.message)
+    }
+}
 
 const requestCampaign = async(detail) =>{
+
     try{
-        var person = await Person.findOne({'user._id': detail.userID})
-        
+        var org = await Organization.findOne({_id: detail.orgID})
         var campaign = await Campaign.findOne({campaignID: detail.campaignID})
         if (!campaign) return {msg:"Campaign does not exist."}
         
-        var userExists = await Campaign.findOne({userIDs: person.user._id})
-        if (userExists) return {msg:"User already Exists."}
+        var orgIsCampaignMember = await Campaign.findOne({orgIDs: detail.orgID, campaignID: detail.campaignID})
+        if (orgIsCampaignMember) return {msg:"Oranization is already a member of this campaign."}
+
+        var campaignIsRequested = await Campaign.findOne({requests: detail.orgID, campaignID: detail.campaignID})
+        if (campaignIsRequested ) return {msg:"Request has already been sent to this campaign."}
         
-        var requestExists = await Campaign.findOne({requests: person.user})
-        if(requestExists) return {msg:"Already Requested."}
-        
-        campaign.requests.push(person.user)
+        campaign.requests.push(detail.orgID)
+
         return campaign.save()
-        
+    } catch(e){
+        throw new Error(e.message)
+    }
+}
+
+const getCampaignRequests = async(campaignDetail) =>{
+    var campaign = await Campaign.findOne({campaignID: campaignDetail.campaignID}); 
+    var requests = campaign.requests;
+    var orgs = await Organization.find({_id: {$in: requests}})
+
+    try {
+        return orgs
+    } catch(e){
+        throw new Error(e.message)
+    }
+}
+
+const manageCampaignRequest = async(detail) =>{
+
+    var orgID = detail.orgID
+    var campaignID = detail.campaignID
+
+    var campaign = await Campaign.findOne({campaignID: campaignID})
+    var org = await Organization.findOne({_id: detail.orgID})
+
+    if (campaign.requests.includes(orgID)){
+        for( var i = 0; i < campaign.requests.length; i++){ 
+            if (campaign.requests[i] === orgID) {
+                campaign.requests.splice(i, 1); 
+            }
+        } 
+    }
+
+    try {
+
+        if(detail.action === 'APPROVE'){
+            campaign.orgIDs.push(orgID)
+            org.campaignIDs.push(campaignID)
+            org.save()
+            return campaign.save()
+        }else {
+            return campaign.save()
+        }
+
     } catch(e){
         throw new Error(e.message)
     }
@@ -61,4 +125,36 @@ const getCampaign = async(campaignDetail) =>{
     }
 }
 
-module.exports = {createCampaign, getAllCampaigns, getCampaign, addCampaignUser, requestCampaign}
+const removeOrg = async(detail) =>{
+    var orgID = detail.orgID
+    var campaignID = detail.campaignID
+
+    var campaign = await Campaign.findOne({campaignID: campaignID})
+    var org = await Organization.findOne({_id: detail.orgID})
+
+    if (campaign.orgIDs.includes(orgID)){
+        for( var i = 0; i < campaign.orgIDs.length; i++){ 
+            if (campaign.orgIDs[i] === orgID) {
+                campaign.orgIDs.splice(i, 1); 
+            }
+        } 
+    }
+
+    if (org.campaignIDs.includes(campaignID)){
+        for( var i = 0; i < org.campaignIDs.length; i++){ 
+            if (org.campaignIDs[i] === campaignID.toString()) {
+                org.campaignIDs.splice(i, 1); 
+            }
+        } 
+    }
+
+    try {
+        campaign.save()
+        return org.save()
+    } catch(e){
+        throw new Error(e.message)
+    }
+
+}
+
+module.exports = {createCampaign, getAllCampaigns, getCampaign, requestCampaign, getOrgCampaigns, getCampaignRequests, manageCampaignRequest,removeOrg}

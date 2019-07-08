@@ -9,5 +9,6 @@ router.post('/requestOrganization', orgController.requestOrganization)
 router.post('/getUserOrganizations', orgController.getUserOrganizations)
 router.post('/getOrgMembers', orgController.getOrgMembers)
 router.post('/updateOrgLevel', orgController.updateOrgLevel)
+router.post('/getCampaignOrgs', orgController.getCampaignOrgs)
 
 module.exports = router;

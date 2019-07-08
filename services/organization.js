@@ -1,5 +1,6 @@
 var Organization = require('../models/organizations/organization'); 
 var Person = require('../models/people/person')
+var Campaign = require('../models/campaigns/campaign')
 
 const createOrganization = async(newOrgDetail) =>{   
     var orgDetail = { name: newOrgDetail.name,
@@ -11,11 +12,10 @@ const createOrganization = async(newOrgDetail) =>{
     organization.save()
 
     var person = await Person.findOne({'user._id': newOrgDetail.userID})
-    person.user.userOrgs.push({level: "LEAD", orgID: organization._id})
+    person.user.userOrgs.push({level: "ADMINISTRATOR", orgID: organization._id})
 
     try {
-        return  person.save()        
-        
+        return person.save()        
     } catch(e){
         throw new Error(e.message)
     }
@@ -24,6 +24,13 @@ const createOrganization = async(newOrgDetail) =>{
 
 const getUserOrganizations = async(userDetail) =>{
     var orgArray = userDetail.user.userOrgs
+
+    var adminOrgIds = orgArray.map(function(org) {
+        if (org.level === "ADMINISTRATOR"){
+            return org.orgID
+        }
+    })
+
     var leadOrgIds = orgArray.map(function(org) {
         if (org.level === "LEAD"){
             return org.orgID
@@ -36,17 +43,19 @@ const getUserOrganizations = async(userDetail) =>{
         }
     })
 
+    var adminOrgs = await Organization.find({_id: {$in: adminOrgIds}})
     var leadOrgs = await Organization.find({_id: {$in: leadOrgIds}})
     var volOrgs = await Organization.find({_id: {$in: volOrgIds}})
 
     try {
-        return {leadOrgs: leadOrgs, volOrgs: volOrgs}
+        return {adminOrgs: adminOrgs, leadOrgs: leadOrgs, volOrgs: volOrgs}
     } catch(e){
         throw new Error(e.message)
     } 
 }
 
-const getAllOrganizations = async() =>{
+const getAllOrganizations = async(userDetail) =>{
+    console.log(userDetail)
     var orgs = await Organization.find()
 
     try {
@@ -56,8 +65,6 @@ const getAllOrganizations = async() =>{
     } 
 }
 
-
-
 const requestOrganization = async(detail) =>{
     try{
         var person = await Person.findOne({'user._id': detail.userID})
@@ -66,7 +73,7 @@ const requestOrganization = async(detail) =>{
         var userExists = await Organization.findOne({userIDs: person.user._id, _id: detail.orgID})
         if (userExists) return {msg:"User already Exists."}
         
-        var requestExists = await Organization.findOne({requests: person.user._id})
+        var requestExists = await Organization.findOne({requests: person.user._id, _id: detail.orgID})
         if(requestExists) return {msg:"Already Requested."}
         
         var userID = person.user._id
@@ -76,17 +83,15 @@ const requestOrganization = async(detail) =>{
         
     } catch(e){
         throw new Error(e.message)
-    }
- 
+    } 
 }
 
 const getOrganization = async(orgDetail) =>{
     try {
-        return Organization.findOne({_id: orgDetail._id}).exec(); 
+        return Organization.findOne({_id: orgDetail.orgID}).exec(); 
     } catch(e){
         throw new Error(e.message)
     }
-    
 }
 
 const getOrgMembers = async(orgDetail) =>{
@@ -108,8 +113,6 @@ const updateOrgLevel = async(detail) =>{
     var userID = detail.person.user._id
     var orgID = detail.org._id
     var status = detail.status
-
-    
 
     var person = await Person.findOne({'user._id': userID})
     var org = await Organization.findOne({_id: detail.org._id})
@@ -137,10 +140,7 @@ const updateOrgLevel = async(detail) =>{
     } else {
 
         org.userIDs.push(userID)
-
         var userOrgExists = false
-
-        
 
         for( var i = 0; i < person.user.userOrgs.length; i++){ 
             if (person.user.userOrgs[i].orgID === orgID) {
@@ -151,12 +151,8 @@ const updateOrgLevel = async(detail) =>{
 
         if (userOrgExists === false){
             person.user.userOrgs.push({level: status, orgID: orgID})
-
         }
     }
-
-    console.log(org)
-    console.log(person)
 
     try {
         person.save()
@@ -167,10 +163,27 @@ const updateOrgLevel = async(detail) =>{
    
 }
 
+
+const getCampaignOrgs = async(campaignDetail) =>{
+    
+    var campaign = await Campaign.findOne({campaignID: campaignDetail.campaignID})
+    var orgIDs = campaign.orgIDs
+    var orgs = await Organization.find({_id: {$in: orgIDs}})
+
+    try {
+        return orgs
+    } catch(e){
+        throw new Error(e.message)
+    }    
+
+    
+}
+
 module.exports = {createOrganization, 
                   getAllOrganizations, 
                   getOrganization, 
                   requestOrganization, 
                   getUserOrganizations, 
                   getOrgMembers, 
-                  updateOrgLevel}
+                  updateOrgLevel,
+                  getCampaignOrgs}
