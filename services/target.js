@@ -2,8 +2,8 @@ var Target = require('../models/targets/target');
 var Campaign = require('../models/campaigns/campaign'); 
 var CensusTract = require('../models/censustracts/censustract'); 
 
-const createTarget = async(targetDetail) =>{
-    var tract = await CensusTract.findOne({'properties.geoid': targetDetail.tractData.geoid});
+const createCensusTarget = async(targetDetail) =>{
+    var tract = await CensusTract.findOne({'properties.geoid': targetDetail.tractData.geoid, 'properties.name': targetDetail.tractData.name});
 
     var target = {
                   targetType: "APPLIED",
@@ -17,27 +17,29 @@ const createTarget = async(targetDetail) =>{
     } catch(e){
         throw new Error(e.message)
     }
+    
 }
 
-const lockTarget = async(targetDetail) =>{
+const lockCensusTarget = async(targetDetail) =>{
 
-    var tract = await CensusTract.findOne({'properties.geoid': targetDetail.tractData.geoid});
+    var tract = await CensusTract.findOne({'properties.geoid': targetDetail.tractData.geoid, 'properties.name': targetDetail.tractData.name});
 
-    for(var i = 0; i < tract.properties.targets.length; i++){
-        if(tract.properties.targets[i].orgID != targetDetail.orgID){
-            tract.properties.targets.splice(i, 1)
-            console.log("REMOVED")
-        }
-    }
+    var lockedTargets = []
 
     for(var i = 0; i < tract.properties.targets.length; i++){
-        if (tract.properties.targets[i].orgID === targetDetail.orgID){
+
+        if ((tract.properties.targets[i].orgID === targetDetail.orgID) && (tract.properties.targets[i].campaignID === targetDetail.campaignID)){
             tract.properties.targets[i].targetType = "LOCKED";
-            console.log("LOCKED")
+            lockedTargets.push(tract.properties.targets[i])
+        }
+
+        if (tract.properties.targets[i].campaignID != targetDetail.campaignID){
+            lockedTargets.push(tract.properties.targets[i])
         }
     }
 
     try{
+        tract.properties.targets = lockedTargets
         return tract.save();
 
     } catch(e){
@@ -47,9 +49,9 @@ const lockTarget = async(targetDetail) =>{
 
 }
 
-const removeTarget = async(targetDetail) => {
+const removeCensusTarget = async(targetDetail) => {
 
-    var tract = await CensusTract.findOne({'properties.geoid': targetDetail.tractData.geoid});
+    var tract = await CensusTract.findOne({'properties.geoid': targetDetail.tractData.geoid, 'properties.name': targetDetail.tractData.name});
 
     for(var i = 0; i < tract.properties.targets.length; i++){
         if(tract.properties.targets[i].orgID === targetDetail.orgID){
@@ -63,16 +65,37 @@ const removeTarget = async(targetDetail) => {
 
         throw new Error(e.message)
     }
-
 }
 
 const getAllTargets = async(targetDetail) =>{
     try {
-        //console.log(targetDetail)
-        return Target.find({}).exec(); 
+        var campaign = await Campaign.findOne({'campaignID': targetDetail.campaignID});
+
+        return campaign.targets 
     } catch(e){
         throw new Error(e.message)
     }
 }
 
-module.exports = {createTarget, getAllTargets, removeTarget, lockTarget}
+const createAssetTarget = async (targetDetail) => {
+
+    var campaign = await Campaign.findOne({'campaignID': targetDetail.campaignID});
+
+    var target = {
+                    targetType: "LOCKED",
+                    orgID: targetDetail.orgID,
+                    campaignID: targetDetail.campaignID,
+                    params: {type: "ASSET", location: targetDetail.tractData.location}
+                }
+
+    campaign.targets.push(target)
+    
+    try {
+        return campaign.save() 
+    } catch(e){
+        throw new Error(e.message)
+    }
+
+}
+
+module.exports = {createCensusTarget, getAllTargets, removeCensusTarget, lockCensusTarget, createAssetTarget}

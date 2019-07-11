@@ -2,12 +2,11 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var Target = require('../targets/target')
 
-
 var CensusTractSchema = new Schema(
     {
       type: {type: String},
       geometry: {},
-      properties: {name: String,
+      properties: { name: String,
                     lrs: Number,
                     htc: Number,
                     geoid: String,

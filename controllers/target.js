@@ -1,8 +1,8 @@
 const targetService = require('../services/target.js')
 
-const createTarget = async (req, res, next) => {
+const createCensusTarget = async (req, res, next) => {
     try {
-        res.send(await targetService.createTarget(req.body))
+        res.send(await targetService.createCensusTarget(req.body))
     } catch(e) {
         console.log(e.message)
         res.sendStatus(500)
@@ -18,19 +18,28 @@ const getAllTargets = async (req, res, next) => {
     }
 }
 
-const removeTarget = async (req, res, next) => {
+const removeCensusTarget = async (req, res, next) => {
     try {
-        res.send(await targetService.removeTarget(req.body))
+        res.send(await targetService.removeCensusTarget(req.body))
     } catch(e) {
         console.log(e.message)
         res.sendStatus(500)
     }
 }
 
-const lockTarget = async (req, res, next) => {
+const lockCensusTarget = async (req, res, next) => {
     try {
-        res.send(await targetService.lockTarget(req.body))
+        res.send(await targetService.lockCensusTarget(req.body))
     } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const createAssetTarget = async (req,res,next) =>{
+    try{
+        res.send(await targetService.createAssetTarget(req.body))
+    } catch(e){
         console.log(e.message)
         res.sendStatus(500)
     }
@@ -38,4 +47,4 @@ const lockTarget = async (req, res, next) => {
 
 
 
-module.exports = {createTarget, getAllTargets, lockTarget, removeTarget};
+module.exports = {createCensusTarget, getAllTargets, lockCensusTarget, removeCensusTarget, createAssetTarget};

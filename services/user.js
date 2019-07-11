@@ -3,7 +3,9 @@ var Campaign = require('../models/campaigns/campaign')
 const sha256 =  require('sha256')
 
 const loginUser = async(userDetail) => {
-    try { return Person.findOne({'user.loginEmail': userDetail.email, 'user.password': sha256(userDetail.password)}).exec(); 
+
+    var person = await Person.findOne({'user.loginEmail': userDetail.email, 'user.password': sha256(userDetail.password)});
+    try { return person 
     } catch(e){
         throw new Error(e.message)
     }
@@ -21,7 +23,8 @@ const deleteUser = async(userDetail) =>{
 const getUserProfile = async(userDetail) =>{
 
     var person = await Person.findOne({'user._id': userDetail.user._id});
-    try { return person.save()
+    person.user.password = "you cant have the password"
+    try { return person
     } catch(e){
         throw new Error(e.message)
     }
@@ -108,7 +111,7 @@ const updateDevStatus = async(userDetail)=>{
 }
 
 const updateAssetMapLvl = async(userDetail)=>{
-    var person = await Person.findOne({'user._id': userDetail.user._id});
+    var person = await Person.findOne({'user._id': userDetail.person.user._id});
     person.user.assetMapLvl = userDetail.newUserLevel
     try{ return person.save()
     }catch(e){

@@ -17,7 +17,7 @@ var CampaignSchema = new Schema(
     requests: [{type: String}],
     //activities: [Activity.schema],
     //campaignScripts: [Script.schema],
-    targets: [{type: String}],
+    targets: [Target.schema],
     //nonResponses: [NonResponse.schema]
   }
 );
