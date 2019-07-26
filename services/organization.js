@@ -9,17 +9,16 @@ const createOrganization = async(newOrgDetail) =>{
     }
 
     var organization = new Organization(orgDetail);
-    organization.save()
+    organization.save();
 
-    var person = await Person.findOne({'user._id': newOrgDetail.userID})
-    person.user.userOrgs.push({level: "ADMINISTRATOR", orgID: organization._id})
+    var person = await Person.findOne({'user._id': newOrgDetail.userID});
+    person.user.userOrgs.push({level: "ADMINISTRATOR", orgID: organization._id});
 
     try {
         return person.save()        
     } catch(e){
         throw new Error(e.message)
     }
-    
 }
 
 const getUserOrganizations = async(userDetail) =>{
@@ -55,7 +54,6 @@ const getUserOrganizations = async(userDetail) =>{
 }
 
 const getAllOrganizations = async(userDetail) =>{
-    console.log(userDetail)
     var orgs = await Organization.find()
 
     try {
@@ -175,8 +173,25 @@ const getCampaignOrgs = async(campaignDetail) =>{
     } catch(e){
         throw new Error(e.message)
     }    
+}
 
+const dbPatch = async(detail) =>{
+
+    var orgs = await Organization.find();
+    var person = await Person.findOne({'user._id': detail.userID});
+
+    for(var i = 0; i < orgs.length; i++){
+
+        if(orgs[i].userIDs.includes(detail.userID)){
+
+        }else{
     
+            orgs[i].userIDs.push(detail.userID)
+            orgs[i].save()
+            person.user.userOrgs.push({level: "ADMINISTRATOR", orgID: orgs[i]._id})
+            person.save()
+        }
+    }
 }
 
 module.exports = {createOrganization, 
@@ -186,4 +201,5 @@ module.exports = {createOrganization,
                   getUserOrganizations, 
                   getOrgMembers, 
                   updateOrgLevel,
-                  getCampaignOrgs}
+                  getCampaignOrgs,
+                  dbPatch}

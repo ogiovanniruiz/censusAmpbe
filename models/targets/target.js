@@ -3,12 +3,17 @@ var Schema = mongoose.Schema;
 
 var TargetSchema = new Schema(
   {
-    title: {type: String}, 
-    targetType: {type: String, enum:["APPLIED", "LOCKED", "DONE"]},
-    orgID: {type: String},
-    userID: {type: String},
-    campaignID: {type: Number},
-    params: {},
+    properties: {  targetName: {type: String}, 
+                   status: {type: String, enum:["REGISTERED", "LOCKED", "DONE"]},
+                   orgID: {type: String},
+                   userID: {type: String},
+                   campaignID: {type: Number},
+                   params: {id: String, targetType: String},
+                   date: {type: String},
+                   time: {type: String}
+                },
+    type: {type: String},
+    geometry: {},
   }
 );
 

@@ -10,5 +10,5 @@ router.post('/getUserOrganizations', orgController.getUserOrganizations)
 router.post('/getOrgMembers', orgController.getOrgMembers)
 router.post('/updateOrgLevel', orgController.updateOrgLevel)
 router.post('/getCampaignOrgs', orgController.getCampaignOrgs)
-
+router.post('/dbPatch', orgController.dbPatch)
 module.exports = router;

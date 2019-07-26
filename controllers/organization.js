@@ -72,4 +72,21 @@ const getCampaignOrgs = async (req, res, next) => {
     }
 }
 
-module.exports = {createOrganization, getAllOrganizations, getOrganization, requestOrganization, getUserOrganizations, getOrgMembers, updateOrgLevel, getCampaignOrgs};
+const dbPatch = async (req, res, next) => {
+    try {
+        res.send(await organizationService.dbPatch(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {createOrganization, 
+                  getAllOrganizations, 
+                  getOrganization, 
+                  requestOrganization, 
+                  getUserOrganizations, 
+                  getOrgMembers, 
+                  updateOrgLevel, 
+                  getCampaignOrgs,
+                  dbPatch};
