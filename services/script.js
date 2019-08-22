@@ -6,7 +6,6 @@ const createScript = async(detail) => {
 }
 
 const editScript = async(editedScript) => {
-    console.log(script)
     var script = await Script.findOne({_id: editedScript.scriptID});
     script.title = editedScript.script.title
     script.initMessage = editedScript.script.initMessage
