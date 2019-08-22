@@ -4,29 +4,13 @@ var CensusTract = require('../models/censustracts/censustract');
 
 const createTarget = async(detail) => {
 
-    function format(value) {
-        if (value > 12) {
-            value = value - 12
-            if (value === 12) { return value.toString() + "AM" } 
-            else { return value.toString() + "PM" }
-          } else {
-            if (value === 12) { return value.toString() + "PM" } 
-            else if(value === 0) { return (12).toString() + "AM" } 
-            else { return value.toString() + "AM" }
-          }
-    }
-
-    var timeRange = format(detail.startTime) + "-" + format(detail.endTime)
-
     var newTarget = {properties: {   
-                                targetName: detail.targetName,
+                                targetName: detail.tractData.geoid,
                                 status: "REGISTERED",
                                 orgID: detail.orgID,
                                 campaignID: detail.campaignID,
                                 userID: detail.userID,
-                                params: {id: "", targetType: ""},
-                                date: detail.date,
-                                time: timeRange
+                                params: {id: "", targetType: ""}
                                 },
                     geometry:{},
                     type: {}
@@ -38,14 +22,7 @@ const createTarget = async(detail) => {
         newTarget.type = tract.type
         newTarget.properties.params.id = detail.tractData.geoid
         newTarget.properties.params.targetType = detail.type
-
-    } else if  (detail.type === "ASSET"){
-        newTarget.properties.params.id = detail.tractData._id
-        newTarget.properties.params.targetType = detail.type
-        newTarget.type = "Feature"
-        newTarget.geometry = detail.tractData.geometry
-        
-    }
+    } 
 
     var target = new Target(newTarget);
 
@@ -54,26 +31,6 @@ const createTarget = async(detail) => {
     }catch(e){
         throw new Error(e.message)
     }
-
-}
-
-const createCensusTarget = async(targetDetail) =>{
-    var tract = await CensusTract.findOne({'properties.geoid': targetDetail.tractData.geoid, 'properties.name': targetDetail.tractData.name});
-
-    var target = {
-                  targetType: "APPLIED",
-                  orgID: targetDetail.orgID,
-                  campaignID: targetDetail.campaignID
-                }
-
-    tract.properties.targets.push(target)
-
-    try {
-         return tract.save();
-    } catch(e){
-        throw new Error(e.message)
-    }
-    
 }
 
 const lockTarget = async(detail) =>{
@@ -98,7 +55,7 @@ const removeTarget = async(detail) => {
     }
 }
 
-const getAllTargets = async(targetDetail) =>{
+const getAllTargetProperties = async(targetDetail) =>{
     try {
         var targets = await Target.find({'properties.campaignID': targetDetail.campaignID});
         var targetProperties = targets.map(target=> target.properties)
@@ -109,35 +66,26 @@ const getAllTargets = async(targetDetail) =>{
     }
 }
 
-const getAllAssetTargets = async(targetDetail) =>{
+const getAllTargets = async(targetDetail) =>{
     try {
-        var targets = await Target.find({'properties.campaignID': targetDetail.campaignID, 'properties.params.targetType': "ASSET"});
-        var targetProperties = targets.map(target=> target.properties)
-
-        return targetProperties
+        var targets = await Target.find({'properties.campaignID': targetDetail.campaignID});
+        
+        return targets
     } catch(e){
         throw new Error(e.message)
     }
 }
 
-const createAssetTarget = async (targetDetail) => {
+const editTarget = async (detail) => {
 
-    var campaign = await Campaign.findOne({'campaignID': targetDetail.campaignID});
-
-    var target = {
-                    targetType: "LOCKED",
-                    orgID: targetDetail.orgID,
-                    campaignID: targetDetail.campaignID,
-                    params: {type: "ASSET", location: targetDetail.tractData.location}
-                }
-
-    campaign.targets.push(target)
-    
-    try {
-        return campaign.save() 
-    } catch(e){
-        throw new Error(e.message)
-    }
+    console.log(detail)
 }
 
-module.exports = {createCensusTarget, getAllTargets, removeTarget, lockTarget, createAssetTarget, createTarget, getAllAssetTargets}
+module.exports = { 
+                    getAllTargetProperties, 
+                    removeTarget, 
+                    lockTarget, 
+                    createTarget, 
+                    editTarget,
+                    getAllTargets
+                    }

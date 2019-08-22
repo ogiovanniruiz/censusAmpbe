@@ -3,6 +3,7 @@ var router = express.Router();
 var orgController = require('../controllers/organization.js')
 
 router.post('/createOrganization', orgController.createOrganization);
+router.post('/editOrganization', orgController.editOrganization);
 router.post('/getAllOrganizations', orgController.getAllOrganizations)
 router.post('/getOrganization', orgController.getOrganization)
 router.post('/requestOrganization', orgController.requestOrganization)

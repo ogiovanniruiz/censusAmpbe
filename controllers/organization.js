@@ -9,6 +9,15 @@ const createOrganization = async (req, res, next) => {
     }
 }
 
+const editOrganization = async (req, res, next) => {
+    try {
+        res.send(await organizationService.editOrganization(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 const getUserOrganizations = async (req, res, next) => {
     try {
         res.send(await organizationService.getUserOrganizations(req.body))
@@ -89,4 +98,5 @@ module.exports = {createOrganization,
                   getOrgMembers, 
                   updateOrgLevel, 
                   getCampaignOrgs,
-                  dbPatch};
+                  dbPatch,
+                  editOrganization};

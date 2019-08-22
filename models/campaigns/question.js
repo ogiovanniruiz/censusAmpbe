@@ -7,7 +7,7 @@ var QuestionSchema = new Schema(
   {
     question: {type: String},
     responses: [Response.schema],
-    questionType: {type: String, enum: ["SINGLESELECT", "MULTISELECT","TEXT", "TREE"]}
+    questionType: {type: String, enum: ["SINGLESELECT", "MULTISELECT","TEXT", "RADIO"]}
   }
 );
 

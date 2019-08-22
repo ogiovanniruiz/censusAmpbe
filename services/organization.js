@@ -21,6 +21,17 @@ const createOrganization = async(newOrgDetail) =>{
     }
 }
 
+const editOrganization = async(detail) =>{
+
+    var org = await Organization.findOne({"_id": detail.orgID})
+
+    org.name = detail.name
+    org.description = detail.description
+
+    return org.save()
+}
+
+
 const getUserOrganizations = async(userDetail) =>{
     var orgArray = userDetail.user.userOrgs
 
@@ -195,6 +206,7 @@ const dbPatch = async(detail) =>{
 }
 
 module.exports = {createOrganization, 
+                  editOrganization,
                   getAllOrganizations, 
                   getOrganization, 
                   requestOrganization, 

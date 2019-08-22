@@ -9,5 +9,7 @@ router.post('/createParcel', parcelController.createParcel);
 router.post('/getAssets', parcelController.getAssets);
 router.post('/deleteAsset', parcelController.deleteAsset);
 router.post('/search', parcelController.search)
+router.post('/getCanvassParcels', parcelController.getCanvassParcels)
+
 
 module.exports = router;

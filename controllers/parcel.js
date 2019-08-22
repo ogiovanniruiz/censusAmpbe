@@ -59,4 +59,13 @@ const search = async (req,res,next)=>{
     }
 }
 
-module.exports = {getParcels, editParcel, createParcel, createAsset, getAssets, deleteAsset, search};
+const getCanvassParcels = async (req,res,next)=>{
+    try {res.send(await parcelService.getCanvassParcels(req.body))
+    } 
+    catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {getParcels, editParcel, createParcel, createAsset, getAssets, deleteAsset, search, getCanvassParcels};

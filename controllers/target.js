@@ -1,18 +1,17 @@
 const targetService = require('../services/target.js')
 
-
-const getAllTargets = async (req, res, next) => {
+const getAllTargetProperties = async (req, res, next) => {
     try {
-        res.send(await targetService.getAllTargets(req.body))
+        res.send(await targetService.getAllTargetProperties(req.body))
     } catch(e) {
         console.log(e.message)
         res.sendStatus(500)
     }
 }
 
-const getAllAssetTargets = async (req, res, next) => {
+const getAllTargets = async (req, res, next) => {
     try {
-        res.send(await targetService.getAllAssetTargets(req.body))
+        res.send(await targetService.getAllTargets(req.body))
     } catch(e) {
         console.log(e.message)
         res.sendStatus(500)
@@ -37,15 +36,6 @@ const lockTarget = async (req, res, next) => {
     }
 }
 
-const createAssetTarget = async (req,res,next) =>{
-    try{
-        res.send(await targetService.createAssetTarget(req.body))
-    } catch(e){
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
 const createTarget = async (req,res,next) =>{
     try{
         res.send(await targetService.createTarget(req.body))
@@ -55,5 +45,18 @@ const createTarget = async (req,res,next) =>{
     }
 }
 
+const editTarget = async (req,res,next) =>{
+    try{
+        res.send(await targetService.editTarget(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
 
-module.exports = { getAllTargets, lockTarget, removeTarget, createAssetTarget, createTarget, getAllAssetTargets};
+module.exports = { getAllTargetProperties, 
+                   lockTarget, 
+                   removeTarget, 
+                   createTarget, 
+                   editTarget,
+                   getAllTargets};

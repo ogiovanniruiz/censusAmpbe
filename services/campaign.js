@@ -44,6 +44,7 @@ const getAllCampaigns = async(userDetail) =>{
 const getOrgCampaigns = async(orgDetail) =>{
     try{
         var org = await Organization.findOne({_id: orgDetail.orgID})
+        
         var campaignIDs = org.campaignIDs;
         return Campaign.find({campaignID: {$in: campaignIDs}}).exec(); 
 

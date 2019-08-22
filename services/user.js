@@ -35,10 +35,10 @@ const registerUser = async(regDetail) => {
     var hashPassword = sha256(regDetail.password)
 
     var personDetail = {firstName: regDetail.firstName, 
-                    lastName: regDetail.lastName,
-                    user: { loginEmail: regDetail.email, 
-                            password: hashPassword},
-                    phone:  regDetail.phone,
+                        lastName: regDetail.lastName,
+                        user: { loginEmail: regDetail.email, 
+                                password: hashPassword},
+                        phones:  regDetail.phone,
                     emails: regDetail.email,
                     creationInfo: {regType: "SELF"}
                 }
@@ -77,7 +77,7 @@ const registerOauth = async(regDetail) => {
 }
 
 const getAllUsers = async(userDetail) =>{
-    try{ return Person.find().exec(); 
+    try{ return Person.find({"user": {$exists: true}}).exec(); 
     }catch(e){
         throw new Error(e.message)
     }
@@ -102,7 +102,7 @@ const updateUserLvl = async(userDetail) =>{
 }
 
 const updateDevStatus = async(userDetail)=>{
-    var person = await Person.findOne({'user._id': userDetail.user._id});
+    var person = await Person.findOne({"user": {$exists: true}, 'user._id': userDetail.user._id});
     person.user.dev = userDetail.developer
     try{ return person.save()
     }catch(e){
