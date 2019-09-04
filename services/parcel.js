@@ -1,5 +1,6 @@
 var Parcel = require('../models/parcels/parcel')
 var Target = require('../models/targets/target')
+var CensusTract = require('../models/censustracts/censustract')
 var mongoose = require('mongoose');
 var IdHistory = require('../models/parcels/idHistory')
 
@@ -28,15 +29,33 @@ const getCanvassParcels = async(parcelDetail) =>{
         var target = await Target.findOne({"_id": mongoose.Types.ObjectId(parcelDetail.targetID)})
         
         if(target['geometry']){
-            return Parcel.find({"properties.type": parcelDetail.type, "properties.location": {$geoIntersects: {$geometry: {type: "Polygon" , coordinates: target['geometry']['coordinates'][0]}}}})
+
+            return Parcel.find({"properties.type": parcelDetail.type, "properties.assessorCodes.realUse": "R1",
+                                "properties.location": {$geoIntersects: {$geometry: {type: "Polygon" , 
+                                                                                     coordinates: target['geometry']['coordinates'][0]}}}})
         }
 
     }catch(e){throw new Error(e.message)}
 }
 
+const getNumParcelsWithin = async(parcelDetail) =>{
+
+    try{
+        var blockGroup = await CensusTract.findOne({"properties.geoid": parcelDetail.geoid})
+
+        if(blockGroup['geometry']){
+            var parcelCount = await Parcel.find({"properties.type": parcelDetail.type,  "properties.assessorCodes.realUse": "R1",
+                         "properties.location": {$geoIntersects: {$geometry: {type: "Polygon" , 
+                                                                              coordinates: blockGroup['geometry']['coordinates'][0]}}}}).countDocuments()
+            return {parcelCount: parcelCount}
+        }
+
+    }catch(e){throw new Error(e.message)}
+}
+
+
 const getAssets = async(detail) =>{
     
-
     try{
         if (Object.entries(detail).length === 0 && detail.constructor === Object){
             return Parcel.find({"properties.asset": { $exists: true}})
@@ -90,9 +109,6 @@ const createAsset = async(parcelDetail) => {
         var parcel = await Parcel.findOne({'properties.location.coordinates': parcelDetail.parcelData.location.coordinates});
         var idHistory = new IdHistory(parcelDetail.assetDetail)
 
-        console.log("idHistory:", idHistory)
-        console.log("Previous Asset:", parcel.properties.asset)
-
         if(!parcel.properties.asset){
             parcel.properties.asset = idHistory
             return parcel.save()
@@ -104,16 +120,29 @@ const createAsset = async(parcelDetail) => {
             parcel.properties.asset.idBy = idHistory.idBy
             parcel.properties.asset.idResponses = idHistory.idResponses
 
-            //parcel.properties.asset = idHistory
-            console.log("New Asset:", parcel.properties.asset)
-
             return parcel.save()
-
-
         }
 
+    } catch(e){throw new Error(e.message)}
+}
 
-        
+const completeHousehold = async(detail) => {
+
+    try{
+        var parcel = await Parcel.findOne({'properties.location.coordinates': detail.parcel.properties.location.coordinates});
+        idHistory = {idBy: detail.userID, 
+                     locationIdentified: detail.locationIdentified}
+
+        var canvassContactHistory = {
+                                     campaignID: detail.campaignID,
+                                     activityID: detail.activityID,
+                                     orgID: detail.orgID,
+                                     idHistory: idHistory
+                                    }
+
+        parcel.properties.canvassContactHistory.push(canvassContactHistory)
+        return parcel.save()
+
     } catch(e){throw new Error(e.message)}
 }
 
@@ -123,22 +152,28 @@ const deleteAsset = async(assetDetail) => {
         parcel.properties['asset'] = undefined
         return parcel.save()
     } catch(e){throw new Error(e.message)}
-
 }
 
 const search = async(parcelDetail) => {
-
-    searchData = {}
-
-    if(parcelDetail.streetNum) searchData['properties.address.streetNum'] = parcelDetail.streetNum
-    if(parcelDetail.street) searchData['properties.address.street'] = parcelDetail.street
-    if(parcelDetail.city) searchData['properties.address.city'] = parcelDetail.city
-    if(parcelDetail.suffix) searchData['properties.address.suffix'] = parcelDetail.suffix
-    if(parcelDetail.zip) searchData['properties.address.zip'] = parcelDetail.zip
-
     try{
+        searchData = {}
+
+        if(parcelDetail.streetNum) searchData['properties.address.streetNum'] = parcelDetail.streetNum
+        if(parcelDetail.street) searchData['properties.address.street'] = parcelDetail.street
+        if(parcelDetail.city) searchData['properties.address.city'] = parcelDetail.city
+        if(parcelDetail.suffix) searchData['properties.address.suffix'] = parcelDetail.suffix
+        if(parcelDetail.zip) searchData['properties.address.zip'] = parcelDetail.zip
+        
         return Parcel.find(searchData)
     } catch(e){throw new Error(e.message)}
 }
 
-module.exports = {getParcels, editParcel, createParcel, createAsset, getAssets, deleteAsset, search, getCanvassParcels}
+
+module.exports = {getParcels, 
+                  editParcel, 
+                  createParcel, 
+                  createAsset, 
+                  getAssets, 
+                  deleteAsset, 
+                  search, 
+                  getCanvassParcels, getNumParcelsWithin, completeHousehold }

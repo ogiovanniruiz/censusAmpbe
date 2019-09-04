@@ -10,7 +10,8 @@ var ScriptSchema = new Schema(
     createdBy: {type: String}, //USER ID
     questions: [Question.schema],
     dateCreated: {type: Date, default: Date.now},
-    campaignID: {type: Number}
+    campaignID: {type: Number},
+    orgID: {type: String}
   }
 );
 

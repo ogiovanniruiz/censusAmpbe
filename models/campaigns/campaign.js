@@ -3,9 +3,9 @@ var Schema = mongoose.Schema;
 
 var Script = require('./script');
 var Target = require('../targets/target') 
-var Activity = require('../activities/activity')
 var EventActivity = require('../activities/event.js')
-var CanvasActvity = require('../activities/canvas.js')
+var CanvassActvity = require('../activities/canvass.js')
+var TextActivity = require('../activities/text.js')
 
 autoIncrement = require('mongoose-auto-increment');
 
@@ -17,9 +17,8 @@ var CampaignSchema = new Schema(
     description: {type: String},
     active: {type: Boolean, default: true},
     requests: [{type: String}],
-    //activities: Activity.schema,
-    //textActivity: [TextActivity.schema],
-    canvasActivities: [CanvasActvity.schema],
+    textActivities: [TextActivity.schema],
+    canvassActivities: [CanvassActvity.schema],
     eventActivities: [EventActivity.schema],
     //phoneActivity: [PhoneActivity.schema]
     targets: [Target.schema],

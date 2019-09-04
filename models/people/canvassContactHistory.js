@@ -7,6 +7,7 @@ var CanvassContactHistorySchema = new Schema(
     {
         campaignID: {type: Number},
         activityID: {type:String},
+        orgID: {type: String},
         idHistory: [idHistory.schema],
     }
 );

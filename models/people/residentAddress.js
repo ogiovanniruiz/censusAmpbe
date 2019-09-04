@@ -1,10 +1,10 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var AddressSchema = new Schema(
+var ResidentAddressSchema = new Schema(
     { 
       streetNum: {type: String, trim: true},
-      unit: {type: Boolean, default: false},
+      unit: {type: String},
       street: {type: String},
       prefix: {type: String},
       suffix: {type: String},
@@ -16,4 +16,4 @@ var AddressSchema = new Schema(
 );
 
 //Export model
-module.exports = mongoose.model('Address', AddressSchema);
+module.exports = mongoose.model('ResidentAddress', ResidentAddressSchema);

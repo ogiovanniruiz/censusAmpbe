@@ -1,4 +1,3 @@
-var Activity = require('../models/activities/activity')
 var Campaign = require('../models/campaigns/campaign')
 var Organization = require('../models/organizations/organization')
 var CensusTract = require('../models/censustracts/censustract'); 
@@ -34,23 +33,38 @@ const createActivity = async(detail) => {
                                         activityScriptIDs: detail.activityScriptIDs
                                         }
 
-        campaign.canvasActivities.push(newActivity)
+        campaign.canvassActivities.push(newActivity)
+    } else if(detail.activityType === "Texting"){
+
+        var newActivity = {
+                           activityMetatData:{},
+                           initTextMsg: detail.initTextMsg,
+                           quickResponses: detail.quickResponses
+                        }
+
+        newActivity.activityMetaData = {
+                                        name: detail.activityName,
+                                        description:  detail.description,
+                                        targetID:  detail.targetID,
+                                        campaignID: detail.campaignID,
+                                        orgIDs: [detail.orgID],
+                                        createdBy: detail.createdBy,
+                                        nonResponses: detail.nonResponses,
+                                        activityScriptIDs: detail.activityScriptIDs
+                                        }
+
+
+        campaign.textActivities.push(newActivity)
+
     } else if (detail.activityType === "Event"){
 
         var locationName = ""
 
-
-        
-
         for(var i = 0; i < detail.parcelData.properties.asset.idResponses.length; i++){
-
-            console.log()
 
             if(detail.parcelData.properties.asset.idResponses[i].question === "Location Name"){
                 locationName = detail.parcelData.properties.asset.idResponses[i].responses;
-
             }
-
         }
 
         var org = await Organization.findOne({"_id": detail.orgID})
@@ -90,19 +104,31 @@ const editActivity = async(detail) =>{
     var campaign = await Campaign.findOne({campaignID: detail.campaignID})
 
     if(detail.activityType === "Canvass"){
-        for(var i = 0; i < campaign.canvasActivities.length; i++){
-            if( campaign.canvasActivities[i]._id.toString() === detail.activityID){
-                campaign.canvasActivities[i].activityMetaData.name = detail.newActivityDetail.activityName
-                campaign.canvasActivities[i].activityMetaData.description = detail.newActivityDetail.description
-                campaign.canvasActivities[i].activityMetaData.targetID = detail.newActivityDetail.targetID
-                campaign.canvasActivities[i].activityMetaData.nonResponses = detail.newActivityDetail.nonResponses
-                campaign.canvasActivities[i].activityMetaData.activityScriptIDs = detail.newActivityDetail.activityScriptIDs
+        for(var i = 0; i < campaign.canvassActivities.length; i++){
+            if( campaign.canvassActivities[i]._id.toString() === detail.activityID){
+                campaign.canvassActivities[i].activityMetaData.name = detail.newActivityDetail.activityName
+                campaign.canvassActivities[i].activityMetaData.description = detail.newActivityDetail.description
+                campaign.canvassActivities[i].activityMetaData.targetID = detail.newActivityDetail.targetID
+                campaign.canvassActivities[i].activityMetaData.nonResponses = detail.newActivityDetail.nonResponses
+                campaign.canvassActivities[i].activityMetaData.activityScriptIDs = detail.newActivityDetail.activityScriptIDs
             }
         }
     } else if (detail.activityType === "Event"){
         for(var i = 0; i < campaign.eventActivities.length; i++){
             if( campaign.eventActivities[i]._id.toString() === detail.activityID){
                 campaign.eventActivities[i].swordForm = detail.newActivityDetail
+            }
+        }
+    } else if(detail.activityType === "Texting"){
+        for(var i = 0; i < campaign.textActivities.length; i++){
+            if( campaign.textActivities[i]._id.toString() === detail.activityID){
+                campaign.textActivities[i].activityMetaData.name = detail.newActivityDetail.activityName
+                campaign.textActivities[i].activityMetaData.description = detail.newActivityDetail.description
+                campaign.textActivities[i].activityMetaData.targetID = detail.newActivityDetail.targetID
+                campaign.textActivities[i].activityMetaData.nonResponses = detail.newActivityDetail.nonResponses
+                campaign.textActivities[i].activityMetaData.activityScriptIDs = detail.newActivityDetail.activityScriptIDs
+                campaign.textActivities[i].quickResponses = detail.newActivityDetail.quickResponses
+                campaign.textActivities[i].initTextMsg = detail.newActivityDetail.initTextMsg
             }
         }
     }
@@ -115,8 +141,8 @@ const completeActivity = async(detail) =>{
 
     if(detail.activityType === "Canvass"){
         for(var i = 0; i < campaign.canvasActivities.length; i++){
-            if( campaign.canvasActivities[i]._id.toString() === detail.activityID){
-                campaign.canvasActivities[i].activityMetaData.complete = true;
+            if( campaign.canvassActivities[i]._id.toString() === detail.activityID){
+                campaign.canvassActivities[i].activityMetaData.complete = true;
             }
         }
     } else if (detail.activityType === "Event"){
@@ -132,10 +158,24 @@ const completeActivity = async(detail) =>{
 
 const getActivities = async(detail) =>{
     var campaign = await Campaign.findOne({campaignID: detail.campaignID})
+    var activities = []
+
     if(detail.activityType === "Canvass"){
-        return campaign.canvasActivities
+        for(var i = 0; i < campaign.canvassActivities.length; i++){
+            if(campaign.canvassActivities[i].activityMetaData.orgIDs.includes(detail.orgID)){
+                activities.push(campaign.canvassActivities[i])
+            }
+        }
+        return activities
     } else if (detail.activityType === "Event"){
-        return campaign.eventActivities
+        return campaign.eventActivities;
+    } else if (detail.activityType === "Texting"){
+        for(var i = 0; i < campaign.textActivities.length; i++){
+            if(campaign.textActivities[i].activityMetaData.orgIDs.includes(detail.orgID)){
+                activities.push(campaign.textActivities[i])
+            }
+        }
+        return activities
     }
 }
 
@@ -144,15 +184,21 @@ const deleteActivity = async(detail) =>{
     var campaign = await Campaign.findOne({campaignID: detail.campaignID})
 
     if(detail.activityType === "Canvass"){
-        for(var i = 0; i < campaign.canvasActivities.length; i++){
-            if( campaign.canvasActivities[i]._id.toString() === detail.activityID){
-                campaign.canvasActivities.splice(i, 1); 
+        for(var i = 0; i < campaign.canvassActivities.length; i++){
+            if( campaign.canvassActivities[i]._id.toString() === detail.activityID){
+                campaign.canvassActivities.splice(i, 1); 
             }
         }
     } else if ( detail.activityType === "Event"){
         for(var i = 0; i < campaign.eventActivities.length; i++){
             if( campaign.eventActivities[i]._id.toString() === detail.activityID){
                 campaign.eventActivities.splice(i, 1); 
+            }
+        }
+    } else if ( detail.activityType === "Texting"){
+        for(var i = 0; i < campaign.textActivities.length; i++){
+            if( campaign.textActivities[i]._id.toString() === detail.activityID){
+                campaign.textActivities.splice(i, 1); 
             }
         }
     }
@@ -163,9 +209,9 @@ const deleteActivity = async(detail) =>{
 const getActivity = async(detail) =>{
     var campaign = await Campaign.findOne({campaignID: detail.campaignID})
     if(detail.activityType === "Canvass"){
-        for(var i = 0; i < campaign.canvasActivities.length; i++){
-            if( campaign.canvasActivities[i]._id.toString() === detail.activityID){
-                return campaign.canvasActivities[i] 
+        for(var i = 0; i < campaign.canvassActivities.length; i++){
+            if( campaign.canvassActivities[i]._id.toString() === detail.activityID){
+                return campaign.canvassActivities[i] 
             }
         }
     } else if(detail.activityType === "Event"){
@@ -173,6 +219,13 @@ const getActivity = async(detail) =>{
         for(var i = 0; i < campaign.eventActivities.length; i++){
             if( campaign.eventActivities[i]._id.toString() === detail.activityID){
                 return campaign.eventActivities[i] 
+            }
+        }
+    } else if(detail.activityType === "Texting"){
+
+        for(var i = 0; i < campaign.textActivities.length; i++){
+            if( campaign.textActivities[i]._id.toString() === detail.activityID){
+                return campaign.textActivities[i] 
             }
         }
     }

@@ -55,6 +55,13 @@ const removeTarget = async(detail) => {
     }
 }
 
+const unlockTarget = async(detail) =>{
+    var target = await Target.findOne({'properties.orgID': detail.orgID, 'properties.campaignID': detail.campaignID, 'properties.params.id': detail.tractData.geoid});
+    target.properties.status = "REGISTERED"
+    return target.save()
+
+}
+
 const getAllTargetProperties = async(targetDetail) =>{
     try {
         var targets = await Target.find({'properties.campaignID': targetDetail.campaignID});
@@ -87,5 +94,6 @@ module.exports = {
                     lockTarget, 
                     createTarget, 
                     editTarget,
-                    getAllTargets
-                    }
+                    getAllTargets, 
+                    unlockTarget
+                }

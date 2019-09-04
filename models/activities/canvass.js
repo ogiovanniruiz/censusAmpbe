@@ -3,7 +3,7 @@ var Schema = mongoose.Schema;
 
 var MetaData = require('./metaData.js')
 
-var CanvasSchema = new Schema(
+var CanvassSchema = new Schema(
   {
     activityMetaData: MetaData.schema,
     swordForm: {}
@@ -11,4 +11,4 @@ var CanvasSchema = new Schema(
 );
 
 //Export model
-module.exports = mongoose.model('Canvas', CanvasSchema);
+module.exports = mongoose.model('Canvass', CanvassSchema);

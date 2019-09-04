@@ -107,6 +107,7 @@ const getOrgMembers = async(orgDetail) =>{
 
     var members = await Person.find({'user._id': {$in: orgDetail.userIDs}})
     var requests = await Person.find({'user._id': {$in: orgDetail.requests}})
+
     var memberList = {members: members, requests: requests}
 
     try {

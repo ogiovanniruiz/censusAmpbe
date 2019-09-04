@@ -38,4 +38,6 @@ const idPerson = async (req,res,next) =>{
 }
 
 
+
+
 module.exports = {getHouseHold, editPerson, createPerson, idPerson};

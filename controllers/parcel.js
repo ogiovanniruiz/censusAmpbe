@@ -68,4 +68,30 @@ const getCanvassParcels = async (req,res,next)=>{
     }
 }
 
-module.exports = {getParcels, editParcel, createParcel, createAsset, getAssets, deleteAsset, search, getCanvassParcels};
+const getNumParcelsWithin = async (req,res,next)=>{
+    try {res.send(await parcelService.getNumParcelsWithin(req.body))
+    } 
+    catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const completeHousehold = async (req,res,next)=>{
+    try {res.send(await parcelService.completeHousehold(req.body))
+    } 
+    catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {getParcels, 
+                  editParcel, 
+                  createParcel, 
+                  createAsset, 
+                  getAssets, 
+                  deleteAsset, 
+                  search, 
+                  getCanvassParcels,
+                  getNumParcelsWithin, completeHousehold};

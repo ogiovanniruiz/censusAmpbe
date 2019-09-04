@@ -1,10 +1,11 @@
 var Person = require('../models/people/person')
 
 
-const getHouseHold = async(address) => {
-    var streetNum = address.streetNum
 
-    var people = await Person.find({"address.street": address.street, "address.streetNum": streetNum});
+
+
+const getHouseHold = async(address) => {
+    var people = await Person.find({"address.street": address.street, "address.streetNum": address.streetNum});
     try { return people 
     } catch(e){
         throw new Error(e.message)
@@ -27,12 +28,12 @@ const createPerson = async(detail) =>{
     return person.save();
 }
 
-const idPerson = async(detail) =>{
-    //console.log(detail)
 
+
+const idPerson = async(detail) =>{
     var person = await Person.findOne({"_id": detail.person._id});
 
-    var idHistory = {scriptID: detail.scriptID,
+    var idHistory = {scriptID: detail.script._id,
                      idBy: detail.userID, 
                      idResponses: detail.idResponses, 
                      locationIdentified: detail.location}
@@ -41,40 +42,34 @@ const idPerson = async(detail) =>{
 
         if(person.canvassContactHistory.length === 0){
 
-            var canvassContactHistory = {campaignID: detail.campaignID, 
-                activityID: detail.activityID,
-                idHistory: idHistory
-               }
+            var canvassContactHistory = {
+                                            campaignID: detail.campaignID, 
+                                            activityID: detail.activityID,
+                                            idHistory: idHistory
+                                        }
 
             person.canvassContactHistory.push(canvassContactHistory)
-
             return person.save()
-
 
         }else{
 
-            for (var i = 0; i < person.canvassContactHistory.length; i++){
-                console.log("HERSIS")
-    
+            
+            for (var i = 0; i < person.canvassContactHistory.length; i++){    
                 if(person.canvassContactHistory[i].activityID === detail.activityID){
-                    console.log("Exists")
                     person.canvassContactHistory[i].idHistory.push(idHistory)
-    
-                } else {
-                    console.log("DOES NOT EXIST")
-    
-                    var canvassContactHistory = {campaignID: detail.campaignID, 
-                                                 activityID: detail.activityID,
-                                                 idHistory: idHistory
-                                                }
-    
-                    person.canvassContactHistory.push(canvassContactHistory)
-    
+                    return person.save()
                 }
             }
 
-            return person.save()
+            var canvassContactHistory = {
+                                            campaignID: detail.campaignID, 
+                                            activityID: detail.activityID,
+                                            idHistory: idHistory
+                                        }
 
+            person.canvassContactHistory.push(canvassContactHistory)
+            return person.save()
+            
         }
     }
 }
