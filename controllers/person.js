@@ -37,7 +37,24 @@ const idPerson = async (req,res,next) =>{
     }
 }
 
+const getMembers = async (req,res,next) =>{
+    try {
+        res.send(await personService.getMembers(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const uploadMembers = async (req,res,next) =>{
+    try {
+        res.send(await personService.uploadMembers(req))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
 
 
 
-module.exports = {getHouseHold, editPerson, createPerson, idPerson};
+module.exports = {getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers};

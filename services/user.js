@@ -38,10 +38,13 @@ const registerUser = async(regDetail) => {
                         lastName: regDetail.lastName,
                         user: { loginEmail: regDetail.email, 
                                 password: hashPassword},
+                        address:{city: regDetail.city, 
+                                 state: "CA", 
+                                 zip: regDetail.zip},
                         phones:  regDetail.phone,
-                    emails: regDetail.email,
-                    creationInfo: {regType: "SELF"}
-                }
+                        emails: regDetail.email,
+                        creationInfo: {regType: "SELF"}
+                        }
     try {
         var person = new Person(personDetail);
         return person.save();

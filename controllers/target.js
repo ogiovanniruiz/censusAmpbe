@@ -64,11 +64,22 @@ const unlockTarget = async (req, res, next) =>{
     }
 }
 
+const getOrgTargets = async (req, res, next) =>{
+
+    try{
+        res.send(await targetService.getOrgTargets(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 module.exports = { getAllTargetProperties, 
                    lockTarget, 
                    removeTarget, 
                    createTarget, 
                    editTarget,
                    getAllTargets,
-                   unlockTarget
+                   unlockTarget,
+                   getOrgTargets
                 };

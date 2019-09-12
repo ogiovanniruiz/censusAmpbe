@@ -26,15 +26,21 @@ const getParcels = async(parcelDetail) =>{
 const getCanvassParcels = async(parcelDetail) =>{
 
     try{
-        var target = await Target.findOne({"_id": mongoose.Types.ObjectId(parcelDetail.targetID)})
-        
-        if(target['geometry']){
 
-            return Parcel.find({"properties.type": parcelDetail.type, "properties.assessorCodes.realUse": "R1",
-                                "properties.location": {$geoIntersects: {$geometry: {type: "Polygon" , 
-                                                                                     coordinates: target['geometry']['coordinates'][0]}}}})
+        var targets = await Target.find({"_id": parcelDetail.targetIDs})
+
+        var targetCoordinates = []
+
+        for(var i = 0; i < targets.length; i++){
+            if(targets[i]['geometry']){
+                targetCoordinates.push(targets[i]['geometry']['coordinates'][0])
+            }
         }
 
+        return Parcel.find({"properties.type": parcelDetail.type, "properties.assessorCodes.realUse": "R1",
+                                "properties.location": {$geoIntersects: {$geometry: {type: "MultiPolygon" , 
+                                                                                     coordinates: targetCoordinates}}}})
+       
     }catch(e){throw new Error(e.message)}
 }
 

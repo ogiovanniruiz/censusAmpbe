@@ -4,6 +4,7 @@ var targetController = require('../controllers/target.js')
 
 router.post('/getAllTargetProperties', targetController.getAllTargetProperties)
 router.post('/getAllTargets', targetController.getAllTargets)
+router.post('/getOrgTargets', targetController.getOrgTargets)
 router.post('/removeTarget', targetController.removeTarget)
 router.post('/lockTarget', targetController.lockTarget)
 router.post('/createTarget', targetController.createTarget)

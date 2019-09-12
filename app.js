@@ -22,7 +22,7 @@ var mongoose = require('mongoose');
 var mongoDB = 'mongodb://127.0.0.1:27017/v2db?authSource=v2db&w=1';
 //var mongoDB = 'mongodb://root:7EA9e666!@AmplifyMongo/v2db?authSource=admin';
 //var mongoDB = 'mongodb://root:7EA9e666!@devAmplifyMongo/v2db?authSource=admin';
-mongoose.connect(mongoDB, { useNewUrlParser: true });
+mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true });
 mongoose.Promise = global.Promise;
 mongoose.set('useCreateIndex', true);
 var db = mongoose.connection;

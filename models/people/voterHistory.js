@@ -3,7 +3,7 @@ var Schema = mongoose.Schema;
 
 var VoterHistorySchema = new Schema(
     {
-     date: Date, 
+     date: {type: String}, 
      method: {type: String}, 
      electionType: { type:String, enum:['PRIMARY', 'GENERAL', 'SPECIAL', 'LOCAL']}
     }

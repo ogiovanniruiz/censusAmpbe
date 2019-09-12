@@ -20,6 +20,7 @@ var CampaignSchema = new Schema(
     textActivities: [TextActivity.schema],
     canvassActivities: [CanvassActvity.schema],
     eventActivities: [EventActivity.schema],
+    phoneNumbers: [{number: {type: String}, available: {type: Boolean, default: true}}],
     //phoneActivity: [PhoneActivity.schema]
     targets: [Target.schema],
     //nonResponses: [NonResponse.schema]

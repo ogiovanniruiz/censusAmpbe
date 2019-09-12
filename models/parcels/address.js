@@ -4,7 +4,7 @@ var Schema = mongoose.Schema;
 var AddressSchema = new Schema(
     { 
       streetNum: {type: String, trim: true},
-      unit: {type: Boolean, default: false},
+      unit: {type: String},
       street: {type: String},
       prefix: {type: String},
       suffix: {type: String},

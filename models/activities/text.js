@@ -6,6 +6,7 @@ var MetaData = require('./metaData.js')
 var TextSchema = new Schema(
   {
     activityMetaData: MetaData.schema,
+    phoneNum: {type: String},
     initTextMsg: {type: String},
     quickResponses: [{type: String}],
     swordForm: {}

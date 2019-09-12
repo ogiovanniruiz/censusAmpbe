@@ -7,7 +7,7 @@ var MetaDataSchema = new Schema(
     name: {type: String},
     active: {type: Boolean, default: true},
     description: {type: String},
-    targetID: {type: String},
+    targetIDs: [{type: String}],
     endDate: {type: String},
     campaignID: {type: Number},
     orgIDs: [{type: String}], //These are the orgs that have access.

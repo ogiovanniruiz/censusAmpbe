@@ -25,7 +25,7 @@ const createActivity = async(detail) => {
         newActivity.activityMetaData = {
                                         name: detail.activityName,
                                         description:  detail.description,
-                                        targetID:  detail.targetID,
+                                        targetIDs:  detail.targetIDs,
                                         campaignID: detail.campaignID,
                                         orgIDs: [detail.orgID],
                                         createdBy: detail.createdBy,
@@ -39,13 +39,14 @@ const createActivity = async(detail) => {
         var newActivity = {
                            activityMetatData:{},
                            initTextMsg: detail.initTextMsg,
-                           quickResponses: detail.quickResponses
+                           quickResponses: detail.quickResponses,
+                           phoneNum: detail.selectedNumber
                         }
 
         newActivity.activityMetaData = {
                                         name: detail.activityName,
                                         description:  detail.description,
-                                        targetID:  detail.targetID,
+                                        targetIDs:  detail.targetIDs,
                                         campaignID: detail.campaignID,
                                         orgIDs: [detail.orgID],
                                         createdBy: detail.createdBy,
@@ -108,7 +109,7 @@ const editActivity = async(detail) =>{
             if( campaign.canvassActivities[i]._id.toString() === detail.activityID){
                 campaign.canvassActivities[i].activityMetaData.name = detail.newActivityDetail.activityName
                 campaign.canvassActivities[i].activityMetaData.description = detail.newActivityDetail.description
-                campaign.canvassActivities[i].activityMetaData.targetID = detail.newActivityDetail.targetID
+                campaign.canvassActivities[i].activityMetaData.targetIDs = detail.newActivityDetail.targetIDs
                 campaign.canvassActivities[i].activityMetaData.nonResponses = detail.newActivityDetail.nonResponses
                 campaign.canvassActivities[i].activityMetaData.activityScriptIDs = detail.newActivityDetail.activityScriptIDs
             }
@@ -124,11 +125,12 @@ const editActivity = async(detail) =>{
             if( campaign.textActivities[i]._id.toString() === detail.activityID){
                 campaign.textActivities[i].activityMetaData.name = detail.newActivityDetail.activityName
                 campaign.textActivities[i].activityMetaData.description = detail.newActivityDetail.description
-                campaign.textActivities[i].activityMetaData.targetID = detail.newActivityDetail.targetID
+                campaign.textActivities[i].activityMetaData.targetIDs = detail.newActivityDetail.targetIDs
                 campaign.textActivities[i].activityMetaData.nonResponses = detail.newActivityDetail.nonResponses
                 campaign.textActivities[i].activityMetaData.activityScriptIDs = detail.newActivityDetail.activityScriptIDs
                 campaign.textActivities[i].quickResponses = detail.newActivityDetail.quickResponses
                 campaign.textActivities[i].initTextMsg = detail.newActivityDetail.initTextMsg
+                campaign.textActivities[i].phoneNum = detail.newActivityDetail.selectedNumber
             }
         }
     }

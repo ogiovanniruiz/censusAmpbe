@@ -36,4 +36,32 @@ const lockNewPeople = async (req,res,next) =>{
     }
 }
 
-module.exports = {loadLockedPeople, sendText, lockNewPeople, getRespondedPeople};
+const receiveTexts = async (req,res,next) =>{
+    try {
+        res.type('text/xml')
+        res.send(await textingService.receiveTexts(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const updateConversation = async (req,res,next) =>{
+    try {
+        res.send(await textingService.updateConversation(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const finishIdentification = async (req,res,next) =>{
+    try {
+        res.send(await textingService.finishIdentification(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {loadLockedPeople, sendText, lockNewPeople, getRespondedPeople, receiveTexts, updateConversation, finishIdentification};

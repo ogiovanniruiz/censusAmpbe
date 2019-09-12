@@ -10,6 +10,8 @@ var TextContactHistorySchema = new Schema(
         orgID: {type: String},
         lockedBy: {type: String},
         textSent: {type: Boolean, default: false},
+        outgoingPhoneNum: {type: String},
+        identified: {type: Boolean, default: false},
         textReceived: {type: Boolean, default: false},
         textConv: [{origin: {type: String, enum: ['VOLUNTEER', 'VOTER']}, msg: {type: String}}],
         idHistory: [idHistory.schema],

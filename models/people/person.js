@@ -6,7 +6,7 @@ var VoterInfo = require('./voterInfo.js');
 var Demographics = require('./demographics.js');
 var CanvassContactHistory = require('./canvassContactHistory.js')
 var CreationInfo = require('./creationInfo.js')
-var ResidentAddress = require('./residentAddress.js')
+var Address = require('../parcels/address.js')
 var TextContactHistory = require('./textContactHistory.js')
 
 var PersonSchema = new Schema(
@@ -17,9 +17,10 @@ var PersonSchema = new Schema(
     middleName: {type: String},
     phones: [{type: String}],
     emails: [{type: String}],
-    address: ResidentAddress.schema,
+    address: Address.schema,
     voterInfo: VoterInfo.schema,
     demographics: Demographics.schema,
+    membership: [{type: String}],
     canvassContactHistory: [CanvassContactHistory.schema],
     textContactHistory: [TextContactHistory.schema],
     creationInfo: CreationInfo.schema
