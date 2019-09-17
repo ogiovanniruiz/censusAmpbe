@@ -6,7 +6,7 @@ var twilio = require('twilio');
 //var VoiceResponse = twilio.twiml.VoiceResponse;
 //var ClientCapability = require('twilio').jwt.ClientCapability;
 
-//var phone_num = '+19513360702'
+//var phone_num = '+19513360702, +19514576907'
 
 const accountSid = 'ACaa2284052d10b1610817013666b0ca9d';
 const authToken = 'cb57765af76625d6ed79376cc411a2ca';
@@ -114,6 +114,8 @@ const receiveTexts = async(incoming) =>{
     var phoneNumber = incoming.From.substring(2);
     var message = incoming.Body;
     var outgoingPhoneNum = incoming.To;
+
+    //console.log(incoming)
     try{
         var person = await Person.findOne({"phones": phoneNumber});  
         for(var i = 0; i < person.textContactHistory.length; i++){

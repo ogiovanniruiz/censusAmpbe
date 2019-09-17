@@ -10,6 +10,9 @@ router.post('/getOrgCampaigns', campaignController.getOrgCampaigns)
 router.post('/getCampaignRequests', campaignController.getCampaignRequests)
 router.post('/manageCampaignRequest', campaignController.manageCampaignRequest)
 router.post('/removeOrg', campaignController.removeOrg)
+router.post('/addPhoneNumber', campaignController.addPhoneNumber);
+router.post('/removePhoneNumber', campaignController.removePhoneNumber);
+router.post('/getCampaignPhoneNumbers', campaignController.getCampaignPhoneNumbers);
 
 
 module.exports = router;

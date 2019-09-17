@@ -10,6 +10,7 @@ router.post('/createPerson', personController.createPerson)
 router.post('/idPerson', personController.idPerson)
 router.post('/getMembers', personController.getMembers)
 router.post('/uploadMembership', [upload.any(), personController.uploadMembers])
+router.post('/runMatch', personController.runMatch)
 
 
 module.exports = router;

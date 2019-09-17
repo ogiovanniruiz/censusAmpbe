@@ -55,6 +55,18 @@ const uploadMembers = async (req,res,next) =>{
     }
 }
 
+const runMatch = async(req,res, next) => {
+    try {
+        res.send(await personService.runMatch(req))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
 
 
-module.exports = {getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers};
+
+}
+
+
+
+module.exports = {getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers, runMatch};

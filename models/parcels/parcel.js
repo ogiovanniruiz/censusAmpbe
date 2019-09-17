@@ -17,10 +17,9 @@ var ParcelSchema = new Schema(
                    assessorCodes: {realUse: String, primary: String},
                    location: {type: { type: String },
                                       coordinates: { type: [Number] }}}   
-    }, 
+    },
     { collection : 'parcels' }
 );
-
 
 //Export model
 module.exports = mongoose.model('Parcel', ParcelSchema);

@@ -54,6 +54,11 @@ const createActivity = async(detail) => {
                                         activityScriptIDs: detail.activityScriptIDs
                                         }
 
+        for(var i = 0; i < campaign.phoneNumbers.length; i++){
+            if(campaign.phoneNumbers[i].number === detail.selectedNumber){
+                campaign.phoneNumbers[i].available = false
+            }
+        }
 
         campaign.textActivities.push(newActivity)
 
@@ -198,11 +203,22 @@ const deleteActivity = async(detail) =>{
             }
         }
     } else if ( detail.activityType === "Texting"){
+
+        var numberToRelease = ""
         for(var i = 0; i < campaign.textActivities.length; i++){
             if( campaign.textActivities[i]._id.toString() === detail.activityID){
+                numberToRelease = campaign.textActivities[i].phoneNum
                 campaign.textActivities.splice(i, 1); 
+
             }
         }
+
+        for(var j = 0; j < campaign.phoneNumbers.length; j++){
+            if(campaign.phoneNumbers[j].number === numberToRelease){
+                campaign.phoneNumbers[j].available = true
+            }
+        }
+  
     }
 
     return campaign.save()

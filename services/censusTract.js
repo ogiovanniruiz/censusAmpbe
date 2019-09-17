@@ -21,4 +21,6 @@ const getAllCensusTracts= async(parcelDetail) =>{
     }
 }
 
+
+
 module.exports = {getAllCensusTracts}

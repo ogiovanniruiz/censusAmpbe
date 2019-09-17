@@ -1,4 +1,6 @@
 var Person = require('../models/people/person')
+var Parcel = require('../models/parcels/parcel')
+
 var async = require('async');
 
 const getHouseHold = async(address) => {
@@ -7,6 +9,37 @@ const getHouseHold = async(address) => {
     } catch(e){
         throw new Error(e.message)
     }
+}
+
+const runMatch = async()=>{
+
+    console.log("IS MATCHING!!!")
+
+     var zips = await Parcel.aggregate(     [ 
+        {$match: {"properties.assessorCodes.realUse": "R1"}},
+        {$group : { _id : "$properties.address.zip"}}
+
+      ])
+
+    for(var i = 0; i < 4; i++){
+        var parcels = await Parcel.find({"properties.address.zip": zips[i]._id})
+    }
+
+    //console.log(parcels[0].properties)
+
+    //console.log(parcel)
+
+    //count = 0
+    for(var j = 0; j < parcels.length; j++){
+        console.log("Parcel Number: ", j)
+        console.log("Total: ", parcels.length)
+       var peopleCount = await Person.find({"address.streetNum": parcels[j].properties.address.streetNum, "address.street": parcels[j].properties.address.street}).count()
+
+    }
+
+    //console.log(peopleCount)
+
+    return {peopleCount: peopleCount}
 }
 
 const editPerson = async(detail) =>{
@@ -158,4 +191,4 @@ const idPerson = async(detail) =>{
 }
 
 
-module.exports = {getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers}
+module.exports = {getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers, runMatch}

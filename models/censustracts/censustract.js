@@ -10,6 +10,7 @@ var CensusTractSchema = new Schema(
                     lrs: Number,
                     htc: Number,
                     geoid: String,
+                    numOccupiedUnits: Number,
                     targetIDs: [{type: String}],
                     location: {type: { type: String },
                                coordinates: { type: [Number] }}}   

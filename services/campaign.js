@@ -158,4 +158,51 @@ const removeOrg = async(detail) =>{
 
 }
 
-module.exports = {createCampaign, getAllCampaigns, getCampaign, requestCampaign, getOrgCampaigns, getCampaignRequests, manageCampaignRequest,removeOrg}
+const removePhoneNumber = async(detail) =>{
+
+    var campaign = await Campaign.findOne({"campaignID": detail.campaignID})
+
+    for(var i = 0; i < campaign.phoneNumbers.length; i++){
+        if(campaign.phoneNumbers[i].number === detail.phoneNumber){
+            campaign.phoneNumbers.splice(i,1)
+            return campaign.save()
+        }
+    }
+}
+const addPhoneNumber = async(detail) =>{
+
+    var campaign = await Campaign.findOne({"campaignID": detail.campaignID})
+
+    for(var i = 0; i < campaign.phoneNumbers.length; i++){
+        if(campaign.phoneNumbers[i].number === detail.phoneNumber){
+            return({msg: "Phone Number already exists.", success: false})
+        }
+    }
+
+    campaign.phoneNumbers.push({number: detail.phoneNumber, available: true})
+
+    campaign.save()
+
+    return {msg: "Phone Number Created.", success: true}
+
+}
+
+const getCampaignPhoneNumbers = async(detail) =>{
+
+    var campaign = await Campaign.findOne({"campaignID": detail.campaignID})
+
+    return campaign.phoneNumbers
+}
+
+module.exports = {createCampaign, 
+                  getAllCampaigns, 
+                  getCampaign, 
+                  requestCampaign, 
+                  getOrgCampaigns, 
+                  getCampaignRequests, 
+                  manageCampaignRequest,
+                  removeOrg,
+                  removePhoneNumber,
+                  addPhoneNumber,
+                  getCampaignPhoneNumbers
+                }
