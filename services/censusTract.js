@@ -31,24 +31,22 @@ const uploadOccupancy = async(detail) =>{
         var stringFile = detail.files[0].buffer.toString('utf8');
 
         var lines = (stringFile).split("\n");
-        var headers = lines[0].split(",");
-        var counter = 0;
         var censustracts = await CensusTract.find();
 
-        for (var h = 0; h < censustracts.length; h++) {
-            if (censustracts[h].properties.lrs == null) {
-                censustracts[h].properties.lrs = 0;
-                censustracts[h].save();
-                console.log("it's zero", h);
-            }
-        }
+        // for (var h = 0; h < censustracts.length; h++) {
+        //     if (censustracts[h].properties.lrs == null) {
+        //         censustracts[h].properties.lrs = 0;
+        //         censustracts[h].save();
+        //         console.log("it's zero", h);
+        //     }
+        // }
     
         for (var i = 1; i < lines.length; i++) {
             var currentLine = lines[i].split(",");
             for (var j = 0; j < censustracts.length; j++) {
                 var geoid = "0" + currentLine[0];
                 // if ((geoid === censustracts[j].properties.geoid) && (censustracts[j].properties.lrs)){
-                    if (geoid === censustracts[j].properties.geoid){
+                if (geoid === censustracts[j].properties.geoid){
                     console.log("happening");
                     censustracts[j].properties.numOccupiedUnits = Number(currentLine[1]);
                     censustracts[j].save();
