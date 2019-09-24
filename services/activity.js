@@ -34,7 +34,31 @@ const createActivity = async(detail) => {
                                         }
 
         campaign.canvassActivities.push(newActivity)
-    } else if(detail.activityType === "Texting"){
+    } else if(detail.activityType === "Phonebank"){
+
+        var newActivity = {activityMetatData:{},
+                           phoneNum: detail.selectedNumber}
+
+        newActivity.activityMetaData = {
+            name: detail.activityName,
+            description:  detail.description,
+            targetIDs:  detail.targetIDs,
+            campaignID: detail.campaignID,
+            orgIDs: [detail.orgID],
+            createdBy: detail.createdBy,
+            nonResponses: detail.nonResponses,
+            activityScriptIDs: detail.activityScriptIDs
+            }
+
+            for(var i = 0; i < campaign.phoneNumbers.length; i++){
+                if(campaign.phoneNumbers[i].number === detail.selectedNumber){
+                    campaign.phoneNumbers[i].available = false
+                }
+            }
+
+            campaign.phonebankActivities.push(newActivity)
+
+    }else if(detail.activityType === "Texting"){
 
         var newActivity = {
                            activityMetatData:{},
@@ -138,7 +162,21 @@ const editActivity = async(detail) =>{
                 campaign.textActivities[i].phoneNum = detail.newActivityDetail.selectedNumber
             }
         }
+    }else if(detail.activityType === "Phonebank"){
+        for(var i = 0; i < campaign.phonebankActivities.length; i++){
+            if( campaign.phonebankActivities[i]._id.toString() === detail.activityID){
+                campaign.phonebankActivities[i].activityMetaData.name = detail.newActivityDetail.activityName
+                campaign.phonebankActivities[i].activityMetaData.description = detail.newActivityDetail.description
+                campaign.phonebankActivities[i].activityMetaData.targetIDs = detail.newActivityDetail.targetIDs
+                campaign.phonebankActivities[i].activityMetaData.nonResponses = detail.newActivityDetail.nonResponses
+                campaign.phonebankActivities[i].activityMetaData.activityScriptIDs = detail.newActivityDetail.activityScriptIDs
+                campaign.phonebankActivities[i].phoneNum = detail.newActivityDetail.selectedNumber
+            }
+        }
     }
+
+
+
     return campaign.save()
 }
 
@@ -183,6 +221,13 @@ const getActivities = async(detail) =>{
             }
         }
         return activities
+    } else if (detail.activityType === "Phonebank"){
+        for(var i = 0; i < campaign.phonebankActivities.length; i++){
+            if(campaign.phonebankActivities[i].activityMetaData.orgIDs.includes(detail.orgID)){
+                activities.push(campaign.phonebankActivities[i])
+            }
+        }
+        return activities
     }
 }
 
@@ -219,6 +264,23 @@ const deleteActivity = async(detail) =>{
             }
         }
   
+    } else if (detail.activityType === "Phonebank"){
+        var numberToRelease = ""
+        for(var i = 0; i < campaign.phonebankActivities.length; i++){
+            if( campaign.phonebankActivities[i]._id.toString() === detail.activityID){
+                numberToRelease = campaign.phonebankActivities[i].phoneNum
+                campaign.phonebankActivities.splice(i, 1); 
+
+            }
+        }
+
+        for(var j = 0; j < campaign.phoneNumbers.length; j++){
+            if(campaign.phoneNumbers[j].number === numberToRelease){
+                campaign.phoneNumbers[j].available = true
+            }
+        }
+
+
     }
 
     return campaign.save()
@@ -244,6 +306,13 @@ const getActivity = async(detail) =>{
         for(var i = 0; i < campaign.textActivities.length; i++){
             if( campaign.textActivities[i]._id.toString() === detail.activityID){
                 return campaign.textActivities[i] 
+            }
+        }
+    }else if(detail.activityType === "Phonebank"){
+
+        for(var i = 0; i < campaign.phonebankActivities.length; i++){
+            if( campaign.phonebankActivities[i]._id.toString() === detail.activityID){
+                return campaign.phonebankActivities[i] 
             }
         }
     }

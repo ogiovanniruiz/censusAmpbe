@@ -110,8 +110,6 @@ const uploadMembers = async(detail) =>{
  
 }
 
-
-
 const idPerson = async(detail) =>{
 
     var person = await Person.findOne({"_id": detail.person._id});

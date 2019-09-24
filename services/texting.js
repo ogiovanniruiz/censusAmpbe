@@ -26,12 +26,7 @@ const loadLockedPeople = async(detail) =>{
 
 const lockNewPeople = async(detail) =>{
 
-    //console.log(detail)
-
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
-
-    //console.log(targets)
-
     var searchParameters = {"textContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID}}}}
 
     for(var i = 0; i < targets.length; i++){

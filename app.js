@@ -15,6 +15,7 @@ var contactRouter = require('./routes/contact')
 var personRouter = require('./routes/people')
 var scriptRouter = require('./routes/scripts')
 var textingRouter = require('./routes/texting')
+var phonebankRouter = require('./routes/phonebank')
 
 var app = express();
 
@@ -56,5 +57,6 @@ app.use('/contact', contactRouter)
 app.use('/person', personRouter)
 app.use('/scripts', scriptRouter)
 app.use('/texting', textingRouter)
+app.use('/phonebank', phonebankRouter)
 
 module.exports = app;
