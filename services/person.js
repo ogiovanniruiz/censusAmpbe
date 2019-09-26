@@ -1,7 +1,17 @@
 var Person = require('../models/people/person')
 var Parcel = require('../models/parcels/parcel')
+var NodeGeocoder = require('node-geocoder');
 
 var async = require('async');
+
+var options = {
+    provider: 'google',
+
+    // Optional depending on the providers
+    httpAdapter: 'https', // Default
+    apiKey: 'AIzaSyAQmji7d5aXw_uf2sCsBGJxWcVrVmDmfxE ', // for Mapquest, OpenCage, Google Premier
+    formatter: null         // 'gpx', 'string', ...
+  };
 
 const getHouseHold = async(address) => {
     var people = await Person.find({"address.street": address.street, "address.streetNum": address.streetNum});
@@ -12,8 +22,6 @@ const getHouseHold = async(address) => {
 }
 
 const runMatch = async()=>{
-
-    console.log("IS MATCHING!!!")
 
      var zips = await Parcel.aggregate(     [
         {$match: {"properties.assessorCodes.realUse": "R1"}},
@@ -31,7 +39,6 @@ const runMatch = async()=>{
        var peopleCount = await Person.find({"address.streetNum": parcels[j].properties.address.streetNum, "address.street": parcels[j].properties.address.street}).count()
 
     }
-
     return {peopleCount: peopleCount}
 }
 
@@ -47,6 +54,18 @@ const editPerson = async(detail) =>{
 }
 
 const createPerson = async(detail) =>{
+/*
+    console.log(detail)
+    var geocoder = NodeGeocoder(options);
+
+    geocoder.geocode('29 champs elysée paris').then(function(res) {
+    console.log(res);})
+  .catch(function(err) {
+    console.log(err);
+  });
+
+*/
+
     var person = new Person(detail);
     return person.save();
 }
@@ -69,7 +88,7 @@ const uploadMembers = async(detail) =>{
         var currentLine = line.split(",")
 
         for(var j = 0; j < headers.length; j++){
-            
+
             // BEGINNING OF ADDRESS
             if(headers[j] === "address"){
 
@@ -80,11 +99,11 @@ const uploadMembers = async(detail) =>{
                     }
                 }
                 obj["address.streetNum"] = brokenAddy[0]
-                
+
                 var prefices = ["E", "N", "W", "S", "NW", "NE"]
                 var suffices = ["AVE","BLVD","BRG","CIR","CRK","CRST","CT","CTR","CV","CYN","DR","EXPY","FLDS","FLTS","HL","HLS","HTS","HWY","IS","LN","LOOP","LP","MDW","ML","PARK","PASS","PATH","PK","PKWY","PL","PLZ","PT","RD","RDG","RUN","SQ","ST","TER","TRL","VIS","VLY","VW","WALK","WAY","XING","AVENUE","BOULEVARD","BRIDGE","CIRCLE","CREEK","CREST","COURT","CENTER","COVE","CANYON","DRIVE","EXPRESSWAY","FIELDS","FLATS","HILL","HILLS","HEIGHTS","HIGHWAY","ISLAND","LANE","MEADOW","MILL","PARKS","PARK","PARKWAY","PLACE","PLAZA","POINT","ROAD","RIDGE","SQUARE","STREET","TERRACE","TRAIL","VISTA","VIEW"]
-                var units = ["APARTMENT","BLDG","FLOOR","SUITE","UNIT","ROOM","DEPARTMENT","RM","DEPT","FL","STE","APT","#"]  
-              
+                var units = ["APARTMENT","BLDG","FLOOR","SUITE","UNIT","ROOM","DEPARTMENT","RM","DEPT","FL","STE","APT","#"]
+
                 var p
                 if (prefices.includes(brokenAddy[1])) {
                     obj["address.prefix"] = brokenAddy[1]
@@ -94,7 +113,7 @@ const uploadMembers = async(detail) =>{
                     obj["address.prefix"] = ""
                     p = 0
                 }
-                
+
                 for (var s = brokenAddy.length - 1; s > 0; s = s - 1) {
                     if (suffices.includes(brokenAddy[s])) {
                         console.log(brokenAddy[s])
@@ -189,7 +208,7 @@ const uploadMembers = async(detail) =>{
                     }
                 }
 
-            } 
+            }
 
             else if(headers[j] === "city") {
                 obj["address.city"] = currentLine[j]
@@ -210,7 +229,7 @@ const uploadMembers = async(detail) =>{
             else if(headers[j] === "party") {
                 obj["voterInfo.party"] = currentLine[j]
             }
-            
+
             else if (headers[j] === "phones"){
 
                 if(currentLine[j]){
@@ -240,8 +259,6 @@ const uploadMembers = async(detail) =>{
     })
 
 }
-
-
 
 const idPerson = async(detail) =>{
 
@@ -282,6 +299,39 @@ const idPerson = async(detail) =>{
                                         }
 
             person.canvassContactHistory.push(canvassContactHistory)
+            return person.save()
+
+        }
+    } else if (detail.activityType === "Phonebank"){
+
+        if(person.phonebankContactHistory.length === 0){
+
+            var phonebankContactHistory = {
+                                            campaignID: detail.campaignID,
+                                            activityID: detail.activityID,
+                                            idHistory: idHistory
+                                        }
+
+            person.phonebankContactHistory.push(phonebankContactHistory)
+            return person.save()
+
+        }else{
+
+
+            for (var i = 0; i < person.phonebankContactHistory.length; i++){
+                if(person.phonebankContactHistory[i].activityID === detail.activityID){
+                    person.phonebankContactHistory[i].idHistory.push(idHistory)
+                    return person.save()
+                }
+            }
+
+            var phonebankContactHistory = {
+                                            campaignID: detail.campaignID,
+                                            activityID: detail.activityID,
+                                            idHistory: idHistory
+                                        }
+
+            person.phonebankContactHistory.push(phonebankContactHistory)
             return person.save()
 
         }
