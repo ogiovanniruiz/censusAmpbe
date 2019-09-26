@@ -1,6 +1,7 @@
 var Person = require('../models/people/person')
 var Target = require('../models/targets/target')
 
+
 var twilio = require('twilio');
 var VoiceResponse = twilio.twiml.VoiceResponse;
 var ClientCapability = require('twilio').jwt.ClientCapability;
@@ -20,9 +21,11 @@ const getHouseHold = async(detail) => {
 
     var people = await Person.aggregate([ 
         {$match: searchParameters},
-        {$group : { _id : "$address.street", people: { $push: {firstName: '$firstName',
+        {$group : { _id : "$address", people: { $push: {firstName: '$firstName',
                                                                lastName: '$lastName', 
                                                                phones: '$phones',
+                                                               emails: '$emails',
+                                                               phonebankContactHistory: '$phonebankContactHistory',
                                                                _id: "$_id"}}}}
         ]).allowDiskUse(true).limit(1)
     

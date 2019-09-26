@@ -1,7 +1,17 @@
 var Person = require('../models/people/person')
 var Parcel = require('../models/parcels/parcel')
+var NodeGeocoder = require('node-geocoder');
 
 var async = require('async');
+
+var options = {
+    provider: 'google',
+   
+    // Optional depending on the providers
+    httpAdapter: 'https', // Default
+    apiKey: 'AIzaSyAQmji7d5aXw_uf2sCsBGJxWcVrVmDmfxE ', // for Mapquest, OpenCage, Google Premier
+    formatter: null         // 'gpx', 'string', ...
+  };
 
 const getHouseHold = async(address) => {
     var people = await Person.find({"address.street": address.street, "address.streetNum": address.streetNum});
@@ -13,8 +23,6 @@ const getHouseHold = async(address) => {
 
 const runMatch = async()=>{
 
-    console.log("IS MATCHING!!!")
-
      var zips = await Parcel.aggregate(     [ 
         {$match: {"properties.assessorCodes.realUse": "R1"}},
         {$group : { _id : "$properties.address.zip"}}
@@ -25,20 +33,12 @@ const runMatch = async()=>{
         var parcels = await Parcel.find({"properties.address.zip": zips[i]._id})
     }
 
-    //console.log(parcels[0].properties)
-
-    //console.log(parcel)
-
-    //count = 0
     for(var j = 0; j < parcels.length; j++){
         console.log("Parcel Number: ", j)
         console.log("Total: ", parcels.length)
        var peopleCount = await Person.find({"address.streetNum": parcels[j].properties.address.streetNum, "address.street": parcels[j].properties.address.street}).count()
 
     }
-
-    //console.log(peopleCount)
-
     return {peopleCount: peopleCount}
 }
 
@@ -54,6 +54,18 @@ const editPerson = async(detail) =>{
 }
 
 const createPerson = async(detail) =>{
+/*
+    console.log(detail)
+    var geocoder = NodeGeocoder(options);
+
+    geocoder.geocode('29 champs elysée paris').then(function(res) {
+    console.log(res);})
+  .catch(function(err) {
+    console.log(err);
+  });
+ 
+*/
+
     var person = new Person(detail);
     return person.save();
 }
@@ -149,6 +161,39 @@ const idPerson = async(detail) =>{
                                         }
 
             person.canvassContactHistory.push(canvassContactHistory)
+            return person.save()
+            
+        }
+    } else if (detail.activityType === "Phonebank"){
+
+        if(person.phonebankContactHistory.length === 0){
+
+            var phonebankContactHistory = {
+                                            campaignID: detail.campaignID, 
+                                            activityID: detail.activityID,
+                                            idHistory: idHistory
+                                        }
+
+            person.phonebankContactHistory.push(phonebankContactHistory)
+            return person.save()
+
+        }else{
+
+            
+            for (var i = 0; i < person.phonebankContactHistory.length; i++){    
+                if(person.phonebankContactHistory[i].activityID === detail.activityID){
+                    person.phonebankContactHistory[i].idHistory.push(idHistory)
+                    return person.save()
+                }
+            }
+
+            var phonebankContactHistory = {
+                                            campaignID: detail.campaignID, 
+                                            activityID: detail.activityID,
+                                            idHistory: idHistory
+                                        }
+
+            person.phonebankContactHistory.push(phonebankContactHistory)
             return person.save()
             
         }

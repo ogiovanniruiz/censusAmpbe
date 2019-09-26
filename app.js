@@ -18,11 +18,26 @@ var textingRouter = require('./routes/texting')
 var phonebankRouter = require('./routes/phonebank')
 
 var app = express();
-
 var mongoose = require('mongoose');
-var mongoDB = 'mongodb://127.0.0.1:27017/v2db?authSource=v2db&w=1';
-//var mongoDB = 'mongodb://root:7EA9e666!@AmplifyMongo/v2db?authSource=admin';
-//var mongoDB = 'mongodb://root:7EA9e666!@devAmplifyMongo/v2db?authSource=admin';
+
+var mongoDB = ""
+var corsOptions = { methods: 'GET,POST,PATCH,DELETE,OPTIONS',
+                    optionsSuccessStatus: 200,
+                    origin: ""}
+
+if(app.get('env') === 'production'){
+  mongoDB = 'mongodb://root:7EA9e666!@AmplifyMongo/v2db?authSource=admin';
+  corsOptions.origin = 'https://outreach.censusie.org'
+  
+  //mongoDB = 'mongodb://root:7EA9e666!@devAmplifyMongo/v2db?authSource=admin';
+  //corsOptions.origin = 'https://dev.outreach.censusie.org'
+
+} else if(app.get('env') === 'development'){
+  mongoDB = 'mongodb://127.0.0.1:27017/v2db?authSource=v2db&w=1';
+  corsOptions.origin = 'http://localhost:4200'
+}
+
+
 mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true });
 mongoose.Promise = global.Promise;
 mongoose.set('useCreateIndex', true);
@@ -31,13 +46,7 @@ db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
 const cors = require('cors');
 
-app.use(cors({
-  methods: 'GET,POST,PATCH,DELETE,OPTIONS',
-  optionsSuccessStatus: 200,
-  //origin: 'https://outreach.censusie.org'
-  //origin: 'https://dev.outreach.censusie.org'
-  origin: 'http://localhost:4200'
-}));
+app.use(cors(corsOptions));
 
 app.use(logger('dev'));
 app.use(express.json());

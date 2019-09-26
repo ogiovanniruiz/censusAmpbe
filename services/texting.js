@@ -1,19 +1,12 @@
 var Person = require('../models/people/person')
 var Target = require('../models/targets/target')
 
-
-var twilio = require('twilio');
-//var VoiceResponse = twilio.twiml.VoiceResponse;
-//var ClientCapability = require('twilio').jwt.ClientCapability;
-
 //var phone_num = '+19513360702, +19514576907'
 
 const accountSid = 'ACaa2284052d10b1610817013666b0ca9d';
 const authToken = 'cb57765af76625d6ed79376cc411a2ca';
 
 const client = require('twilio')(accountSid, authToken);
-
-const  app_sid  = 'APcfa84370fade47d9de6493f08e73b6fa'
 
 const loadLockedPeople = async(detail) =>{
 
@@ -110,7 +103,6 @@ const receiveTexts = async(incoming) =>{
     var message = incoming.Body;
     var outgoingPhoneNum = incoming.To;
 
-    //console.log(incoming)
     try{
         var person = await Person.findOne({"phones": phoneNumber});  
         for(var i = 0; i < person.textContactHistory.length; i++){
