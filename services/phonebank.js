@@ -1,7 +1,6 @@
 var Person = require('../models/people/person')
 var Target = require('../models/targets/target')
 
-
 var twilio = require('twilio');
 var VoiceResponse = twilio.twiml.VoiceResponse;
 var ClientCapability = require('twilio').jwt.ClientCapability;
@@ -11,24 +10,26 @@ const authToken = 'cb57765af76625d6ed79376cc411a2ca';
 
 const getHouseHold = async(detail) => {
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
-    var searchParameters = {"textContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID}}}}
+    var searchParameters = {"phonebankContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, identified: true}}}}
 
     for(var i = 0; i < targets.length; i++){
         if(targets[i].properties.params.targetType === "ORGMEMBERS"){
-            searchParameters['membership'] = targets[i].properties.params.id
+            searchParameters['membership'] = targets[i].properties.params.id;
         }
     }
 
     var people = await Person.aggregate([ 
         {$match: searchParameters},
-        {$group : { _id : "$address", people: { $push: {firstName: '$firstName',
+        {$group : { _id : {streetNum: "$address.streetNum", street: "$address.street"}, people: { $push: {firstName: '$firstName',
                                                                lastName: '$lastName', 
                                                                phones: '$phones',
                                                                emails: '$emails',
+                                                               address: '$address',
                                                                phonebankContactHistory: '$phonebankContactHistory',
                                                                _id: "$_id"}}}}
-        ]).allowDiskUse(true).limit(1)
+        ]).allowDiskUse(true)
     
+    console.log(people)
     try { return people[0] 
     } catch(e){
         throw new Error(e.message)

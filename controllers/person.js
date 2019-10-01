@@ -62,11 +62,17 @@ const runMatch = async(req,res, next) => {
         console.log(e.message)
         res.sendStatus(500)
     }
+}
 
-
-
+const finishIdentification = async(req,res, next) => {
+    try {
+        res.send(await personService.finishIdentification(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
 }
 
 
 
-module.exports = {getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers, runMatch};
+module.exports = {getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers, runMatch, finishIdentification};

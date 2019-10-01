@@ -25,16 +25,27 @@ var corsOptions = { methods: 'GET,POST,PATCH,DELETE,OPTIONS',
                     optionsSuccessStatus: 200,
                     origin: ""}
 
-if(app.get('env') === 'production'){
+if(app.get('env') === 'census'){
+
   mongoDB = 'mongodb://root:7EA9e666!@AmplifyMongo/v2db?authSource=admin';
   corsOptions.origin = 'https://outreach.censusie.org'
   
-  //mongoDB = 'mongodb://root:7EA9e666!@devAmplifyMongo/v2db?authSource=admin';
-  //corsOptions.origin = 'https://dev.outreach.censusie.org'
+}else if(app.get('env') === 'devServer'){
 
-} else if(app.get('env') === 'development'){
+  mongoDB = 'mongodb://root:7EA9e666!@devAmplifyMongo/v2db?authSource=admin';
+  corsOptions.origin = 'https://dev.outreach.censusie.org'
+
+} 
+else if(app.get('env') === 'campaigns'){
+
+  mongoDB = 'mongodb://root:7EA9e666!@mongoCampaigns/v2db?authSource=admin';
+  corsOptions.origin = 'https://amp.ieunited.org'
+
+}else if(app.get('env') === 'development'){
+
   mongoDB = 'mongodb://127.0.0.1:27017/v2db?authSource=v2db&w=1';
   corsOptions.origin = 'http://localhost:4200'
+  
 }
 
 

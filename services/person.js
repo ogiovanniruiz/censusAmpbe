@@ -49,6 +49,21 @@ const editPerson = async(detail) =>{
     person.lastName = detail.newDetail.lastName
     person.emails = detail.newDetail.email
     person.phones = detail.newDetail.phone
+    person.address = {
+                      streetNum: detail.newDetail.streetNum,
+                      prefix: detail.newDetail.prefix,
+                      street: detail.newDetail.street,
+                      suffix : detail.newDetail.suffix,
+                      unit: detail.newDetail.unit,
+                      city: detail.newDetail.city,
+                      county: detail.newDetail.county
+                    }
+    person.demographics = {dob: detail.newDetail.dob,
+        gender: detail.newDetail.gender
+    }
+
+    person.voterInfo = {party: detail.newDetail.party}
+
 
     return person.save()
 }
@@ -276,6 +291,7 @@ const idPerson = async(detail) =>{
             var canvassContactHistory = {
                                             campaignID: detail.campaignID,
                                             activityID: detail.activityID,
+                                            orgID: detail.orgID,
                                             idHistory: idHistory
                                         }
 
@@ -295,6 +311,7 @@ const idPerson = async(detail) =>{
             var canvassContactHistory = {
                                             campaignID: detail.campaignID,
                                             activityID: detail.activityID,
+                                            orgID: detail.orgID,
                                             idHistory: idHistory
                                         }
 
@@ -309,6 +326,7 @@ const idPerson = async(detail) =>{
             var phonebankContactHistory = {
                                             campaignID: detail.campaignID,
                                             activityID: detail.activityID,
+                                            orgID: detail.orgID,
                                             idHistory: idHistory
                                         }
 
@@ -328,6 +346,7 @@ const idPerson = async(detail) =>{
             var phonebankContactHistory = {
                                             campaignID: detail.campaignID,
                                             activityID: detail.activityID,
+                                            orgID: detail.orgID,
                                             idHistory: idHistory
                                         }
 
@@ -342,6 +361,7 @@ const idPerson = async(detail) =>{
             var textContactHistory = {
                                             campaignID: detail.campaignID,
                                             activityID: detail.activityID,
+                                            orgID: detail.orgID,
                                             idHistory: idHistory
                                         }
 
@@ -361,6 +381,7 @@ const idPerson = async(detail) =>{
             var textContactHistory = {
                                             campaignID: detail.campaignID,
                                             activityID: detail.activityID,
+                                            orgID: detail.orgID,
                                             idHistory: idHistory
                                         }
 
@@ -369,7 +390,31 @@ const idPerson = async(detail) =>{
 
         }
     }
+
+}
+
+const finishIdentification = async(detail) => {
+
+    var person = await Person.findOne({"_id": detail.person._id})
+
+    if(detail.activityType === "Phonebank"){
+        for(var i = 0; i < person.phonebankContactHistory.length; i++){
+
+            if(person.phonebankContactHistory[i].activityID === detail.activityID){
+                person.phonebankContactHistory[i].identified = true;
+                return person.save()
+            }
+        }
+    } else if(detail.activityType === "Texting"){
+        for(var i = 0; i < person.textContactHistory.length; i++){
+
+            if(person.textContactHistory[i].activityID === detail.activityID){
+                person.textContactHistory[i].identified = true;
+                return person.save()
+            }
+        }
+    }
 }
 
 
-module.exports = {getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers, runMatch}
+module.exports = {getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers, runMatch, finishIdentification}

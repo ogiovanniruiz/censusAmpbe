@@ -16,4 +16,4 @@ RUN npm install
 # Bundle app source
 COPY . /usr/src/app
 
-CMD npm run prodstart --host 0.0.0.0
+CMD npm run campServer --host 0.0.0.0

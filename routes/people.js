@@ -12,5 +12,6 @@ router.post('/getMembers', personController.getMembers)
 router.post('/uploadMembership', [upload.any(), personController.uploadMembers])
 router.post('/runMatch', personController.runMatch)
 
+router.post('/finishIdentification', personController.finishIdentification)
 
 module.exports = router;

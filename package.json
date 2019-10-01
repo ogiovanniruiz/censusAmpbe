@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "prodstart": "export NODE_ENV=production && node ./bin/www",
+    "cenServer": "export NODE_ENV=census && node ./bin/www",
+    "campServer": "export NODE_ENV=campaigns && node ./bin/www",
+    "devServer": "export NODE_ENV=devServer && node ./bin/www",
     "devstart": "nodemon ./bin/www"
   },
   "dependencies": {

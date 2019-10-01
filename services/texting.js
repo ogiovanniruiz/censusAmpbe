@@ -12,9 +12,7 @@ const loadLockedPeople = async(detail) =>{
 
     var people = await Person.find({ 
         "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textSent: false }}}).limit(10); 
-    
     return people
-    
 }
 
 const lockNewPeople = async(detail) =>{
@@ -44,8 +42,6 @@ const lockNewPeople = async(detail) =>{
     }  
     
     return {msg: "success"}
-    
-
 }
 
 const getRespondedPeople = async(detail) =>{
