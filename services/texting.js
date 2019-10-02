@@ -8,13 +8,6 @@ const authToken = 'cb57765af76625d6ed79376cc411a2ca';
 
 const client = require('twilio')(accountSid, authToken);
 
-const loadLockedPeople = async(detail) =>{
-
-    var people = await Person.find({ 
-        "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textSent: false }}}).limit(10); 
-    return people
-}
-
 const lockNewPeople = async(detail) =>{
 
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
@@ -23,12 +16,22 @@ const lockNewPeople = async(detail) =>{
     for(var i = 0; i < targets.length; i++){
         if(targets[i].properties.params.targetType === "ORGMEMBERS"){
             searchParameters['membership'] = targets[i].properties.params.id
+        
+        }else if (targets[i].properties.params.targetType === "SCRIPT"){
+
+            searchParameters['$or'] = [{'phonebankContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
+                                                                                                            idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}, 
+                                       {'canvassContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
+                                                                                                          idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}},
+                                       {'textContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
+                                                                                                       idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}]
         }
     }
 
-    
     var people = await Person.find(searchParameters).limit(5); 
 
+
+    
     var textContactHistory = { 
                                campaignID: detail.campaignID,
                                activityID: detail.activityID,
@@ -40,9 +43,18 @@ const lockNewPeople = async(detail) =>{
         people[i].textContactHistory.push(textContactHistory)
         people[i].save()
     }  
+    return {msg: "processing"}
     
-    return {msg: "success"}
 }
+
+const loadLockedPeople = async(detail) =>{
+
+    var people = await Person.find({ 
+        "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textSent: false }}}).limit(10); 
+    return people
+}
+
+
 
 const getRespondedPeople = async(detail) =>{
 

@@ -9,6 +9,7 @@ var CreationInfo = require('./creationInfo.js')
 var Address = require('../parcels/address.js')
 var TextContactHistory = require('./textContactHistory.js')
 var PhonebankContactHistory = require('./phonebankContactHistory.js')
+var PreferredMethodContact = require('./preferredMethodContact.js')
 
 var PersonSchema = new Schema(
   {
@@ -25,7 +26,9 @@ var PersonSchema = new Schema(
     canvassContactHistory: [CanvassContactHistory.schema],
     textContactHistory: [TextContactHistory.schema],
     phonebankContactHistory: [PhonebankContactHistory.schema],
-    creationInfo: CreationInfo.schema
+    creationInfo: CreationInfo.schema,
+    preferredMethodContact: [PreferredMethodContact.schema],
+    tags: [{type: String}]
   }
 );
 

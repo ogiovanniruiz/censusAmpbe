@@ -8,7 +8,7 @@ var TargetSchema = new Schema(
                    orgID: {type: String},
                    userID: {type: String},
                    campaignID: {type: Number},
-                   params: {id: String, targetType: String}
+                   params: {id: String, targetType: String, subParam: String}
                 },
     type: {type: String},
     geometry: {},

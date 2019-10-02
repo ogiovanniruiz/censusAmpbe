@@ -194,6 +194,19 @@ const getCampaignPhoneNumbers = async(detail) =>{
     return campaign.phoneNumbers
 }
 
+const getAccountPhoneNumbers = async()=>{
+
+    const client = require('twilio')(process.env.accountSid, process.env.authToken);
+
+    var numbers = await client.incomingPhoneNumbers
+    .list({limit: 20})
+    .then(incomingPhoneNumbers => {return incomingPhoneNumbers.map(i => i.phoneNumber)});
+
+
+    return numbers
+
+}
+
 module.exports = {createCampaign, 
                   getAllCampaigns, 
                   getCampaign, 
@@ -204,5 +217,6 @@ module.exports = {createCampaign,
                   removeOrg,
                   removePhoneNumber,
                   addPhoneNumber,
-                  getCampaignPhoneNumbers
+                  getCampaignPhoneNumbers,
+                  getAccountPhoneNumbers
                 }

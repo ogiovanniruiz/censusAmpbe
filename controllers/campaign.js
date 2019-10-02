@@ -99,6 +99,15 @@ const getCampaignPhoneNumbers = async (req, res, next) => {
     }
 }
 
+const getAccountPhoneNumbers = async (req, res, next) => {
+    try {
+        res.send(await campaignService.getAccountPhoneNumbers(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 
 module.exports = {createCampaign, 
                   getAllCampaigns, 
@@ -110,5 +119,6 @@ module.exports = {createCampaign,
                   removeOrg,
                     addPhoneNumber,
                     removePhoneNumber,
-                    getCampaignPhoneNumbers
+                    getCampaignPhoneNumbers,
+                    getAccountPhoneNumbers
                 };

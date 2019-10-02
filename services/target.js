@@ -4,6 +4,8 @@ var CensusTract = require('../models/censustracts/censustract');
 
 const createTarget = async(detail) => {
 
+    console.log(detail)
+
     var newTarget = {properties: {   
                                 targetName: "",
                                 status: "",
@@ -33,16 +35,23 @@ const createTarget = async(detail) => {
 
         if(detail.targetType === "ORGMEMBERS"){
             newTarget.properties.params.id = detail.orgID;
+        } else if (detail.targetType === "SCRIPT"){
+            newTarget.properties.params.id = detail.scriptID;
+            newTarget.properties.params.subParam = detail.scriptResponseType
         }
     }
 
     var target = new Target(newTarget);
+
+    console.log(target)
 
     try{
         return target.save()
     }catch(e){
         throw new Error(e.message)
     }
+
+    
 }
 
 const lockTarget = async(detail) =>{

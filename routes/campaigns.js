@@ -13,6 +13,7 @@ router.post('/removeOrg', campaignController.removeOrg)
 router.post('/addPhoneNumber', campaignController.addPhoneNumber);
 router.post('/removePhoneNumber', campaignController.removePhoneNumber);
 router.post('/getCampaignPhoneNumbers', campaignController.getCampaignPhoneNumbers);
+router.post('/getAccountPhoneNumbers', campaignController.getAccountPhoneNumbers);
 
 
 module.exports = router;

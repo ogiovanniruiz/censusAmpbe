@@ -4,17 +4,22 @@ var Target = require('../models/targets/target')
 var twilio = require('twilio');
 var VoiceResponse = twilio.twiml.VoiceResponse;
 var ClientCapability = require('twilio').jwt.ClientCapability;
-const  app_sid  = 'APcfa84370fade47d9de6493f08e73b6fa'
-const accountSid = 'ACaa2284052d10b1610817013666b0ca9d';
-const authToken = 'cb57765af76625d6ed79376cc411a2ca';
 
 const getHouseHold = async(detail) => {
+
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
     var searchParameters = {"phonebankContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, identified: true}}}}
 
     for(var i = 0; i < targets.length; i++){
         if(targets[i].properties.params.targetType === "ORGMEMBERS"){
             searchParameters['membership'] = targets[i].properties.params.id;
+        } else if (targets[i].properties.params.targetType === "SCRIPT"){
+            searchParameters['$or'] = [{'textContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
+                                                                                                            idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}, 
+                                       {'canvassContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
+                                                                                                            idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}, 
+                                       {'phonebankContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
+                                                                                                          idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}]
         }
     }
 
@@ -41,13 +46,16 @@ const getHouseHold = async(detail) => {
 const getTwilioToken = async(detail) =>{
 
     var capability = new ClientCapability({
-        accountSid: accountSid,
-        authToken: authToken
+        accountSid: process.env.accountSid,
+        authToken: process.env.authToken
       });
     
-    capability.addScope(new ClientCapability.OutgoingClientScope({applicationSid: app_sid}));
+    capability.addScope(new ClientCapability.OutgoingClientScope({applicationSid: process.env.app_sid}));
     
     var token = capability.toJwt();
+
+
+
 
     return {token: token}
 }

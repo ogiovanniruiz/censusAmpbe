@@ -204,6 +204,8 @@ const dbPatch = async(detail) =>{
             person.save()
         }
     }
+
+    return {msg: "processing"}
 }
 
 module.exports = {createOrganization, 

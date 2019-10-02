@@ -50,11 +50,11 @@ const createActivity = async(detail) => {
             activityScriptIDs: detail.activityScriptIDs
             }
 
-            for(var i = 0; i < campaign.phoneNumbers.length; i++){
-                if(campaign.phoneNumbers[i].number === detail.selectedNumber){
-                    campaign.phoneNumbers[i].available = false
-                }
-            }
+            //for(var i = 0; i < campaign.phoneNumbers.length; i++){
+            //    if(campaign.phoneNumbers[i].number === detail.selectedNumber){
+            //      campaign.phoneNumbers[i].available = false
+            //    }
+            //}
 
             campaign.phonebankActivities.push(newActivity)
 
