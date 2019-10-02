@@ -95,12 +95,15 @@ const uploadMembers = async(detail) =>{
 
     var lines = (stringFile).split("\n");
     var headers = lines[0].split(",");
-    var counter = 0;
 
     async.eachLimit(lines, 100, function(line, callback){
 
         var obj = {}
         var currentLine = line.split(",")
+
+        if(currentLine.length === 1){
+           return 
+        }
 
         for(var j = 0; j < headers.length; j++){
 
@@ -131,8 +134,6 @@ const uploadMembers = async(detail) =>{
 
                 for (var s = brokenAddy.length - 1; s > 0; s = s - 1) {
                     if (suffices.includes(brokenAddy[s])) {
-                        console.log(brokenAddy[s])
-                        console.log("here")
                         break
                     }
                     else {s = -1}
@@ -226,15 +227,15 @@ const uploadMembers = async(detail) =>{
             }
 
             else if(headers[j] === "city") {
-                obj["address.city"] = currentLine[j]
+                obj["address.city"] = currentLine[j].toUpperCase()
             }
 
             else if(headers[j] === "county") {
-                obj["address.county"] = currentLine[j]
+                obj["address.county"] = currentLine[j].toUpperCase()
             }
 
             else if(headers[j] === "gender") {
-                obj["demographics.gender"] = currentLine[j]
+                obj["demographics.gender"] = currentLine[j].toUpperCase()
             }
 
             else if(headers[j] === "birthDate") {
@@ -242,7 +243,7 @@ const uploadMembers = async(detail) =>{
             }
 
             else if(headers[j] === "party") {
-                obj["voterInfo.party"] = currentLine[j]
+                obj["voterInfo.party"] = currentLine[j].toUpperCase()
             }
 
             else if (headers[j] === "phones"){
@@ -261,13 +262,7 @@ const uploadMembers = async(detail) =>{
         if(obj['firstName'] != "firstName" && obj["firstName"] != "" && obj ['firstName'] != undefined){
             var person = new Person(obj)
 
-            person.save(function(err){
-                if (err) console.log(err);
-                else {
-                    counter++;
-                    console.log(counter);
-                }
-            })
+            person.save()
         }
 
         callback();

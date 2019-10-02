@@ -20,16 +20,17 @@ const getHouseHold = async(detail) => {
 
     var people = await Person.aggregate([ 
         {$match: searchParameters},
-        {$group : { _id : {streetNum: "$address.streetNum", street: "$address.street"}, people: { $push: {firstName: '$firstName',
-                                                               lastName: '$lastName', 
-                                                               phones: '$phones',
-                                                               emails: '$emails',
-                                                               address: '$address',
-                                                               phonebankContactHistory: '$phonebankContactHistory',
-                                                               _id: "$_id"}}}}
+        {$group : { _id : {streetNum: "$address.streetNum", 
+                           street: "$address.street"}, 
+                    people: { $push: {firstName: '$firstName',
+                                      lastName: '$lastName', 
+                                      phones: '$phones',
+                                      emails: '$emails',
+                                      address: '$address',
+                                      phonebankContactHistory: '$phonebankContactHistory',
+                                      _id: "$_id"}}}}
         ]).allowDiskUse(true)
     
-    console.log(people)
     try { return people[0] 
     } catch(e){
         throw new Error(e.message)

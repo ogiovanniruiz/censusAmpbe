@@ -160,6 +160,8 @@ const editActivity = async(detail) =>{
                 campaign.textActivities[i].quickResponses = detail.newActivityDetail.quickResponses
                 campaign.textActivities[i].initTextMsg = detail.newActivityDetail.initTextMsg
                 campaign.textActivities[i].phoneNum = detail.newActivityDetail.selectedNumber
+                campaign.textActivities[i].sendReceiverName = detail.newActivityDetail.sendReceiverName
+                campaign.textActivities[i].sendSenderName = detail.newActivityDetail.sendSenderName
             }
         }
     }else if(detail.activityType === "Phonebank"){

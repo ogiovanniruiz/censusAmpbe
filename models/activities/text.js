@@ -8,6 +8,8 @@ var TextSchema = new Schema(
     activityMetaData: MetaData.schema,
     phoneNum: {type: String},
     initTextMsg: {type: String},
+    sendReceiverName: {type: Boolean, default: true},
+    sendSenderName: {type: Boolean, default: true},
     quickResponses: [{type: String}],
     swordForm: {}
   }
