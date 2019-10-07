@@ -91,10 +91,12 @@ const getMembers = async(detail) =>{
 }
 
 const uploadMembers = async(detail) =>{
+
     var stringFile = detail.files[0].buffer.toString('utf8');
 
     var lines = (stringFile).split("\n");
     var headers = lines[0].split(",");
+    counter = 0
 
     async.eachLimit(lines, 100, function(line, callback){
 
@@ -259,11 +261,17 @@ const uploadMembers = async(detail) =>{
 
         obj["membership"] = detail.body.orgID
 
+        if(detail.body.selectedTag){
+            obj['tags'] = detail.body.selectedTag
+        }
+
         if(obj['firstName'] != "firstName" && obj["firstName"] != "" && obj ['firstName'] != undefined){
             var person = new Person(obj)
 
             person.save()
+
         }
+
 
         callback();
     })

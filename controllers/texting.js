@@ -64,4 +64,13 @@ const finishIdentification = async (req,res,next) =>{
     }
 }
 
-module.exports = {loadLockedPeople, sendText, lockNewPeople, getRespondedPeople, receiveTexts, updateConversation, finishIdentification};
+const getTextMetaData = async (req,res,next) =>{
+    try {
+        res.send(await textingService.getTextMetaData(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {loadLockedPeople, sendText, lockNewPeople, getRespondedPeople, receiveTexts, updateConversation, finishIdentification, getTextMetaData};

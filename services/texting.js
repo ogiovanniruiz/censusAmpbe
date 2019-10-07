@@ -1,17 +1,13 @@
 var Person = require('../models/people/person')
 var Target = require('../models/targets/target')
 
-//var phone_num = '+19513360702, +19514576907'
-
-const accountSid = 'ACaa2284052d10b1610817013666b0ca9d';
-const authToken = 'cb57765af76625d6ed79376cc411a2ca';
-
-const client = require('twilio')(accountSid, authToken);
-
 const lockNewPeople = async(detail) =>{
-
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
-    var searchParameters = {"textContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID}}}}
+    var searchParameters = {$or: [{ "textContactHistory":  {$size: 0}, 
+                                    "textContactHistory": { $not: {$elemMatch: {activityID : detail.activityID}}}}],
+                            
+                            "phones": { $exists: true, $not: {$size: 0}}
+                            }
 
     for(var i = 0; i < targets.length; i++){
         if(targets[i].properties.params.targetType === "ORGMEMBERS"){
@@ -29,8 +25,6 @@ const lockNewPeople = async(detail) =>{
     }
 
     var people = await Person.find(searchParameters).limit(5); 
-
-
     
     var textContactHistory = { 
                                campaignID: detail.campaignID,
@@ -44,7 +38,44 @@ const lockNewPeople = async(detail) =>{
         people[i].save()
     }  
     return {msg: "processing"}
+}
+
+const getTextMetaData = async(detail) =>{
+
+    var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
+    var searchParametersTotal = {"phones": { $exists: true, $not: {$size: 0}}}
+
+    for(var i = 0; i < targets.length; i++){
+        if(targets[i].properties.params.targetType === "ORGMEMBERS"){
+            searchParametersTotal['membership'] = targets[i].properties.params.id
+        
+        }else if (targets[i].properties.params.targetType === "SCRIPT"){
+
+            searchParametersTotal['$or'] = [{'phonebankContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
+                                                                                                            idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}, 
+                                       {'canvassContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
+                                                                                                          idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}},
+                                       {'textContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
+                                                                                                       idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}]
+        }
+    }
+
+    var totalPeople = await Person.find(searchParametersTotal).count();
+
+    const searchParametersSent = searchParametersTotal
     
+    const searchParametersResponded = searchParametersTotal
+
+    searchParametersSent["textContactHistory"] =  {$elemMatch: {textSent : true, activityID : detail.activityID}}
+
+    var textsSent = await Person.find(searchParametersSent).count()
+
+    searchParametersResponded["textContactHistory"] = {$elemMatch: {textReceived : true, activityID : detail.activityID}}
+
+    var textsResponded = await Person.find(searchParametersResponded).count()
+
+    return {total: totalPeople, textsSent: textsSent, textsResponded: textsResponded}
+
 }
 
 const loadLockedPeople = async(detail) =>{
@@ -66,6 +97,11 @@ const sendText = async(detail) =>{
 
     var number = detail.person.phones[0]
     var script = detail.initTextMsg
+
+    var accountSid = process.env.accountSid;
+    var authToken = process.env.authToken;
+
+    const client = require('twilio')(accountSid, authToken);
 
     try {
         var person = await Person.findOne({_id: detail.person._id})
@@ -146,4 +182,11 @@ const finishIdentification = async(detail) => {
     
 }
 
-module.exports = {loadLockedPeople, getRespondedPeople, lockNewPeople, sendText, receiveTexts, updateConversation, finishIdentification}
+module.exports = {loadLockedPeople, 
+                  getRespondedPeople, 
+                  lockNewPeople, 
+                  sendText, 
+                  receiveTexts, 
+                  updateConversation, 
+                  finishIdentification,
+                  getTextMetaData}

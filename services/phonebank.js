@@ -54,9 +54,6 @@ const getTwilioToken = async(detail) =>{
     
     var token = capability.toJwt();
 
-
-
-
     return {token: token}
 }
 
@@ -67,6 +64,7 @@ const call = async(detail) =>{
     var number = detail.number;
   
     var twiml = new VoiceResponse();
+    
     var dial = twiml.dial({callerId : detail.origin});
     
     dial.number(number);

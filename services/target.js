@@ -38,6 +38,10 @@ const createTarget = async(detail) => {
         } else if (detail.targetType === "SCRIPT"){
             newTarget.properties.params.id = detail.scriptID;
             newTarget.properties.params.subParam = detail.scriptResponseType
+        } else if (detail.targetType === "TAG"){
+            newTarget.properties.params.id = detail.tag;
+
+
         }
     }
 

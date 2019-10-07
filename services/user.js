@@ -21,7 +21,6 @@ const deleteUser = async(userDetail) =>{
 }
 
 const getUserProfile = async(userDetail) =>{
-
     var person = await Person.findOne({'user._id': userDetail.user._id});
     person.user.password = "you cant have the password"
     try { return person
