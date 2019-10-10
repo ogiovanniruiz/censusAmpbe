@@ -208,6 +208,55 @@ const dbPatch = async(detail) =>{
     return {msg: "processing"}
 }
 
+const removePhoneNumber = async(detail) =>{
+
+    var org = await Organization.findOne({"_id": detail.orgID})
+
+    for(var i = 0; i < org.phoneNumbers.length; i++){
+        if(org.phoneNumbers[i].number === detail.phoneNumber){
+            org.phoneNumbers.splice(i,1)
+            return org.save()
+        }
+    }
+}
+const addPhoneNumber = async(detail) =>{
+
+    var org = await Organization.findOne({"_id": detail.orgID})
+
+    for(var i = 0; i < org.phoneNumbers.length; i++){
+        if(org.phoneNumbers[i].number === detail.phoneNumber){
+            return({msg: "Phone Number already exists.", success: false})
+        }
+    }
+
+    org.phoneNumbers.push({number: detail.phoneNumber, available: true})
+
+    org.save()
+
+    return {msg: "Phone Number Created.", success: true}
+
+}
+
+const getOrgPhoneNumbers = async(detail) =>{
+
+    var org = await Organization.findOne({"_id": detail.orgID})
+
+    return org.phoneNumbers
+}
+
+const getAccountPhoneNumbers = async()=>{
+
+    const client = require('twilio')(process.env.accountSid, process.env.authToken);
+
+    var numbers = await client.incomingPhoneNumbers
+    .list({limit: 20})
+    .then(incomingPhoneNumbers => {return incomingPhoneNumbers.map(i => i.phoneNumber)});
+
+
+    return numbers
+
+}
+
 module.exports = {createOrganization, 
                   editOrganization,
                   getAllOrganizations, 
@@ -217,4 +266,8 @@ module.exports = {createOrganization,
                   getOrgMembers, 
                   updateOrgLevel,
                   getCampaignOrgs,
-                  dbPatch}
+                  dbPatch,                  
+                  removePhoneNumber,
+                  addPhoneNumber,
+                  getOrgPhoneNumbers,
+                  getAccountPhoneNumbers}

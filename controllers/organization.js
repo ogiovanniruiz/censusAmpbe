@@ -90,6 +90,42 @@ const dbPatch = async (req, res, next) => {
     }
 }
 
+const addPhoneNumber = async (req, res, next) => {
+    try {
+        res.send(await organizationService.addPhoneNumber(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const removePhoneNumber = async (req, res, next) => {
+    try {
+        res.send(await organizationService.removePhoneNumber(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const getOrgPhoneNumbers = async (req, res, next) => {
+    try {
+        res.send(await organizationService.getOrgPhoneNumbers(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const getAccountPhoneNumbers = async (req, res, next) => {
+    try {
+        res.send(await organizationService.getAccountPhoneNumbers(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 module.exports = {createOrganization, 
                   getAllOrganizations, 
                   getOrganization, 
@@ -99,4 +135,8 @@ module.exports = {createOrganization,
                   updateOrgLevel, 
                   getCampaignOrgs,
                   dbPatch,
-                  editOrganization};
+                  editOrganization,                    
+                  addPhoneNumber,
+                  removePhoneNumber,
+                  getOrgPhoneNumbers,
+                  getAccountPhoneNumbers};

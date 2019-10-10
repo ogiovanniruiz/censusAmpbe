@@ -121,4 +121,17 @@ const updateAssetMapLvl = async(userDetail)=>{
     }
 }
 
-module.exports = {loginUser, registerUser, getOauth, registerOauth, getAllUsers, updateUserLvl, updateDevStatus, updateAssetMapLvl, getUserProfile, deleteUser}
+const editUser = async(userDetail) =>{
+    console.log(userDetail)
+}
+
+module.exports = {loginUser, 
+                  registerUser, 
+                  getOauth, 
+                  registerOauth, 
+                  getAllUsers, 
+                  updateUserLvl, 
+                  updateDevStatus, 
+                  updateAssetMapLvl, 
+                  getUserProfile, 
+                  deleteUser, editUser}

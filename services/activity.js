@@ -60,11 +60,19 @@ const createActivity = async(detail) => {
 
     }else if(detail.activityType === "Texting"){
 
+        var phoneNumberObjs = []
+
+
+
+        for(var i = 0; i < detail.selectedNumbers.length;  i++){
+            phoneNumberObjs.push({number: detail.selectedNumbers[i]})
+        }
+
         var newActivity = {
                            activityMetatData:{},
                            initTextMsg: detail.initTextMsg,
                            quickResponses: detail.quickResponses,
-                           phoneNum: detail.selectedNumber
+                           phoneNums: phoneNumberObjs
                         }
 
         newActivity.activityMetaData = {
@@ -77,12 +85,15 @@ const createActivity = async(detail) => {
                                         nonResponses: detail.nonResponses,
                                         activityScriptIDs: detail.activityScriptIDs
                                         }
-
-        for(var i = 0; i < campaign.phoneNumbers.length; i++){
-            if(campaign.phoneNumbers[i].number === detail.selectedNumber){
-                campaign.phoneNumbers[i].available = false
+        var org = await Organization.findOne({"_id": detail.orgID})
+        
+        for(var i = 0; i < org.phoneNumbers.length; i++){
+            if(detail.selectedNumbers.includes(org.phoneNumbers[i].number)){
+                org.phoneNumbers[i].available = false
             }
         }
+
+        org.save()
 
         campaign.textActivities.push(newActivity)
 
@@ -133,6 +144,8 @@ const createActivity = async(detail) => {
 const editActivity = async(detail) =>{
     var campaign = await Campaign.findOne({campaignID: detail.campaignID})
 
+   // console.log(campaign)
+
     if(detail.activityType === "Canvass"){
         for(var i = 0; i < campaign.canvassActivities.length; i++){
             if( campaign.canvassActivities[i]._id.toString() === detail.activityID){
@@ -150,7 +163,18 @@ const editActivity = async(detail) =>{
             }
         }
     } else if(detail.activityType === "Texting"){
+
         for(var i = 0; i < campaign.textActivities.length; i++){
+
+            var phoneNumberObjs = []
+
+            for(var j = 0; j < detail.newActivityDetail.selectedNumbers.length;  j++){
+                phoneNumberObjs.push({number: detail.newActivityDetail.selectedNumbers[j]})
+            }
+
+            var totalNumbers = campaign.textActivities[i].phoneNums.concat(phoneNumberObjs)
+            
+            
             if( campaign.textActivities[i]._id.toString() === detail.activityID){
                 campaign.textActivities[i].activityMetaData.name = detail.newActivityDetail.activityName
                 campaign.textActivities[i].activityMetaData.description = detail.newActivityDetail.description
@@ -159,11 +183,23 @@ const editActivity = async(detail) =>{
                 campaign.textActivities[i].activityMetaData.activityScriptIDs = detail.newActivityDetail.activityScriptIDs
                 campaign.textActivities[i].quickResponses = detail.newActivityDetail.quickResponses
                 campaign.textActivities[i].initTextMsg = detail.newActivityDetail.initTextMsg
-                campaign.textActivities[i].phoneNum = detail.newActivityDetail.selectedNumber
+                campaign.textActivities[i].phoneNums = totalNumbers
                 campaign.textActivities[i].sendReceiverName = detail.newActivityDetail.sendReceiverName
                 campaign.textActivities[i].sendSenderName = detail.newActivityDetail.sendSenderName
             }
+
+            console.log(campaign.textActivities[0].phoneNums)
         }
+
+        var org = await Organization.findOne({"_id": detail.orgID})
+
+        for(var i = 0; i < org.phoneNumbers.length; i++){
+            if(detail.newActivityDetail.selectedNumbers.includes(org.phoneNumbers[i].number)){
+                org.phoneNumbers[i].available = false
+            }
+        }
+        org.save()
+
     }else if(detail.activityType === "Phonebank"){
         for(var i = 0; i < campaign.phonebankActivities.length; i++){
             if( campaign.phonebankActivities[i]._id.toString() === detail.activityID){
@@ -251,21 +287,31 @@ const deleteActivity = async(detail) =>{
         }
     } else if ( detail.activityType === "Texting"){
 
-        var numberToRelease = ""
+        var numbersToRelease = []
         for(var i = 0; i < campaign.textActivities.length; i++){
             if( campaign.textActivities[i]._id.toString() === detail.activityID){
-                numberToRelease = campaign.textActivities[i].phoneNum
+                numbersToRelease = campaign.textActivities[i].phoneNums
                 campaign.textActivities.splice(i, 1); 
 
             }
         }
 
-        for(var j = 0; j < campaign.phoneNumbers.length; j++){
-            if(campaign.phoneNumbers[j].number === numberToRelease){
-                campaign.phoneNumbers[j].available = true
+        var org = await Organization.findOne({"_id": detail.orgID})
+        
+        for(var i = 0; i < org.phoneNumbers.length; i++){
+            for (var j = 0; j < numbersToRelease.length; j++){
+
+                if(numbersToRelease[j].number === org.phoneNumbers[i].number){
+                    org.phoneNumbers[i].available = true
+                }
+
+
             }
+
         }
-  
+
+        org.save()
+
     } else if (detail.activityType === "Phonebank"){
         var numberToRelease = ""
         for(var i = 0; i < campaign.phonebankActivities.length; i++){

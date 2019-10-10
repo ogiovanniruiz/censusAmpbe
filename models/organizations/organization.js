@@ -9,6 +9,7 @@ var OrganizationSchema = new Schema(
     campaignIDs: [{type: String}],
     description: {type: String},
     active: {type: Boolean, default: true},
+    phoneNumbers: [{number: {type: String}, available: {type: Boolean, default: true}}],
     requests: [{type: String}],
   }
 );

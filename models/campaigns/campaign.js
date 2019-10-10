@@ -21,7 +21,6 @@ var CampaignSchema = new Schema(
     canvassActivities: [CanvassActvity.schema],
     eventActivities: [EventActivity.schema],
     phonebankActivities: [PhonebankActivity.schema],
-    phoneNumbers: [{number: {type: String}, available: {type: Boolean, default: true}}],
     targets: [Target.schema],
   }
 );

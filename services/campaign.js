@@ -158,54 +158,6 @@ const removeOrg = async(detail) =>{
 
 }
 
-const removePhoneNumber = async(detail) =>{
-
-    var campaign = await Campaign.findOne({"campaignID": detail.campaignID})
-
-    for(var i = 0; i < campaign.phoneNumbers.length; i++){
-        if(campaign.phoneNumbers[i].number === detail.phoneNumber){
-            campaign.phoneNumbers.splice(i,1)
-            return campaign.save()
-        }
-    }
-}
-const addPhoneNumber = async(detail) =>{
-
-    var campaign = await Campaign.findOne({"campaignID": detail.campaignID})
-
-    for(var i = 0; i < campaign.phoneNumbers.length; i++){
-        if(campaign.phoneNumbers[i].number === detail.phoneNumber){
-            return({msg: "Phone Number already exists.", success: false})
-        }
-    }
-
-    campaign.phoneNumbers.push({number: detail.phoneNumber, available: true})
-
-    campaign.save()
-
-    return {msg: "Phone Number Created.", success: true}
-
-}
-
-const getCampaignPhoneNumbers = async(detail) =>{
-
-    var campaign = await Campaign.findOne({"campaignID": detail.campaignID})
-
-    return campaign.phoneNumbers
-}
-
-const getAccountPhoneNumbers = async()=>{
-
-    const client = require('twilio')(process.env.accountSid, process.env.authToken);
-
-    var numbers = await client.incomingPhoneNumbers
-    .list({limit: 20})
-    .then(incomingPhoneNumbers => {return incomingPhoneNumbers.map(i => i.phoneNumber)});
-
-
-    return numbers
-
-}
 
 module.exports = {createCampaign, 
                   getAllCampaigns, 
@@ -215,8 +167,5 @@ module.exports = {createCampaign,
                   getCampaignRequests, 
                   manageCampaignRequest,
                   removeOrg,
-                  removePhoneNumber,
-                  addPhoneNumber,
-                  getCampaignPhoneNumbers,
-                  getAccountPhoneNumbers
+
                 }

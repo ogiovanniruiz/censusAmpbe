@@ -72,41 +72,7 @@ const removeOrg = async (req, res, next) => {
     }
 }
 
-const addPhoneNumber = async (req, res, next) => {
-    try {
-        res.send(await campaignService.addPhoneNumber(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
 
-const removePhoneNumber = async (req, res, next) => {
-    try {
-        res.send(await campaignService.removePhoneNumber(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
-const getCampaignPhoneNumbers = async (req, res, next) => {
-    try {
-        res.send(await campaignService.getCampaignPhoneNumbers(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
-const getAccountPhoneNumbers = async (req, res, next) => {
-    try {
-        res.send(await campaignService.getAccountPhoneNumbers(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
 
 
 module.exports = {createCampaign, 
@@ -117,8 +83,5 @@ module.exports = {createCampaign,
                   getCampaignRequests, 
                   manageCampaignRequest,
                   removeOrg,
-                    addPhoneNumber,
-                    removePhoneNumber,
-                    getCampaignPhoneNumbers,
-                    getAccountPhoneNumbers
+
                 };

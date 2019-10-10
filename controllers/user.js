@@ -91,4 +91,23 @@ const deleteUser = async(req,res,next)=>{
     }
 }
 
-module.exports = {loginUser, registerUser, getOauth, registerOauth, getAllUsers, updateUserLvl, updateDevStatus, updateAssetMapLvl, getUserProfile, deleteUser};
+const editUser = async(req,res,next)=>{
+
+    try {
+        res.send(await userService.editUser(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {loginUser, 
+                  registerUser, 
+                  getOauth, 
+                  registerOauth, 
+                  getAllUsers, 
+                  updateUserLvl, 
+                  updateDevStatus, 
+                  updateAssetMapLvl, 
+                  getUserProfile, 
+                  deleteUser, editUser};

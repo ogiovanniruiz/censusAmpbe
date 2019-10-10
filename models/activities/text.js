@@ -2,11 +2,12 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var MetaData = require('./metaData.js')
+var Person = require('../people/person.js')
 
 var TextSchema = new Schema(
   {
     activityMetaData: MetaData.schema,
-    phoneNum: {type: String},
+    phoneNums: [{number: {type: String}, userID: {type: String}, available: {type: Boolean, default: true}}],
     initTextMsg: {type: String},
     sendReceiverName: {type: Boolean, default: true},
     sendSenderName: {type: Boolean, default: true},
