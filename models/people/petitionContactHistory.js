@@ -3,7 +3,7 @@ var Schema = mongoose.Schema;
 
 var idHistory = require('../parcels/idHistory')
 
-var CanvassContactHistorySchema = new Schema(
+var PetitionContactHistorySchema = new Schema(
     {
         campaignID: {type: Number},
         activityID: {type:String},
@@ -14,4 +14,4 @@ var CanvassContactHistorySchema = new Schema(
 );
 
 //Export model
-module.exports = mongoose.model('CanvassContactHistory', CanvassContactHistorySchema);
+module.exports = mongoose.model('PetitionContactHistory', PetitionContactHistorySchema);

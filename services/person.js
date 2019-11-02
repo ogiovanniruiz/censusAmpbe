@@ -1,16 +1,19 @@
 var Person = require('../models/people/person')
 var Parcel = require('../models/parcels/parcel')
 var NodeGeocoder = require('node-geocoder');
+const https = require('https');
+const axios = require('axios');
+var parser = require('parse-address'); 
+var parseAddress = require('parse-address-string')
+
 
 var async = require('async');
 
 var options = {
     provider: 'google',
-
-    // Optional depending on the providers
-    httpAdapter: 'https', // Default
-    apiKey: 'AIzaSyAQmji7d5aXw_uf2sCsBGJxWcVrVmDmfxE ', // for Mapquest, OpenCage, Google Premier
-    formatter: null         // 'gpx', 'string', ...
+    httpAdapter: 'https', 
+    apiKey: 'AIzaSyAC9-1I1ktfv9eC0THZk8N77-HEd-bcZEY', 
+    formatter: null     
   };
 
 const getHouseHold = async(address) => {
@@ -21,6 +24,7 @@ const getHouseHold = async(address) => {
     }
 }
 
+/*
 const runMatch = async()=>{
 
      var zips = await Parcel.aggregate(     [
@@ -41,242 +45,333 @@ const runMatch = async()=>{
     }
     return {peopleCount: peopleCount}
 }
-
+*/
 const editPerson = async(detail) =>{
 
     var person = await Person.findOne({"_id": detail.person._id});
-    person.firstName = detail.newDetail.firstName
-    person.lastName = detail.newDetail.lastName
-    person.emails = detail.newDetail.email
-    person.phones = detail.newDetail.phone
-    person.address = {
-                      streetNum: detail.newDetail.streetNum,
-                      prefix: detail.newDetail.prefix,
-                      street: detail.newDetail.street,
-                      suffix : detail.newDetail.suffix,
-                      unit: detail.newDetail.unit,
-                      city: detail.newDetail.city,
-                      county: detail.newDetail.county
-                    }
-    person.demographics = {dob: detail.newDetail.dob,
-        gender: detail.newDetail.gender
+    
+    if(detail.newDetail.firstName) person.firstName = detail.newDetail.firstName
+    if(detail.newDetail.lastName) person.lastName = detail.newDetail.lastName
+    if(detail.newDetail.middleName) person.middleName = detail.newDetail.middleName
+    if(detail.newDetail.email) person.emails = detail.newDetail.email
+    if(detail.newDetail.phone) person.phones = detail.newDetail.phone
+    
+    if(detail.newDetail.streetNum) person.address.streetNum = detail.newDetail.streetNum
+    if(detail.newDetail.prefix) person.address.prefix = detail.newDetail.prefix
+    if(detail.newDetail.street) person.address.street = detail.newDetail.street
+    if(detail.newDetail.suffix) person.address.suffix = detail.newDetail.suffix
+    if(detail.newDetail.unit) person.address.unit = detail.newDetail.unit
+    if(detail.newDetail.city) person.address.city = detail.newDetail.city
+    if(detail.newDetail.county) person.address.county = detail.newDetail.county
+    if(detail.newDetail.location) person.address.location = detail.newDetail.location
+    if(detail.newDetail.state) person.address.state = detail.newDetail.state
+    if(detail.newDetail.zip) person.address.zip = detail.newDetail.zip
+    if(detail.newDetail.tags){
+
+    for(var i = 0; i < person.membership.length; i++){
+        if(person.membership[i].orgID === detail.newDetail.orgID){
+                person.membership[i].tags = detail.newDetail.tags
+            }
+        }
     }
+                    
+    if(detail.newDetail.dob) person.demographics.dob = detail.newDetail.dob
+    if(detail.newDetail.gender) person.demographics.gender = detail.newDetail.gender
+    if(detail.newDetail.htcGroups) person.demographics.htcGroups = detail.newDetail.htcGroups
+    if(detail.newDetail.languages) person.demographics.languages = detail.newDetail.languages
 
-    person.voterInfo = {party: detail.newDetail.party}
-
+    if(detail.newDetail.party) person.voterInfo = {party: detail.newDetail.party}
 
     return person.save()
 }
 
 const createPerson = async(detail) =>{
-/*
-    console.log(detail)
-    var geocoder = NodeGeocoder(options);
 
-    geocoder.geocode('29 champs elysée paris').then(function(res) {
-    console.log(res);})
-  .catch(function(err) {
-    console.log(err);
-  });
+    var foundPeople = await Person.find({"emails": {$not: {$size: 0}, $ne: ""}, "phones": {$not: {$size: 0}, $ne: ""}, $or: [{"emails": detail.emails}, {"phones": detail.phones}]})
 
-*/
+    if(foundPeople.length === 0){
 
-    var person = new Person(detail);
-    return person.save();
+        var person = new Person(detail);
+
+        if(!detail.address.location){
+
+            var addressString = ""
+
+            if(detail.address.streetNum) addressString = addressString + detail.address.streetNum + "+"
+            if(detail.address.prefix) addressString = addressString + detail.address.prefix + "+"
+            if(detail.address.street) addressString = addressString + detail.address.street.replace(",", "+") + "+"
+            if(detail.address.suffix) addressString = addressString + detail.address.suffix + "+"
+            if(detail.address.city) addressString = addressString + detail.address.city + "+"
+            if(detail.address.zip) addressString = addressString + detail.address.zip
+            
+            var searchString = "https://nom.ieunited.org/?format=json&addressdetails=2&q=" + addressString + "&format=json&limit=1"
+    
+            var coordinates = await axios.get(searchString).then(response => {
+                return [parseFloat(response.data[0].lon), parseFloat(response.data[0].lat)]
+            }).catch(error => {console.log(error)});
+    
+
+            person.address.location.coordinates = coordinates
+            person.address.location.type = "Point"
+
+        }
+
+        person.save()
+        return {status: "NEWPERSON", person: person};
+
+    } else{
+        return {status: "EXISTS", person: foundPeople};
+    }
 }
 
 const getMembers = async(detail) =>{
-    var people = await Person.find({"membership": detail.orgID})
+    var people = await Person.find({"membership.orgID": detail.orgID})
     return people
 }
 
+
+
 const uploadMembers = async(detail) =>{
 
+    var geocoder = NodeGeocoder(options);
+
+    var peopleObjs = constructUploadPeopleObjArray(detail);
+    var checkResults = await checkExisting(peopleObjs)
+
+    for(var j = 0; j < checkResults.newPeople.length; j++){
+        var person = new Person(checkResults.newPeople[j])
+        person.save()
+        checkResults.newPeople[j]._id = person._id
+    }
+
+    var fail = 0
+    var success = 0
+
+    async.eachSeries(checkResults.newPeople, function(newPerson, next){
+
+        let addressString = ""
+
+        if(newPerson.address.streetNum) addressString = addressString + newPerson.address.streetNum + " "
+        if(newPerson.address.prefix) addressString = addressString + newPerson.address.prefix + " "
+        if(newPerson.address.street) addressString = addressString + newPerson.address.street.replace(",", " ") + " "
+        if(newPerson.address.suffix) addressString = addressString + newPerson.address.suffix + " "
+        if(newPerson.address.city) addressString = addressString + newPerson.address.city + " "
+        if(newPerson.address.zip) addressString = addressString + newPerson.address.zip
+
+
+        geocoder.geocode(addressString, async function(err, res) {
+            
+            if(err) {
+                fail++
+                console.log(err)
+            }
+            if(res) {
+                if(res[0]) {
+                    success++;
+                    
+                    let person = await Person.findOne({"_id": newPerson._id})
+                    person.address.location = {coordinates: [res[0].longitude, res[0].latitude], type: "Point"}
+                    person.save()
+                }
+                else {
+                    fail++
+                }
+            }
+            console.log("SUCCESS: ", success, "FAILED: ", fail)
+            next();
+        });
+
+    })
+
+    return {msg: "PROCESSING",  existingPeople: checkResults.existingPeople}
+/*
+    async.eachLimit(checkResults.newPeople, 100, async function(newPerson){ 
+        
+        var addressString = ""
+        
+        if(newPerson.address.streetNum) addressString = addressString + newPerson.address.streetNum + " "
+        if(newPerson.address.prefix) addressString = addressString + newPerson.address.prefix + " "
+        if(newPerson.address.street) addressString = addressString + newPerson.address.street.replace(",", " ") + " "
+        if(newPerson.address.suffix) addressString = addressString + newPerson.address.suffix + " "
+        if(newPerson.address.city) addressString = addressString + newPerson.address.city + " "
+        if(newPerson.address.zip) addressString = addressString + newPerson.address.zip
+
+
+        var searchString = "https://nom.ieunited.org/?format=json&addressdetails=2&q=" + addressString + "&format=json&limit=1"
+
+        
+        await axios.get(searchString).then(response => {
+
+            geocodeFailed.push(newPerson)
+        /*
+            if(response.data[0] != undefined){
+
+                success = success + 1
+                geocodeSuccess.push({coordinates: [parseFloat(response.data[0].lon), parseFloat(response.data[0].lat)], person: newPerson})
+
+            }else{
+                fail = fail + 1
+                geocodeFailed.push(newPerson)
+                console.log("Success: ", success, "Fail: ", fail, "Error: ", errorCount, "Coordinates: ", response.data[0], "Address: ", addressString)
+            }
+
+        }).catch(error => {
+            geocodeFailed.push(newPerson)
+            errorCount = errorCount + 1
+        });
+
+    }, async function(err) {
+        if(err) {console.log("err : ",err); throw err;}
+
+        for(var i = 0; i < geocodeSuccess.length; i++){
+            let person = await Person.findOne({"_id": geocodeSuccess[i].person._id})
+            person.address.location = {coordinates: geocodeSuccess[i].coordinates, type: "Point"}
+            person.save()
+        }
+
+        var geocoder = NodeGeocoder(options);
+ 
+        for(var i = 0; i < geocodeFailed.length; i++){
+            (function(i){
+                setTimeout(() =>{
+                    let addressString = ""
+
+                    if(geocodeFailed[i].address.streetNum) addressString = addressString + geocodeFailed[i].address.streetNum + " "
+                    if(geocodeFailed[i].address.prefix) addressString = addressString + geocodeFailed[i].address.prefix + " "
+                    if(geocodeFailed[i].address.street) addressString = addressString + geocodeFailed[i].address.street.replace(",", " ") + " "
+                    if(geocodeFailed[i].address.suffix) addressString = addressString + geocodeFailed[i].address.suffix + " "
+                    if(geocodeFailed[i].address.city) addressString = addressString + geocodeFailed[i].address.city + " "
+                    if(geocodeFailed[i].address.zip) addressString = addressString + geocodeFailed[i].address.zip
+
+
+                    geocoder.geocode(addressString, async function(err, res) {
+                        console.log(i)
+                        if(err) console.log(err)
+                        if(res) {
+                            if(res[0]) {
+                                let person = await Person.findOne({"_id": geocodeFailed[i]._id})
+                                person.address.location = {coordinates: [res[0].longitude, res[0].latitude], type: "Point"}
+                                person.save()
+                            }
+
+                            else {console.log("FAILED")}
+                        }
+                    });
+                }, i*150);
+            })(i);
+        
+        }
+
+        console.log("DONZO")
+    })
+ */
+
+}
+
+const checkExisting = async(people) =>{
+
+    var existingPeople = [];
+    var newPeople = [];
+
+    for(var i = 0; i < people.length; i++){
+
+        let existingPerson = await Person.findOne({$or: [{"emails": people[i]["emails"]}, 
+                                                         {"phones": people[i]["phones"]}
+                                                         ]})
+    
+        if(existingPerson){existingPeople.push(existingPerson)} 
+        else{newPeople.push(people[i])}        
+    }
+
+    return ({existingPeople: existingPeople, newPeople: newPeople})
+}
+
+const constructUploadPeopleObjArray = function(detail){
     var stringFile = detail.files[0].buffer.toString('utf8');
 
     var lines = (stringFile).split("\n");
     var headers = lines[0].split(",");
-    counter = 0
 
-    async.eachLimit(lines, 100, function(line, callback){
+    var peopleObjs = []
 
-        var obj = {}
-        var currentLine = line.split(",")
+    for(var i = 0; i < lines.length; i++ ){
+        let personObj = {address: {}, demographics:{}, voterInfo: {}}
+        let currentLine = lines[i].split(",")
 
-        if(currentLine.length === 1){
-           return 
+        if(currentLine.length <= 1){break}
+
+        for(var j = 0; j < headers.length; j++){ 
+            if(headers[j] === "city") {
+                personObj.address["city"] = currentLine[j].toUpperCase()
+                break
+            }
         }
 
-        for(var j = 0; j < headers.length; j++){
+        for(var j = 0; j < headers.length; j++){ 
+            if(headers[j] === "zip") {
+                personObj.address["zip"] = currentLine[j]
+                break
+            }
+        }
 
-            // BEGINNING OF ADDRESS
+        for(var j = 0; j < headers.length; j++){ 
             if(headers[j] === "address"){
 
-                var brokenAddy = currentLine[j].split(" ")
-                for (let m = 0; m < brokenAddy.length; m++) {
-                    if (typeof brokenAddy[m] === 'string') {
-                        brokenAddy[m] = brokenAddy[m].toUpperCase();
-                    }
-                }
-                obj["address.streetNum"] = brokenAddy[0]
+                var fullAddressString = currentLine[j] + " " + personObj["address"]["city"] + " " + "CA"
+                if(personObj["address"]["zip"]) fullAddressString + " " + personObj["address"]["zip"]
 
-                var prefices = ["E", "N", "W", "S", "NW", "NE"]
-                var suffices = ["AVE","BLVD","BRG","CIR","CRK","CRST","CT","CTR","CV","CYN","DR","EXPY","FLDS","FLTS","HL","HLS","HTS","HWY","IS","LN","LOOP","LP","MDW","ML","PARK","PASS","PATH","PK","PKWY","PL","PLZ","PT","RD","RDG","RUN","SQ","ST","TER","TRL","VIS","VLY","VW","WALK","WAY","XING","AVENUE","BOULEVARD","BRIDGE","CIRCLE","CREEK","CREST","COURT","CENTER","COVE","CANYON","DRIVE","EXPRESSWAY","FIELDS","FLATS","HILL","HILLS","HEIGHTS","HIGHWAY","ISLAND","LANE","MEADOW","MILL","PARKS","PARK","PARKWAY","PLACE","PLAZA","POINT","ROAD","RIDGE","SQUARE","STREET","TERRACE","TRAIL","VISTA","VIEW"]
-                var units = ["APARTMENT","BLDG","FLOOR","SUITE","UNIT","ROOM","DEPARTMENT","RM","DEPT","FL","STE","APT","#"]
+                var address = parser.parseLocation(fullAddressString);     
 
-                var p
-                if (prefices.includes(brokenAddy[1])) {
-                    obj["address.prefix"] = brokenAddy[1]
-                    p = 1
-                }
-                else {
-                    obj["address.prefix"] = ""
-                    p = 0
-                }
+                personObj.address.streetNum = address.number
+                if(address.street) personObj.address.street = address.street.toUpperCase()
+                if(address.type) personObj.address.suffix = address.type.toUpperCase()
+                if(address.prefix) personObj.address.prefix = address.prefix.toUpperCase()
+                if(address.sec_unit_type && address.sec_unit_num ){personObj['address']['unit'] =  address.sec_unit_type.toUpperCase() + " " + address.sec_unit_num.toUpperCase()}
 
-                for (var s = brokenAddy.length - 1; s > 0; s = s - 1) {
-                    if (suffices.includes(brokenAddy[s])) {
-                        break
-                    }
-                    else {s = -1}
-                }
-
-                for (var u = brokenAddy.length - 1; u > 0; u = u - 1) {
-                    if (units.includes(brokenAddy[u])) {
-                        return u
-                    }
-                    else {
-                        u = -1
-                        obj["address.unit"] = ""
-                    }
-                }
-
-                var u1 = brokenAddy.findIndex(element => element.includes("#"))
-                var u2 = brokenAddy.findIndex(element => element.includes("APT"))
-
-                if (p == 1 && s != -1) {
-                    var street1 = brokenAddy.slice(2, s)
-                    obj["address.street"] = street1.join()
-                    obj["address.suffix"] = brokenAddy[s]
-
-                    if (u != -1) {
-                        var unit1 = brokenAddy.slice(s+1, brokenAddy.length)
-                        obj["address.unit"] = unit1.join()
-                    }
-                }
-
-                else if (p == 0 && s != -1) {
-                    var street2 = brokenAddy.slice(1, s)
-                    obj["address.street"] = street2.join()
-                    obj["address.suffix"] = brokenAddy[s]
-
-                    if (u != -1) {
-                        var unit2 = brokenAddy.slice(s+1, brokenAddy.length)
-                        obj["address.unit"] = unit2.join()
-                    }
-                }
-
-                else if (p == 1 && s == -1) {
-                    if (u != -1) {
-                        var unit3 = brokenAddy.slice(u, brokenAddy.length)
-                        obj["address.unit"] = unit3.join()
-                        var street3 = brokenAddy.slice(2, u)
-                        obj["address.street"] = street3.join()
-                    }
-                    else if (u == -1 && u1 == -1 && u2 == -1) {
-                        var street4 = brokenAddy.slice(2, brokenAddy.length)
-                        obj["address.street"] = street4.join()
-                    }
-                    else if (u == -1 && u1 != -1) {
-                        var unit31 = brokenAddy.slice(u1, brokenAddy.length)
-                        obj["address.unit"] = unit31.join()
-                        var street41 = brokenAddy.slice(2, u1)
-                        obj["address.street"] = street41.join()
-                    }
-                    else if (u == -1 && u2 != -1) {
-                        var unit32 = brokenAddy.slice(u2, brokenAddy.length)
-                        obj["address.unit"] = unit32.join()
-                        var street42 = brokenAddy.slice(2, u2)
-                        obj["address.street"] = street42.join()
-                    }
-                }
-
-                else if (p == 0 && s == -1) {
-                    if (u != -1) {
-                        var unit4 = brokenAddy.slice(u, brokenAddy.length)
-                        obj["address.unit"] = unit4.join()
-                        var street5 = brokenAddy.slice(1, u)
-                        obj["address.street"] = street5.join()
-                    }
-                    else if (u == -1) {
-                        var street6 = brokenAddy.slice(1, brokenAddy.length)
-                        obj["address.street"] = street6.join()
-                    }
-                    else if (u == -1 && u1 != -1) {
-                        var unit41 = brokenAddy.slice(u1, brokenAddy.length)
-                        obj["address.unit"] = unit41.join()
-                        var street61 = brokenAddy.slice(1, u1)
-                        obj["address.street"] = street61.join()
-                    }
-                    else if (u == -1 && u2 != -1) {
-                        var unit42 = brokenAddy.slice(u2, brokenAddy.length)
-                        obj["address.unit"] = unit42.join()
-                        var street62 = brokenAddy.slice(1, u2)
-                        obj["address.street"] = street62.join()
-                    }
-                }
-
+                break
             }
-
-            else if(headers[j] === "city") {
-                obj["address.city"] = currentLine[j].toUpperCase()
-            }
-
-            else if(headers[j] === "county") {
-                obj["address.county"] = currentLine[j].toUpperCase()
-            }
-
-            else if(headers[j] === "gender") {
-                obj["demographics.gender"] = currentLine[j].toUpperCase()
-            }
-
-            else if(headers[j] === "birthDate") {
-                obj["demographics.dob"] = currentLine[j]
-            }
-
-            else if(headers[j] === "party") {
-                obj["voterInfo.party"] = currentLine[j].toUpperCase()
-            }
-
-            else if (headers[j] === "phones"){
-
-                if(currentLine[j]){
-                    obj[headers[j]] = currentLine[j].replace("(", "").replace(")", "").replace("-","")
-                }
-
-            } else{
-                obj[headers[j]] = currentLine[j]
-            }
-        }
-
-        obj["membership"] = detail.body.orgID
-
-        if(detail.body.selectedTag){
-            obj['tags'] = detail.body.selectedTag
-        }
-
-        if(obj['firstName'] != "firstName" && obj["firstName"] != "" && obj ['firstName'] != undefined){
-            var person = new Person(obj)
-
-            person.save()
 
         }
 
+        for(var j = 0; j < headers.length; j++){       
+            if(headers[j] === "county") {
+                personObj["address"]["county"] = currentLine[j].toUpperCase()
+            }else if(headers[j] === "gender") {
+                personObj['demographics']['gender'] = currentLine[j].toUpperCase()
+            }else if(headers[j] === "birthDate") {
+                personObj['demographics']["dob"] = currentLine[j]
+            }else if(headers[j] === "party") {
+                personObj["voterInfo"]["party"] = currentLine[j].toUpperCase()
+            }else if (headers[j] === "phones"){
+                if(currentLine[j]){personObj[headers[j]] = currentLine[j].replace("(", "").replace(")", "").replace("-","")}
+            }else if(headers[j] === "voterID"){
+                personObj["voterInfo"]["voterID"] = currentLine[j]
+            }else if(headers[j] === "firstName"){
+                personObj["firstName"] = currentLine[j]
+            }else if(headers[j] === "middleName"){
+                personObj["middleName"] = currentLine[j]
+            }else if(headers[j] === "lastName"){
+                personObj["lastName"] = currentLine[j]
+            }
+        }
 
-        callback();
-    })
+        personObj["membership"] = {orgID: detail.body.orgID}
 
+        var selectedTags = detail.body.selectedTags.split(",")
+
+        if(detail.body.selectedTags){
+            personObj['membership']['tags'] = selectedTags
+        }
+
+        if(personObj['firstName'] != "firstName" && personObj["firstName"] != "" && personObj ['firstName'] != undefined){
+            peopleObjs.push(personObj)
+        }
+    }
+
+
+    return peopleObjs
 }
+
 
 const idPerson = async(detail) =>{
 
@@ -302,7 +397,6 @@ const idPerson = async(detail) =>{
             return person.save()
 
         }else{
-
 
             for (var i = 0; i < person.canvassContactHistory.length; i++){
                 if(person.canvassContactHistory[i].activityID === detail.activityID){
@@ -392,17 +486,48 @@ const idPerson = async(detail) =>{
             return person.save()
 
         }
-    }
+    } else if(detail.activityType === "Petition"){
+        if(person.petitionContactHistory.length === 0){
 
+            var petitionContactHistory = {
+                                            campaignID: detail.campaignID,
+                                            activityID: detail.activityID,
+                                            orgID: detail.orgID,
+                                            idHistory: idHistory
+                                        }
+
+            person.petitionContactHistory.push(petitionContactHistory)
+            return person.save()
+
+        }else{
+
+
+            for (var i = 0; i < person.petitionContactHistory.length; i++){
+                if(person.petitionContactHistory[i].activityID === detail.activityID){
+                    person.petitionContactHistory[i].idHistory.push(idHistory)
+                    return person.save()
+                }
+            }
+
+            var petitionContactHistory = {
+                                            campaignID: detail.campaignID,
+                                            activityID: detail.activityID,
+                                            orgID: detail.orgID,
+                                            idHistory: idHistory
+                                        }
+
+            person.petitionContactHistory.push(petitionContactHistory)
+            return person.save()
+
+        }
+    }
 }
 
 const finishIdentification = async(detail) => {
-
     var person = await Person.findOne({"_id": detail.person._id})
 
     if(detail.activityType === "Phonebank"){
         for(var i = 0; i < person.phonebankContactHistory.length; i++){
-
             if(person.phonebankContactHistory[i].activityID === detail.activityID){
                 person.phonebankContactHistory[i].identified = true;
                 return person.save()
@@ -410,14 +535,70 @@ const finishIdentification = async(detail) => {
         }
     } else if(detail.activityType === "Texting"){
         for(var i = 0; i < person.textContactHistory.length; i++){
-
-            if(person.textContactHistory[i].activityID === detail.activityID){
-                person.textContactHistory[i].identified = true;
+           if(person.textContactHistory[i].activityID === detail.activityID){
+               person.textContactHistory[i].identified = true;
+                return person.save()
+           }
+        }
+        
+    }else if(detail.activityType === "Petition"){
+        for(var i = 0; i < person.petitionContactHistory.length; i++){
+            if(person.petitionContactHistory[i].activityID === detail.activityID){
+                person.petitionContactHistory[i].identified = true;
+                return person.save()
+            }
+        }
+    }
+    else if(detail.activityType === "Canvass"){
+        for(var i = 0; i < person.canvassContactHistory.length; i++){
+            if(person.canvassContactHistory[i].activityID === detail.activityID){
+                person.canvassContactHistory[i].identified = true;
                 return person.save()
             }
         }
     }
 }
 
+const assignPreferredMethodOfContact = async(detail) =>{
 
-module.exports = {getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers, runMatch, finishIdentification}
+    if(detail.preferredMethodOfContact){
+        var person = await Person.findOne({"_id": detail.person._id});
+
+        for(var i = 0; i < detail.preferredMethodOfContact.length; i++){
+            var method = {orgID: detail.orgID, optInProof: detail.activityID, method: detail.preferredMethodOfContact[i]}
+            person.preferredMethodContact.push(method)
+        }
+    
+        person.save()
+    }
+    
+    return 
+}
+
+const assignTags = async(detail) =>{
+    var person = await Person.findOne({"_id": detail.person._id});
+
+    for(var i = 0; i < person.membership.length; i++){
+        if(person.membership[i].orgID === detail.orgID){
+            for(var j = 0; j < detail.tags.length; j++){
+                person.membership[i].tags.push(detail.tags[j])
+
+            }
+
+        } 
+    }
+
+    return person.save()
+}
+
+
+module.exports = {getHouseHold, 
+                  editPerson, 
+                  createPerson, 
+                  idPerson, 
+                  getMembers, 
+                  uploadMembers, 
+                  //runMatch, 
+                  finishIdentification,
+                  assignPreferredMethodOfContact,
+                  assignTags}

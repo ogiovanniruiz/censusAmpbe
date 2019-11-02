@@ -12,6 +12,6 @@ router.post('/search', parcelController.search)
 router.post('/getCanvassParcels', parcelController.getCanvassParcels)
 router.post('/getNumParcelsWithin', parcelController.getNumParcelsWithin)
 router.post('/completeHousehold', parcelController.completeHousehold)
-
+router.post('/tagParcels', parcelController.tagParcels)
 
 module.exports = router;

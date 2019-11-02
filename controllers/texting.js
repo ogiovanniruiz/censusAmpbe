@@ -55,14 +55,7 @@ const updateConversation = async (req,res,next) =>{
     }
 }
 
-const finishIdentification = async (req,res,next) =>{
-    try {
-        res.send(await textingService.finishIdentification(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
+
 
 const getTextMetaData = async (req,res,next) =>{
     try {
@@ -92,16 +85,27 @@ const allocatePhoneNumber = async (req,res,next) =>{
     }
 }
 
+
+const resetTextBank = async (req,res,next) =>{
+    try {
+        res.send(await textingService.resetTextBank(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 module.exports = {loadLockedPeople, 
     sendText, 
     lockNewPeople, 
     getRespondedPeople, 
     receiveTexts, 
     updateConversation, 
-    finishIdentification, 
+  
     getTextMetaData,
-getIdentifiedPeople,
-allocatePhoneNumber
+    getIdentifiedPeople,
+    allocatePhoneNumber,
+    resetTextBank
 
 
 };

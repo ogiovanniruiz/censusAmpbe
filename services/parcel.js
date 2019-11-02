@@ -3,6 +3,9 @@ var Target = require('../models/targets/target')
 var CensusTract = require('../models/censustracts/censustract')
 var mongoose = require('mongoose');
 var IdHistory = require('../models/parcels/idHistory')
+var Person = require('../models/people/person')
+var async = require('async')
+var parser = require('parse-address')
 
 const getParcels = async(parcelDetail) =>{
     try{
@@ -28,7 +31,6 @@ const getCanvassParcels = async(parcelDetail) =>{
     try{
 
         var targets = await Target.find({"_id": parcelDetail.targetIDs})
-
         var targetCoordinates = []
 
         for(var i = 0; i < targets.length; i++){
@@ -102,11 +104,33 @@ const editParcel = async(parcelDetail) =>{
     } catch(e){throw new Error(e.message)}
 }
 
-const createParcel = async(parcelDetail) =>{
+const createParcel = async(detail) =>{
     try{
-        var parcel = new Parcel(parcelDetail);
-        return parcel.save();
+
+    var parcel = new Parcel(detail.parcelData);
+    
+    parcel.properties.address = {city: detail.address.city, 
+                                 state: detail.address.state, 
+                                 zip: detail.address.zip, 
+                                 county: detail.address.county}
+
+    var fullAddressString = detail.address.address + " " + detail.address.city + " " + detail.address.state + " " + detail.address.zip
+
+    var address = parser.parseLocation(fullAddressString); 
+
+    parcel.properties.address.unit =  detail.address.unit
+    parcel.properties.address.streetNum = address.number
+    if(address.street) parcel.properties.address.street = address.street.toUpperCase()
+    if(address.type) parcel.properties.address.suffix = address.type.toUpperCase()
+    if(address.prefix) parcel.properties.address.prefix = address.prefix.toUpperCase()
+
+    parcel.properties.address.location = parcel.properties.location 
+
+    return parcel.save();
+
     } catch(e){throw new Error(e.message)}
+
+    
 }
 
 const createAsset = async(parcelDetail) => {
@@ -174,6 +198,58 @@ const search = async(parcelDetail) => {
     } catch(e){throw new Error(e.message)}
 }
 
+const tagParcels = async (detail) =>{
+
+    var people = await Person.find({"membership.orgID": detail.orgID})
+
+    var matched = 0
+    var failed = 0
+
+    try{
+        //for(var i = 0; i < people.length; i++){
+        async.forEachLimit(people, 1000, function(person, callback){
+
+            if(person.address.location.coordinates.length > 0){
+                var parcelSearchQuery = {//"properties.type": "RESIDENTIAL",
+                                        //$or: [{"properties.assessorCodes.realUse": "R1"}, {"properties.assessorCodes.realUse": "R2"}, {"properties.assessorCodes.realUse": "RC"}],
+                                        //"properties.address.city": person.address.city,
+                                        "properties.address.streetNum":person.address.streetNum,
+                                        //"properties.address.street": person.address.street,
+                                        "geometry": {$geoIntersects: {$geometry: {type: "Point" , 
+                                                                                  coordinates: person.address.location.coordinates}}}}
+                
+        
+
+                Parcel.findOne(parcelSearchQuery).exec(function (errr, parcel){
+                    //console.log(detail.orgID)
+                  
+                    if(parcel) {
+                        matched++;
+                        //parcel.properties.membership = {orgID: detail.orgID}
+                        //parcel.save()
+                    }
+                    if(!parcel) {failed++;
+                        console.log(person.address)
+                    
+                    
+                    }
+                    console.log("Matched: ", matched, "Failed: ", failed, "Total: ", people.length)
+                    return callback()
+                    
+                })
+            }
+        }, function(error){ console.log("DONE")})
+
+        return {msg: "PROCESSING"}
+
+
+    } catch(e){throw new Error(e.message)}
+
+
+}
+
+
+
 
 module.exports = {getParcels, 
                   editParcel, 
@@ -182,4 +258,4 @@ module.exports = {getParcels,
                   getAssets, 
                   deleteAsset, 
                   search, 
-                  getCanvassParcels, getNumParcelsWithin, completeHousehold }
+                  getCanvassParcels, getNumParcelsWithin, completeHousehold , tagParcels}

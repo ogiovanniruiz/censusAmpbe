@@ -17,4 +17,8 @@ router.post('/addPhoneNumber', orgController.addPhoneNumber);
 router.post('/removePhoneNumber', orgController.removePhoneNumber);
 router.post('/getOrgPhoneNumbers', orgController.getOrgPhoneNumbers);
 router.post('/getAccountPhoneNumbers', orgController.getAccountPhoneNumbers);
+
+router.post('/getOrgTags', orgController.getOrgTags);
+router.post('/createTag', orgController.createTag);
+
 module.exports = router;

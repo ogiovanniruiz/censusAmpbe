@@ -14,9 +14,7 @@ const editScript = async(editedScript) => {
 }
 
 const getAllScripts = async(detail) =>{
-
-    //console.log(detail) NEEDS CAMPAIGN ID
-    var scripts = await Script.find();
+    var scripts = await Script.find({$or: [{orgID: detail.orgID}, {campaignID: detail.campaignID}]});
     return scripts
 }
 

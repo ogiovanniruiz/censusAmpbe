@@ -10,6 +10,7 @@ var Address = require('../parcels/address.js')
 var TextContactHistory = require('./textContactHistory.js')
 var PhonebankContactHistory = require('./phonebankContactHistory.js')
 var PreferredMethodContact = require('./preferredMethodContact.js')
+var PetitionContactHistory = require('./petitionContactHistory.js')
 
 var PersonSchema = new Schema(
   {
@@ -22,13 +23,13 @@ var PersonSchema = new Schema(
     address: Address.schema,
     voterInfo: VoterInfo.schema,
     demographics: Demographics.schema,
-    membership: [{type: String}],
+    membership: [{orgID: {type: String}, tags: [{type: String}]}],
     canvassContactHistory: [CanvassContactHistory.schema],
     textContactHistory: [TextContactHistory.schema],
     phonebankContactHistory: [PhonebankContactHistory.schema],
+    petitionContactHistory: [PetitionContactHistory.schema],
     creationInfo: CreationInfo.schema,
     preferredMethodContact: [PreferredMethodContact.schema],
-    tags: [{type: String}]
   }
 );
 

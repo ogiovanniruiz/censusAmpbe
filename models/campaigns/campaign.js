@@ -6,6 +6,7 @@ var EventActivity = require('../activities/event.js')
 var CanvassActvity = require('../activities/canvass.js')
 var TextActivity = require('../activities/text.js')
 var PhonebankActivity = require('../activities/phonebank.js')
+var PetitionActivity = require('../activities/petition.js')
 
 autoIncrement = require('mongoose-auto-increment');
 
@@ -21,6 +22,7 @@ var CampaignSchema = new Schema(
     canvassActivities: [CanvassActvity.schema],
     eventActivities: [EventActivity.schema],
     phonebankActivities: [PhonebankActivity.schema],
+    petitionActivities: [PetitionActivity.schema],
     targets: [Target.schema],
   }
 );

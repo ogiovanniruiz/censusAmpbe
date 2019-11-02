@@ -4,8 +4,6 @@ var CensusTract = require('../models/censustracts/censustract');
 
 const createTarget = async(detail) => {
 
-    console.log(detail)
-
     var newTarget = {properties: {   
                                 targetName: "",
                                 status: "",
@@ -15,23 +13,23 @@ const createTarget = async(detail) => {
                                 params: {id: "", targetType: ""}
                                 },
                     geometry:{},
-                    type: {}
+                  
                     }
 
     if(detail.type === "CENSUSTRACT"){
         var tract = await CensusTract.findOne({'properties.geoid': detail.tractData.geoid});
+        
         newTarget.properties.targetName = detail.tractData.geoid
         newTarget.properties.status = "REGISTERED"
         newTarget.geometry = tract.geometry
-        newTarget.type = tract.type
         newTarget.properties.params.id = detail.tractData.geoid
         newTarget.properties.params.targetType = detail.type
+    
     } else if(detail.type === "NONGEOGRAPHIC"){
 
         newTarget.properties.targetName = detail.targetName
         newTarget.properties.status = "LOCKED" 
         newTarget.properties.params.targetType = detail.targetType;
-        newTarget.type = ""
 
         if(detail.targetType === "ORGMEMBERS"){
             newTarget.properties.params.id = detail.orgID;
@@ -40,22 +38,36 @@ const createTarget = async(detail) => {
             newTarget.properties.params.subParam = detail.scriptResponseType
         } else if (detail.targetType === "TAG"){
             newTarget.properties.params.id = detail.tag;
-
-
         }
+
+    } else if(detail.type === "POLYGON"){
+    
+        newTarget.properties.targetName = detail.targetName
+        newTarget.geometry = {coordinates: [detail.geometry.coordinates], type: "MultiPolygon"}
+        newTarget.properties.status = "LOCKED" 
+        newTarget.properties.params.targetType = detail.type;
+        newTarget.properties.queries = []
+
+        if(detail.targetType === "ORGMEMBERS"){
+
+            newTarget.properties.queries.push({queryType: detail.targetType, param: detail.orgID})
+        } else if (detail.targetType === "SCRIPT"){
+            newTarget.properties.queries.push({queryType: detail.targetType, param: detail.scriptID, subParam: detail.scriptResponseType})
+            newTarget.properties.queries.push({queryType: detail.targetType, param: detail.scriptID, subParam: detail.scriptResponseType })
+        } else if (detail.targetType === "TAG"){
+
+            newTarget.properties.queries.push({queryType: detail.targetType, param: detail.tag })
+        }
+    
     }
 
     var target = new Target(newTarget);
-
-    console.log(target)
 
     try{
         return target.save()
     }catch(e){
         throw new Error(e.message)
     }
-
-    
 }
 
 const lockTarget = async(detail) =>{
@@ -73,8 +85,18 @@ const lockTarget = async(detail) =>{
 }
 
 const removeTarget = async(detail) => {
+    
     try{
-        return Target.remove({'properties.orgID': detail.orgID, 'properties.campaignID': detail.campaignID, 'properties.params.id': detail.geoid}).exec();
+
+        if(detail.type === "CENSUSTRACT") {
+            return Target.remove({'properties.orgID': detail.orgID, 'properties.campaignID': detail.campaignID, 'properties.params.id': detail.id}).exec();
+        }
+
+        if(detail.type === "POLYGON"){
+            return Target.deleteOne({'_id': detail.id}).exec();
+
+        }
+
     } catch(e){
         throw new Error(e.message)
     }

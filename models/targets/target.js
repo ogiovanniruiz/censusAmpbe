@@ -8,9 +8,10 @@ var TargetSchema = new Schema(
                    orgID: {type: String},
                    userID: {type: String},
                    campaignID: {type: Number},
-                   params: {id: String, targetType: String, subParam: String}
+                   params: {id: String, targetType: String, subParam: String},
+                   queries:[{queryType: String, param: String, subParam: String}]
                 },
-    type: {type: String},
+    type: {type: String, default: "Feature"},
     geometry: {},
   }
 );

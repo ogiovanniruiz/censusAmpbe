@@ -20,7 +20,7 @@ const createActivity = async(detail) => {
     
 
     if(detail.activityType === "Canvass"){
-        var newActivity = {activityMetatData:{}}
+        var newActivity = {activityMetaData:{}}
         
         newActivity.activityMetaData = {
                                         name: detail.activityName,
@@ -36,7 +36,7 @@ const createActivity = async(detail) => {
         campaign.canvassActivities.push(newActivity)
     } else if(detail.activityType === "Phonebank"){
 
-        var newActivity = {activityMetatData:{},
+        var newActivity = {activityMetaData:{},
                            phoneNum: detail.selectedNumber}
 
         newActivity.activityMetaData = {
@@ -62,14 +62,12 @@ const createActivity = async(detail) => {
 
         var phoneNumberObjs = []
 
-
-
         for(var i = 0; i < detail.selectedNumbers.length;  i++){
             phoneNumberObjs.push({number: detail.selectedNumbers[i]})
         }
 
         var newActivity = {
-                           activityMetatData:{},
+                           activityMetaData:{},
                            initTextMsg: detail.initTextMsg,
                            quickResponses: detail.quickResponses,
                            phoneNums: phoneNumberObjs
@@ -111,7 +109,7 @@ const createActivity = async(detail) => {
         var org = await Organization.findOne({"_id": detail.orgID})
         var blockGroup = await CensusTract.findOne({"geometry": {$geoIntersects: { $geometry: detail.parcelData.geometry}}})
 
-        var newActivity = {activityMetatData:{},
+        var newActivity = {activityMetaData:{},
                            address: detail.parcelData.properties.address,
                            time: format(detail.startTime) + "-" + format(detail.endTime),
                            blockGroupID: blockGroup.properties.geoid,
@@ -131,6 +129,23 @@ const createActivity = async(detail) => {
                                         }
 
         campaign.eventActivities.push(newActivity)
+    } else if(detail.activityType === "Petition"){
+
+        var newActivity = {activityMetaData:{}}
+        
+        newActivity.activityMetaData = {
+                                        name: detail.activityName,
+                                        description:  detail.description,
+                                        campaignID: detail.campaignID,
+                                        orgIDs: [detail.orgID],
+                                        createdBy: detail.createdBy,
+                                        activityScriptIDs: detail.activityScriptIDs
+                                        }
+
+        console.log(newActivity.activityMetaData)
+
+        campaign.petitionActivities.push(newActivity)
+
     }
 
     try{
@@ -187,8 +202,6 @@ const editActivity = async(detail) =>{
                 campaign.textActivities[i].sendReceiverName = detail.newActivityDetail.sendReceiverName
                 campaign.textActivities[i].sendSenderName = detail.newActivityDetail.sendSenderName
             }
-
-            console.log(campaign.textActivities[0].phoneNums)
         }
 
         var org = await Organization.findOne({"_id": detail.orgID})
@@ -209,6 +222,13 @@ const editActivity = async(detail) =>{
                 campaign.phonebankActivities[i].activityMetaData.nonResponses = detail.newActivityDetail.nonResponses
                 campaign.phonebankActivities[i].activityMetaData.activityScriptIDs = detail.newActivityDetail.activityScriptIDs
                 campaign.phonebankActivities[i].phoneNum = detail.newActivityDetail.selectedNumber
+            }
+        }
+    }else if(detail.activityType === "Petition"){
+        for(var i = 0; i < campaign.petitionActivities.length; i++){
+            if( campaign.petitionActivities[i]._id.toString() === detail.activityID){
+                campaign.petitionActivities[i].activityMetaData.name = detail.newActivityDetail.activityName
+                campaign.petitionActivities[i].activityMetaData.description = detail.newActivityDetail.description
             }
         }
     }
@@ -266,6 +286,13 @@ const getActivities = async(detail) =>{
             }
         }
         return activities
+    }else if (detail.activityType === "Petition"){
+        for(var i = 0; i < campaign.petitionActivities.length; i++){
+            if(campaign.petitionActivities[i].activityMetaData.orgIDs.includes(detail.orgID)){
+                activities.push(campaign.petitionActivities[i])
+            }
+        }
+        return activities
     }
 }
 
@@ -285,7 +312,14 @@ const deleteActivity = async(detail) =>{
                 campaign.eventActivities.splice(i, 1); 
             }
         }
-    } else if ( detail.activityType === "Texting"){
+    }else if ( detail.activityType === "Petition"){
+        for(var i = 0; i < campaign.petitionActivities.length; i++){
+            if( campaign.petitionActivities[i]._id.toString() === detail.activityID){
+                campaign.petitionActivities.splice(i, 1); 
+            }
+        }
+    } 
+    else if ( detail.activityType === "Texting"){
 
         var numbersToRelease = []
         for(var i = 0; i < campaign.textActivities.length; i++){
@@ -304,8 +338,6 @@ const deleteActivity = async(detail) =>{
                 if(numbersToRelease[j].number === org.phoneNumbers[i].number){
                     org.phoneNumbers[i].available = true
                 }
-
-
             }
 
         }
@@ -361,6 +393,13 @@ const getActivity = async(detail) =>{
         for(var i = 0; i < campaign.phonebankActivities.length; i++){
             if( campaign.phonebankActivities[i]._id.toString() === detail.activityID){
                 return campaign.phonebankActivities[i] 
+            }
+        }
+    }else if(detail.activityType === "Petition"){
+
+        for(var i = 0; i < campaign.petitionActivities.length; i++){
+            if( campaign.petitionActivities[i]._id.toString() === detail.activityID){
+                return campaign.petitionActivities[i] 
             }
         }
     }

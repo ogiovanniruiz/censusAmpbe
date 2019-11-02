@@ -10,6 +10,7 @@ var OrganizationSchema = new Schema(
     description: {type: String},
     active: {type: Boolean, default: true},
     phoneNumbers: [{number: {type: String}, available: {type: Boolean, default: true}}],
+    orgTags: [{type: String}],
     requests: [{type: String}],
   }
 );

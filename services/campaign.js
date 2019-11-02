@@ -2,6 +2,7 @@ var Campaign = require('../models/campaigns/campaign');
 var Person = require('../models/people/person')
 var Organization = require('../models/organizations/organization')
 var mongoose = require('mongoose');
+var Target = require('../models/targets/target')
 
 const createCampaign = async(newCampaignDetail) =>{
     var campaignDetail = {name: newCampaignDetail.name,
@@ -149,7 +150,10 @@ const removeOrg = async(detail) =>{
         } 
     }
 
+    Target.remove({'properties.orgID': detail.orgID, 'properties.campaignID': detail.campaignID}).exec();
+
     try {
+        console.log(campaign)
         campaign.save()
         return org.save()
     } catch(e){

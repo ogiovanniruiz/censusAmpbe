@@ -2,11 +2,29 @@ var Person = require('../models/people/person')
 var Campaign = require('../models/campaigns/campaign')
 var Target = require('../models/targets/target')
 
+const resetTextBank = async(detail) =>{
+
+    var people = await Person.find({"textContactHistory": { $elemMatch: {activityID: detail.activityID}}});
+    var count = 0;
+    
+    for(var i = 0; i <  people.length; i++){
+
+        for(var j = 0; j < people[i].textContactHistory.length; j++){
+            if(people[i].textContactHistory[j].identified === false && people[i].textContactHistory[j].activityID === detail.activityID){
+                people[i].textContactHistory.splice(j,1)
+                people[i].save()
+            }
+        }
+    }
+
+    return {count: count}
+}
+
 const lockNewPeople = async(detail) =>{
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
-    var searchParameters = {$or: [{ "textContactHistory":  {$size: 0}, 
-                                    "textContactHistory": { $not: {$elemMatch: {activityID : detail.activityID}}}}],
-                            
+    var searchParameters = {$or: [{"textContactHistory": {$size: 0}}, 
+                                  {"textContactHistory": {$not: {$elemMatch: {activityID : detail.activityID}}}}
+                                 ],
                             "phones": { $exists: true, $not: {$size: 0}}
                             }
 
@@ -22,7 +40,8 @@ const lockNewPeople = async(detail) =>{
                                                                                                           idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}},
                                        {'textContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
                                                                                                        idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}]
-        }
+                                                                                                    
+                                                                                                    }
     }
 
     var people = await Person.find(searchParameters).limit(5); 
@@ -56,9 +75,6 @@ const allocatePhoneNumber = async(detail) =>{
             }
         }
     }
-
-    
-
 }
 
 const getTextMetaData = async(detail) =>{
@@ -85,6 +101,11 @@ const getTextMetaData = async(detail) =>{
 
     const searchParametersSent = searchParametersTotal
     const searchParametersResponded = searchParametersTotal
+    const searchParametersIdentified = searchParametersTotal
+    const searchParametersPositive = searchParametersTotal
+    const searchParametersNeutral = searchParametersTotal
+    const searchParametersNegative = searchParametersTotal
+    const searchParametersRefused = searchParametersTotal
 
     searchParametersSent["textContactHistory"] =  {$elemMatch: {textSent : true, activityID : detail.activityID}}
     var textsSent = await Person.find(searchParametersSent).count()
@@ -92,7 +113,34 @@ const getTextMetaData = async(detail) =>{
     searchParametersResponded["textContactHistory"] = {$elemMatch: {textReceived : true, activityID : detail.activityID}}
     var textsResponded = await Person.find(searchParametersResponded).count()
 
-    return {total: totalPeople, textsSent: textsSent, textsResponded: textsResponded}
+    searchParametersIdentified["textContactHistory"] = {$elemMatch: {identified : true, activityID : detail.activityID}}
+    var identified = await Person.find(searchParametersIdentified).count()
+
+    searchParametersPositive['textContactHistory']= {$elemMatch: {activityID : detail.activityID,
+                                                                 "idHistory": {$elemMatch: {idResponses: {$elemMatch: {idType: "POSITIVE"}}}}}}
+    var positives = await Person.find(searchParametersPositive).count()
+
+    searchParametersNegative['textContactHistory']= {$elemMatch: {activityID : detail.activityID,
+                                                                 "idHistory": {$elemMatch: {idResponses: {$elemMatch: {idType: "NEGATIVE"}}}}}}
+    var negatives = await Person.find(searchParametersNegative).count()
+    
+    searchParametersNeutral['textContactHistory']= {$elemMatch: {activityID : detail.activityID,
+                                                                  "idHistory": {$elemMatch: {idResponses: {$elemMatch: {idType: "NEUTRAL"}}}}}}
+    var neutrals = await Person.find(searchParametersNeutral).count()
+
+    searchParametersRefused['textContactHistory']= {$elemMatch: {activityID : detail.activityID,
+                                                                  "idHistory": {$elemMatch: {idResponses: {$elemMatch: {idType: "REFUSED"}}}}}}
+    var refused = await Person.find(searchParametersRefused).count()
+
+
+    return {total: totalPeople, 
+            textsSent: textsSent, 
+            textsResponded: textsResponded, 
+            identified: identified, 
+            positives: positives,
+            neutrals: neutrals,
+            negatives: negatives,
+            refused: refused}
 
 }
 
@@ -110,8 +158,8 @@ const getRespondedPeople = async(detail) =>{
 
 const getIdentifiedPeople = async(detail) =>{
 
-    var people = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, identified: true }}});   
-    return people
+    var identified = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, identified: true }}})   
+    return identified
 }
 
 const sendText = async(detail) =>{
@@ -139,7 +187,7 @@ const sendText = async(detail) =>{
                 
                 for (var i = 0; i < person.textContactHistory.length; i++) {
                     if(person.textContactHistory[i].activityID === detail.activityID){
-                        person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: "STOPPED"})
+                        person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: e.message, error: e.message})
                     }
                 }
 
@@ -209,17 +257,6 @@ const updateConversation = async(person) =>{
     return updatedPerson
 }
 
-const finishIdentification = async(detail) => {
-    var person = await Person.findOne({"_id": detail.person._id})
-
-    for(var i = 0; i < person.textContactHistory.length; i++){
-
-        if(person.textContactHistory[i].activityID === detail.activityID){
-            person.textContactHistory[i].identified = true;
-            return person.save()
-        }
-    }
-}
 
 module.exports = {loadLockedPeople, 
                   getRespondedPeople, 
@@ -227,7 +264,9 @@ module.exports = {loadLockedPeople,
                   sendText, 
                   receiveTexts, 
                   updateConversation, 
-                  finishIdentification,
+              
                   getTextMetaData,
-                    getIdentifiedPeople, allocatePhoneNumber
+                    getIdentifiedPeople, 
+                    allocatePhoneNumber,
+                    resetTextBank
                 }

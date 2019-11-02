@@ -13,7 +13,7 @@ var TextContactHistorySchema = new Schema(
         outgoingPhoneNum: {type: String},
         identified: {type: Boolean, default: false},
         textReceived: {type: Boolean, default: false},
-        textConv: [{origin: {type: String, enum: ['VOLUNTEER', 'VOTER']}, msg: {type: String}}],
+        textConv: [{origin: {type: String, enum: ['VOLUNTEER', 'VOTER']}, msg: {type: String}, error: {type: String, default:"NONE"}}],
         idHistory: [idHistory.schema],
     }
 );

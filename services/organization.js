@@ -192,20 +192,28 @@ const dbPatch = async(detail) =>{
     var orgs = await Organization.find();
     var person = await Person.findOne({'user._id': detail.userID});
 
-    for(var i = 0; i < orgs.length; i++){
+    try{
+        for(var i = 0; i < orgs.length; i++){
 
-        if(orgs[i].userIDs.includes(detail.userID)){
-
-        }else{
+            if(orgs[i].userIDs.includes(detail.userID)){
     
-            orgs[i].userIDs.push(detail.userID)
-            orgs[i].save()
-            person.user.userOrgs.push({level: "ADMINISTRATOR", orgID: orgs[i]._id})
-            person.save()
+            }else{
+        
+                orgs[i].userIDs.push(detail.userID)
+                orgs[i].save()
+                person.user.userOrgs.push({level: "ADMINISTRATOR", orgID: orgs[i]._id})
+                
+            }
         }
+        person.save()
+    
+        return {msg: "processing"}
+        
+    } catch(e){
+        throw new Error(e.message)
     }
 
-    return {msg: "processing"}
+
 }
 
 const removePhoneNumber = async(detail) =>{
@@ -257,6 +265,18 @@ const getAccountPhoneNumbers = async()=>{
 
 }
 
+const createTag= async(detail) =>{
+    var org = await Organization.findOne({"_id": detail.orgID})
+
+    org.orgTags.push(detail.tag)
+    return org.save()
+}
+
+const getOrgTags= async(detail)=>{
+    var org = await Organization.findOne({"_id": detail.orgID})
+    return org.orgTags
+}
+
 module.exports = {createOrganization, 
                   editOrganization,
                   getAllOrganizations, 
@@ -270,4 +290,4 @@ module.exports = {createOrganization,
                   removePhoneNumber,
                   addPhoneNumber,
                   getOrgPhoneNumbers,
-                  getAccountPhoneNumbers}
+                  getAccountPhoneNumbers, createTag, getOrgTags}

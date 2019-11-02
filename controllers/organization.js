@@ -126,6 +126,24 @@ const getAccountPhoneNumbers = async (req, res, next) => {
     }
 }
 
+const getOrgTags= async (req, res, next) => {
+    try {
+        res.send(await organizationService.getOrgTags(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const createTag = async (req, res, next) => {
+    try {
+        res.send(await organizationService.createTag(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 module.exports = {createOrganization, 
                   getAllOrganizations, 
                   getOrganization, 
@@ -139,4 +157,4 @@ module.exports = {createOrganization,
                   addPhoneNumber,
                   removePhoneNumber,
                   getOrgPhoneNumbers,
-                  getAccountPhoneNumbers};
+                  getAccountPhoneNumbers, createTag, getOrgTags};

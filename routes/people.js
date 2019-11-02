@@ -13,5 +13,7 @@ router.post('/uploadMembership', [upload.any(), personController.uploadMembers])
 router.post('/runMatch', personController.runMatch)
 
 router.post('/finishIdentification', personController.finishIdentification)
+router.post('/assignPreferredMethodOfContact', personController.assignPreferredMethodOfContact)
+router.post('/assignTags', personController.assignTags)
 
 module.exports = router;

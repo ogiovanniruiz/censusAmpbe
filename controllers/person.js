@@ -48,6 +48,7 @@ const getMembers = async (req,res,next) =>{
 
 const uploadMembers = async (req,res,next) =>{
     try {
+        
         res.send(await personService.uploadMembers(req))
     } catch(e) {
         console.log(e.message)
@@ -72,7 +73,24 @@ const finishIdentification = async(req,res, next) => {
         res.sendStatus(500)
     }
 }
+const assignPreferredMethodOfContact = async(req,res, next) => {
+    try {
+        res.send(await personService.assignPreferredMethodOfContact(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const assignTags = async(req,res, next) => {
+    try {
+        res.send(await personService.assignTags(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
 
 
 
-module.exports = {getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers, runMatch, finishIdentification};
+module.exports = {getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers, runMatch, finishIdentification, assignPreferredMethodOfContact, assignTags};

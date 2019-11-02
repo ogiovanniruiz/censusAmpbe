@@ -86,6 +86,15 @@ const completeHousehold = async (req,res,next)=>{
     }
 }
 
+const tagParcels = async (req,res,next)=>{
+    try {res.send(await parcelService.tagParcels(req.body))
+    } 
+    catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 module.exports = {getParcels, 
                   editParcel, 
                   createParcel, 
@@ -94,4 +103,4 @@ module.exports = {getParcels,
                   deleteAsset, 
                   search, 
                   getCanvassParcels,
-                  getNumParcelsWithin, completeHousehold};
+                  getNumParcelsWithin, completeHousehold, tagParcels};

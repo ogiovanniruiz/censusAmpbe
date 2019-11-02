@@ -16,6 +16,9 @@ var personRouter = require('./routes/people')
 var scriptRouter = require('./routes/scripts')
 var textingRouter = require('./routes/texting')
 var phonebankRouter = require('./routes/phonebank')
+var canvassRouter = require('./routes/canvass')
+var petitionRouter = require('./routes/petition')
+
 
 var app = express();
 var mongoose = require('mongoose');
@@ -36,14 +39,13 @@ if(app.get('env') === 'census'){
 }else if(app.get('env') === 'devServer'){
 
   process.env.app_sid =  'APcfa84370fade47d9de6493f08e73b6fa'
-  process.env.accountSid = 'ACaa2284052d10b1610817013666b0ca9d'
-  process.env.authToken = 'cb57765af76625d6ed79376cc411a2ca'
+  process.env.accountSid = 'ACa9bc84bd822620cbfd617c0dad7752e6'
+  process.env.authToken = '7352a89bc11f44c979c90446a66c9dbb'
 
   mongoDB = 'mongodb://root:7EA9e666!@devAmplifyMongo/v2db?authSource=admin';
   corsOptions.origin = 'https://dev.outreach.censusie.org'
 
-} 
-else if(app.get('env') === 'campaigns'){
+}else if(app.get('env') === 'campaigns'){
 
   process.env.app_sid =  'AP3445c5a3471c40dbca2fd426cc205417'
   process.env.accountSid = 'ACc923c4760fbb4e54694ca4e2275dc132'
@@ -93,5 +95,7 @@ app.use('/person', personRouter)
 app.use('/scripts', scriptRouter)
 app.use('/texting', textingRouter)
 app.use('/phonebank', phonebankRouter)
+app.use('/canvass', canvassRouter)
+app.use('/petition', petitionRouter)
 
 module.exports = app;
