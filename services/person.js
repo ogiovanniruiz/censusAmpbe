@@ -4,8 +4,6 @@ var NodeGeocoder = require('node-geocoder');
 const https = require('https');
 const axios = require('axios');
 var parser = require('parse-address'); 
-var parseAddress = require('parse-address-string')
-
 
 var async = require('async');
 

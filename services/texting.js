@@ -22,15 +22,19 @@ const resetTextBank = async(detail) =>{
 
 const lockNewPeople = async(detail) =>{
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
+
+    console.log(targets)
     var searchParameters = {$or: [{"textContactHistory": {$size: 0}}, 
                                   {"textContactHistory": {$not: {$elemMatch: {activityID : detail.activityID}}}}
                                  ],
                             "phones": { $exists: true, $not: {$size: 0}}
                             }
 
+    
+
     for(var i = 0; i < targets.length; i++){
         if(targets[i].properties.params.targetType === "ORGMEMBERS"){
-            searchParameters['membership'] = targets[i].properties.params.id
+            searchParameters['membership.orgID'] = targets[i].properties.params.id
         
         }else if (targets[i].properties.params.targetType === "SCRIPT"){
 
@@ -43,6 +47,8 @@ const lockNewPeople = async(detail) =>{
                                                                                                     
                                                                                                     }
     }
+
+    console.log(searchParameters)
 
     var people = await Person.find(searchParameters).limit(5); 
     
@@ -84,7 +90,7 @@ const getTextMetaData = async(detail) =>{
 
     for(var i = 0; i < targets.length; i++){
         if(targets[i].properties.params.targetType === "ORGMEMBERS"){
-            searchParametersTotal['membership'] = targets[i].properties.params.id
+            searchParametersTotal['membership.orgID'] = targets[i].properties.params.id
         
         }else if (targets[i].properties.params.targetType === "SCRIPT"){
 
@@ -211,6 +217,8 @@ const sendText = async(detail) =>{
 }
 
 const receiveTexts = async(incoming) =>{
+
+    console.log(incoming)
 
     var phoneNumber = incoming.From.substring(2);
     var message = incoming.Body;

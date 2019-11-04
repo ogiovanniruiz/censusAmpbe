@@ -73,6 +73,51 @@ const getCanvassResidents = async(detail) =>{
 
 const idPerson = async(detail)=>{
 
+    var person = await Person.findOne({"_id": detail.person._id});
+
+    if (!person) person = await Person.findOne({"clientID": detail.person.clientID});
+
+    var idHistory = {scriptID: detail.script._id,
+                     idBy: detail.userID,
+                     idResponses: detail.idResponses,
+                     locationIdentified: detail.location
+                    }
+
+    console.log(person)
+
+    if(person.canvassContactHistory.length === 0){
+
+        var canvassContactHistory = {
+                                        campaignID: detail.campaignID,
+                                        activityID: detail.activityID,
+                                        orgID: detail.orgID,
+                                        idHistory: idHistory
+                                    }
+
+        person.canvassContactHistory.push(canvassContactHistory)
+        return person.save()
+
+    }else{
+
+        for (var i = 0; i < person.canvassContactHistory.length; i++){
+            if(person.canvassContactHistory[i].activityID === detail.activityID){
+                person.canvassContactHistory[i].idHistory.push(idHistory)
+                return person.save()
+            }
+        }
+
+        var canvassContactHistory = {
+                                        campaignID: detail.campaignID,
+                                        activityID: detail.activityID,
+                                        orgID: detail.orgID,
+                                        idHistory: idHistory
+                                    }
+
+        person.canvassContactHistory.push(canvassContactHistory)
+        return person.save()
+
+    }
+
 }
 
 const createPerson = async(detail) =>{

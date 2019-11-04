@@ -30,6 +30,7 @@ var PersonSchema = new Schema(
     petitionContactHistory: [PetitionContactHistory.schema],
     creationInfo: CreationInfo.schema,
     preferredMethodContact: [PreferredMethodContact.schema],
+    clientID: {type: String}
   }
 );
 
