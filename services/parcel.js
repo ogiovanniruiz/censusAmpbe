@@ -160,6 +160,7 @@ const completeHousehold = async(detail) => {
 
     try{
         var parcel = await Parcel.findOne({'properties.location.coordinates': detail.parcel.properties.location.coordinates});
+        /*
         idHistory = {idBy: detail.userID, 
                      locationIdentified: detail.locationIdentified}
 
@@ -169,8 +170,9 @@ const completeHousehold = async(detail) => {
                                      orgID: detail.orgID,
                                      idHistory: idHistory
                                     }
+                                    */
 
-        parcel.properties.canvassContactHistory.push(canvassContactHistory)
+        parcel.properties.canvassContactHistory.push(detail.canvassContactHistory)
         return parcel.save()
 
     } catch(e){throw new Error(e.message)}

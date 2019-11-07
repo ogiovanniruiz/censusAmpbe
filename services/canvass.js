@@ -2,6 +2,17 @@ var Person = require('../models/people/person')
 var Parcel = require('../models/parcels/parcel')
 var Target = require('../models/targets/target')
 var async = require('async')
+var parser = require('parse-address'); 
+
+
+var NodeGeocoder = require('node-geocoder');
+
+var options = {
+    provider: 'google',
+    httpAdapter: 'https', 
+    apiKey: 'AIzaSyAC9-1I1ktfv9eC0THZk8N77-HEd-bcZEY', 
+    formatter: null     
+  };
 
 
 const getCanvassResidents = async(detail) =>{  
@@ -9,9 +20,10 @@ const getCanvassResidents = async(detail) =>{
         var targets = await Target.find({"_id": detail.targetIDs})
         var targetCoordinates = []
 
-        var parcelSearchQuery = {"properties.assessorCodes.primary": {$ne: null},
+        var parcelSearchQuery = {
+                                 "properties.assessorCodes.primary": {$ne: null},
                                  "properties.assessorCodes.realUse": {$ne: null},
-                                //"properties.type": "RESIDENTIAL",
+                                 //"properties.type": "RESIDENTIAL",
                                 }
         var personSearchQuery = {}
         var hasQueries = false;
@@ -77,17 +89,17 @@ const idPerson = async(detail)=>{
 
     if (!person) person = await Person.findOne({"clientID": detail.person.clientID});
 
-    var idHistory = {scriptID: detail.script._id,
+    var idHistory = {
+                     scriptID: detail.script._id,
                      idBy: detail.userID,
                      idResponses: detail.idResponses,
-                     locationIdentified: detail.location
+                     locationIdentified: detail.locationIdentified
                     }
-
-    console.log(person)
 
     if(person.canvassContactHistory.length === 0){
 
         var canvassContactHistory = {
+                                        identified: true,
                                         campaignID: detail.campaignID,
                                         activityID: detail.activityID,
                                         orgID: detail.orgID,
@@ -131,8 +143,31 @@ const createPerson = async(detail) =>{
     }
 }
 
+const reverseGeocode = async(detail) =>{
+
+    var geocoder = NodeGeocoder(options);
+    var googleAddress = []
+
+    await geocoder.reverse({lat:detail.coordinates[1], lon: detail.coordinates[0]}, function(err, res) {googleAddress = res}, googleAddress);
+    var address = parser.parseLocation(googleAddress[0].formattedAddress); 
+
+    var parcel = await Parcel.findOne({"properties.location.coordinates": detail.coordinates})
+
+    if(address.number) parcel.properties.address.streetNum = address.number
+    if(address.street) parcel.properties.address.street = address.street.toUpperCase()
+    if(address.type) parcel.properties.address.suffix = address.type.toUpperCase()
+    if(address.city) parcel.properties.address.city = address.city.toUpperCase()
+    if(address.state) parcel.properties.address.state = address.state.toUpperCase()
+    if(address.zip) parcel.properties.address.zip = address.zip
+
+    parcel.save()
+    
+    return parcel.properties.address
+
+}
 
 
 
 
-module.exports = {getCanvassResidents, createPerson, idPerson}
+
+module.exports = {getCanvassResidents, createPerson, idPerson, reverseGeocode}

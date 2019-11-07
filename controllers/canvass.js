@@ -27,4 +27,13 @@ const createPerson  = async (req, res, next) => {
     }
 }
 
-module.exports = {getCanvassResidents, idPerson, createPerson};
+const reverseGeocode  = async (req, res, next) => {
+    try {
+        res.send(await canvassService.reverseGeocode(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {getCanvassResidents, idPerson, createPerson, reverseGeocode};
