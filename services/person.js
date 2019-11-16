@@ -22,9 +22,89 @@ const getHouseHold = async(address) => {
     }
 }
 
-/*
+
 const runMatch = async()=>{
 
+    console.log("RUNNING DATA CONVERSION")
+
+    var people = await Person.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}})
+
+
+    for(var i = 0; i < people.length; i++){
+        console.log(people[i].canvassContactHistory)
+        for(var j = 0; j < people[i].canvassContactHistory.length; j++){
+
+            for(var k = 0; k < people[i].canvassContactHistory[j].idHistory.length; k++){
+
+                if(!people[i].canvassContactHistory[j].idHistory[k].idResponses[0]){
+
+                    console.log("NO RESPONSES EXIST")
+
+                    break
+                }
+
+                if(people[i].canvassContactHistory[j].idHistory[k].idResponses[0].idType === "REFUSED"){
+
+                    people[i].canvassContactHistory[j].identified = false;
+                    people[i].canvassContactHistory[j].refused = true;
+
+                    console.log("REFUSED")
+
+                    break
+
+                } else if (people[i].canvassContactHistory[j].idHistory[k].idResponses[0].idType === "NONRESPONSE"){
+                    people[i].canvassContactHistory[j].identified = false;
+                    people[i].canvassContactHistory[j].refused = false;
+
+                    console.log("NONRESPONSE")
+
+                    break
+
+
+                } else if (people[i].canvassContactHistory[j].idHistory[k].idResponses[0].idType === "POSITIVE" || 
+                            people[i].canvassContactHistory[j].idHistory[k].idResponses[0].idType === "NEUTRAL" ||
+                            people[i].canvassContactHistory[j].idHistory[k].idResponses[0].idType === "NEGATIVE"
+                ){
+                    people[i].canvassContactHistory[j].identified = true;
+                    people[i].canvassContactHistory[j].refused = false;
+
+                    console.log("IDENTIFIED")
+
+                    break
+                }
+            }
+            
+        }
+
+        console.log(i)
+        people[i].save()
+
+
+    }
+
+
+/*
+    
+    //for(var i = 0; i < parcels.length; i++){
+
+        let newPerson = { 
+            address: parcels[i].properties.address,
+            petitionContactHistory: [],
+            phonebankContactHistory: [],
+            canvassContactHistory: parcels[i].properties.canvassContactHistory,
+            textContactHistory: [],
+            preferredMethodContact: [],
+          }
+
+        newPerson.address.location = parcels[i].properties.location
+
+        var person = new Person(newPerson);
+        console.log(person.address.location)
+        console.log(i)
+        person.save()
+    //}
+
+    /*
      var zips = await Parcel.aggregate(     [
         {$match: {"properties.assessorCodes.realUse": "R1"}},
         {$group : { _id : "$properties.address.zip"}}
@@ -42,8 +122,9 @@ const runMatch = async()=>{
 
     }
     return {peopleCount: peopleCount}
+    */
 }
-*/
+
 const editPerson = async(detail) =>{
 
     var person = await Person.findOne({"_id": detail.person._id});
@@ -133,7 +214,11 @@ const uploadMembers = async(detail) =>{
 
     var geocoder = NodeGeocoder(options);
 
+   // console.log(detail)
+
     var peopleObjs = constructUploadPeopleObjArray(detail);
+
+   // console.log(peopleObjs)
     var checkResults = await checkExisting(peopleObjs)
 
     for(var j = 0; j < checkResults.newPeople.length; j++){
@@ -193,9 +278,7 @@ const checkExisting = async(people) =>{
 
     for(var i = 0; i < people.length; i++){
 
-        let existingPerson = await Person.findOne({$or: [{"emails": people[i]["emails"]}, 
-                                                         {"phones": people[i]["phones"]}
-                                                         ]})
+        let existingPerson = await Person.findOne({"emails": {$not: {$size: 0}, $ne: ""}, "phones": {$not: {$size: 0}, $ne: ""}, $or: [{"emails": detail.emails}, {"phones": detail.phones}]})
     
         if(existingPerson){existingPeople.push(existingPerson)} 
         else{newPeople.push(people[i])}        
@@ -205,7 +288,10 @@ const checkExisting = async(people) =>{
 }
 
 const constructUploadPeopleObjArray = function(detail){
+    //console.log(detail.files)
     var stringFile = detail.files[0].buffer.toString('utf8');
+
+    //console.log(stringFile)
 
     var lines = (stringFile).split("\n");
     var headers = lines[0].split(",");
@@ -516,7 +602,7 @@ module.exports = {getHouseHold,
                   idPerson, 
                   getMembers, 
                   uploadMembers, 
-                  //runMatch, 
+                  runMatch, 
                   finishIdentification,
                   assignPreferredMethodOfContact,
                   assignTags}

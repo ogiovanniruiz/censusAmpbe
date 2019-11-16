@@ -36,4 +36,30 @@ const reverseGeocode  = async (req, res, next) => {
     }
 }
 
-module.exports = {getCanvassResidents, idPerson, createPerson, reverseGeocode};
+const getCanvassParcels  = async (req, res, next) => {
+    try {
+        res.send(await canvassService.getCanvassParcels(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const removePerson  = async (req, res, next) => {
+    try {
+        res.send(await canvassService.removePerson(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const addUnit  = async (req, res, next) => {
+    try {
+        res.send(await canvassService.addUnit(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+module.exports = {getCanvassResidents, idPerson, createPerson, reverseGeocode, getCanvassParcels, removePerson, addUnit};
