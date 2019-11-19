@@ -17,4 +17,6 @@ router.post('/updateAssetMapLvl', userController.updateAssetMapLvl)
 
 router.post('/deleteUser', userController.deleteUser);
 router.post('/editeUser', userController.editUser);
+
+router.post('/checkVersion', userController.checkVersion);
 module.exports = router;

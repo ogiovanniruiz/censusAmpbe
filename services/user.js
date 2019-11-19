@@ -125,7 +125,17 @@ const editUser = async(userDetail) =>{
     console.log(userDetail)
 }
 
-module.exports = {loginUser, 
+const checkVersion = async(app) =>{
+
+    if(app.version === process.env.npm_package_version){
+        return {sync: true, serverVersion: process.env.npm_package_version}
+    }
+
+    return {sync: false, serverVersion: process.env.npm_package_version}
+}
+
+module.exports = {checkVersion,
+                  loginUser, 
                   registerUser, 
                   getOauth, 
                   registerOauth, 
@@ -134,4 +144,5 @@ module.exports = {loginUser,
                   updateDevStatus, 
                   updateAssetMapLvl, 
                   getUserProfile, 
-                  deleteUser, editUser}
+                  deleteUser, 
+                  editUser}

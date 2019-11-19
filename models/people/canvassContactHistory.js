@@ -10,6 +10,7 @@ var CanvassContactHistorySchema = new Schema(
         orgID: {type: String},
         identified: {type: Boolean, default: false},
         refused: {type: Boolean, default: false},
+        
         idHistory: [idHistory.schema],
     }
 );
