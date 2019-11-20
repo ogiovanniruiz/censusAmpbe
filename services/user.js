@@ -126,10 +126,7 @@ const editUser = async(userDetail) =>{
 }
 
 const checkVersion = async(app) =>{
-
-    console.log(process.env.npm_package_version)
-
-    var version = "0.3.8"
+    var version = "0.3.9"
 
     if(app.version === version){
         return {sync: true, serverVersion: version}
