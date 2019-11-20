@@ -26,28 +26,42 @@ const runMatch = async()=>{
 
     console.log("RUNNING DATA CONVERSION")
 
+    Person.aggregate({$group: { "_id": { code: "$Code", name: "$Name" } } }, function(err, contacts) {
+        console.log(contacts)
+     });
 
-    var people = await Person.find({"membership": { $exists: true, $not: {$size: 0}}})
-    console.log(people)
-    //var people = await Person.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}})
 
-/*
+
+    /*
+    //var people = await Person.find({"membership": { $exists: true, $not: {$size: 0}}})
+    //console.log(people)
+    var people = await Person.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}})
+
+
     for(var i = 0; i < people.length; i++){
-        console.log(people[i].canvassContactHistory)
+       // console.log(people[i].canvassContactHistory)
         for(var j = 0; j < people[i].canvassContactHistory.length; j++){
 
             for(var k = 0; k < people[i].canvassContactHistory[j].idHistory.length; k++){
 
-                if(!people[i].canvassContactHistory[j].idHistory[k].idResponses[0]){
+                if(people[i].canvassContactHistory[j].idHistory[k].idResponses.length === 0){
 
                     console.log("NO RESPONSES EXIST")
+                    people[i].canvassContactHistory[j].identified = false;
+                    people[i].canvassContactHistory[j].refused = false;
+                    people[i].canvassContactHistory[j].nonResponse = true;
+
+                    people[i].save()
 
                     break
                 }
 
+                /*
+
                 if(people[i].canvassContactHistory[j].idHistory[k].idResponses[0].idType === "REFUSED"){
 
                     people[i].canvassContactHistory[j].identified = false;
+                    people[i].canvassContactHistory[j].nonResponse = true;
                     people[i].canvassContactHistory[j].refused = true;
 
                     console.log("REFUSED")
@@ -70,22 +84,26 @@ const runMatch = async()=>{
                 ){
                     people[i].canvassContactHistory[j].identified = true;
                     people[i].canvassContactHistory[j].refused = false;
+                    people[i].canvassContactHistory[j].nonResponse = false;
 
                     console.log("IDENTIFIED")
 
                     break
                 }
+
+                
             }
             
         }
 
         console.log(i)
-        people[i].save()
+
+
 
 
     }
-*/
 
+*/
 
 }
 
