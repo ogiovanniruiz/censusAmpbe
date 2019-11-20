@@ -1,5 +1,14 @@
 const canvassService = require('../services/canvass.js')
 
+const getCanvassPolygon = async (req, res, next) => {
+    try {
+        res.send(await canvassService.getCanvassPolygon(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 const getCanvassResidents = async (req, res, next) => {
     try {
         res.send(await canvassService.getCanvassResidents(req.body))
@@ -62,4 +71,8 @@ const addUnit  = async (req, res, next) => {
         res.sendStatus(500)
     }
 }
+<<<<<<< HEAD
+module.exports = {getCanvassPolygon, getCanvassResidents, idPerson, createPerson, reverseGeocode, getCanvassParcels, removePerson, addUnit};
+=======
 module.exports = {getCanvassResidents, idPerson, createPerson, reverseGeocode, getCanvassParcels, editPerson, addUnit};
+>>>>>>> 6042a5d98e102b34884a56de395a496810288fe0

@@ -14,6 +14,17 @@ var options = {
     formatter: null     
   };
 
+const getCanvassPolygon = async(detail) =>{
+    try {
+        var targets = await Target.find({"_id": detail.targetIDs})
+
+        return targets
+
+    }catch(e){
+        throw new Error(e.message)
+
+    }
+}
 
 const getCanvassParcels = async(detail) =>{
     try {
@@ -28,14 +39,14 @@ const getCanvassParcels = async(detail) =>{
            }
 
         for(var i = 0; i < targets.length; i++){
-            if(targets[i]['geometry']){ 
+            if(targets[i]['geometry']){
                 targetCoordinates.push(targets[i]['geometry']['coordinates'][0])
             }
         }
 
-   
+
         if(targetCoordinates.length > 0){
-            parcelSearchQuery['properties.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" , 
+            parcelSearchQuery['properties.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" ,
                                                                                      coordinates: targetCoordinates}}}
         }
 
@@ -216,4 +227,8 @@ const reverseGeocode = async(detail) =>{
 
 
 
+<<<<<<< HEAD
+module.exports = {getCanvassResidents, createPerson, idPerson, reverseGeocode, getCanvassPolygon, getCanvassParcels, removePerson, addUnit}
+=======
 module.exports = {getCanvassResidents, createPerson, idPerson, reverseGeocode, getCanvassParcels, editPerson, addUnit}
+>>>>>>> 6042a5d98e102b34884a56de395a496810288fe0
