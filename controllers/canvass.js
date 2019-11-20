@@ -45,9 +45,9 @@ const getCanvassParcels  = async (req, res, next) => {
     }
 }
 
-const removePerson  = async (req, res, next) => {
+const editPerson  = async (req, res, next) => {
     try {
-        res.send(await canvassService.removePerson(req.body))
+        res.send(await canvassService.editPerson(req.body))
     } catch(e) {
         console.log(e.message)
         res.sendStatus(500)
@@ -62,4 +62,4 @@ const addUnit  = async (req, res, next) => {
         res.sendStatus(500)
     }
 }
-module.exports = {getCanvassResidents, idPerson, createPerson, reverseGeocode, getCanvassParcels, removePerson, addUnit};
+module.exports = {getCanvassResidents, idPerson, createPerson, reverseGeocode, getCanvassParcels, editPerson, addUnit};
