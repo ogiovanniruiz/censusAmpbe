@@ -71,8 +71,6 @@ const addUnit  = async (req, res, next) => {
         res.sendStatus(500)
     }
 }
-<<<<<<< HEAD
-module.exports = {getCanvassPolygon, getCanvassResidents, idPerson, createPerson, reverseGeocode, getCanvassParcels, removePerson, addUnit};
-=======
-module.exports = {getCanvassResidents, idPerson, createPerson, reverseGeocode, getCanvassParcels, editPerson, addUnit};
->>>>>>> 6042a5d98e102b34884a56de395a496810288fe0
+
+module.exports = {getCanvassPolygon, getCanvassResidents, idPerson, createPerson, reverseGeocode, getCanvassParcels, editPerson, addUnit};
+
