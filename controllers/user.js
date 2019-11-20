@@ -101,7 +101,18 @@ const editUser = async(req,res,next)=>{
     }
 }
 
-module.exports = {loginUser, 
+const checkVersion = async(req,res,next)=>{
+
+    try {
+        res.send(await userService.checkVersion(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {checkVersion,
+                  loginUser, 
                   registerUser, 
                   getOauth, 
                   registerOauth, 

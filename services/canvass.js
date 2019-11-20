@@ -113,8 +113,6 @@ const getCanvassResidents = async(detail) =>{
 }
 
 const addUnit = async(detail) =>{
-
-    console.log(detail.person.address.unit)
     var person = await Person.findOne({"_id": detail.person._id});
 
     if (!person) person = await Person.findOne({"clientID": detail.person.clientID});
@@ -138,6 +136,7 @@ const idPerson = async(detail)=>{
             if(person.canvassContactHistory[i].activityID === detail.canvassContactHistory.activityID){
                 person.canvassContactHistory[i].identified = detail.canvassContactHistory.identified;
                 person.canvassContactHistory[i].refused = detail.canvassContactHistory.refused;
+                person.canvassContactHistory[i].nonResponse = detail.canvassContactHistory.nonResponse;
                 person.canvassContactHistory[i].idHistory.push(detail.canvassContactHistory.idHistory[0])
                 return person.save()
             }
@@ -149,9 +148,19 @@ const idPerson = async(detail)=>{
 }
 
 
-const removePerson = async (person) =>{
+const editPerson = async (data) =>{
     try{
-        return Person.deleteOne({"_id": person._id}).exec()
+
+        var person = await Person.findOne({"_id": data.person._id})
+        if (!person) person = await Person.findOne({"clientID": data.person.clientID});
+
+
+        person.firstName = data.newDetail.firstName;
+        person.lastName = data.newDetail.lastName;
+        person.phones = data.newDetail.phones;
+        person.emails = data.newDetail.emails;
+        return person.save()
+        
     }catch(e){
         throw new Error(e.message)
     }
@@ -218,4 +227,8 @@ const reverseGeocode = async(detail) =>{
 
 
 
+<<<<<<< HEAD
 module.exports = {getCanvassResidents, createPerson, idPerson, reverseGeocode, getCanvassPolygon, getCanvassParcels, removePerson, addUnit}
+=======
+module.exports = {getCanvassResidents, createPerson, idPerson, reverseGeocode, getCanvassParcels, editPerson, addUnit}
+>>>>>>> 6042a5d98e102b34884a56de395a496810288fe0

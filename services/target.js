@@ -57,17 +57,23 @@ const createTarget = async(detail) => {
         } else if (detail.targetType === "TAG"){
 
             newTarget.properties.queries.push({queryType: detail.targetType, param: detail.tag })
+        
+        
+        
         }
     
     }
 
     var target = new Target(newTarget);
 
+   
     try{
         return target.save()
     }catch(e){
         throw new Error(e.message)
     }
+
+    
 }
 
 const lockTarget = async(detail) =>{

@@ -8,6 +8,6 @@ router.post('/createPerson', canvassController.createPerson);
 router.post('/idPerson', canvassController.idPerson);
 router.post('/reverseGeocode', canvassController.reverseGeocode);
 router.post('/getCanvassParcels', canvassController.getCanvassParcels);
-router.post('/removePerson', canvassController.removePerson)
+router.post('/editPerson', canvassController.editPerson)
 router.post('/addUnit', canvassController.addUnit)
 module.exports = router;
