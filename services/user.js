@@ -126,7 +126,7 @@ const editUser = async(userDetail) =>{
 }
 
 const checkVersion = async(app) =>{
-    var version = "0.3.9"
+    var version = "0.4.1"
 
     if(app.version === version){
         return {sync: true, serverVersion: version}
@@ -134,6 +134,7 @@ const checkVersion = async(app) =>{
 
     return {sync: false, serverVersion: version}
 }
+
 
 module.exports = {checkVersion,
                   loginUser, 

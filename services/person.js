@@ -26,8 +26,8 @@ const runMatch = async()=>{
 
     console.log("RUNNING DATA CONVERSION")
 
-    Person.aggregate({$group: { "_id": { code: "$Code", name: "$Name" } } }, function(err, contacts) {
-        console.log(contacts)
+    await Person.aggregate({$group: { "_id": { code: "$Code", name: "$Name" } } }, function(err, contacts) {
+        console.log()
      });
 
 
