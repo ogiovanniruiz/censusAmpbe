@@ -3,7 +3,8 @@ var Parcel = require('../models/parcels/parcel')
 var NodeGeocoder = require('node-geocoder');
 const https = require('https');
 const axios = require('axios');
-var parser = require('parse-address'); 
+var parser = require('parse-address');
+var Org = require('../models/organizations/organization.js') 
 
 var async = require('async');
 
@@ -24,87 +25,7 @@ const getHouseHold = async(address) => {
 
 const runMatch = async()=>{
 
-    console.log("RUNNING DATA CONVERSION")
-
-    Person.aggregate({$group: { "_id": { code: "$Code", name: "$Name" } } }, function(err, contacts) {
-        console.log(contacts)
-     });
-
-
-
-    /*
-    //var people = await Person.find({"membership": { $exists: true, $not: {$size: 0}}})
-    //console.log(people)
-    var people = await Person.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}})
-
-
-    for(var i = 0; i < people.length; i++){
-       // console.log(people[i].canvassContactHistory)
-        for(var j = 0; j < people[i].canvassContactHistory.length; j++){
-
-            for(var k = 0; k < people[i].canvassContactHistory[j].idHistory.length; k++){
-
-                if(people[i].canvassContactHistory[j].idHistory[k].idResponses.length === 0){
-
-                    console.log("NO RESPONSES EXIST")
-                    people[i].canvassContactHistory[j].identified = false;
-                    people[i].canvassContactHistory[j].refused = false;
-                    people[i].canvassContactHistory[j].nonResponse = true;
-
-                    people[i].save()
-
-                    break
-                }
-
-                /*
-
-                if(people[i].canvassContactHistory[j].idHistory[k].idResponses[0].idType === "REFUSED"){
-
-                    people[i].canvassContactHistory[j].identified = false;
-                    people[i].canvassContactHistory[j].nonResponse = true;
-                    people[i].canvassContactHistory[j].refused = true;
-
-                    console.log("REFUSED")
-
-                    break
-
-                } else if (people[i].canvassContactHistory[j].idHistory[k].idResponses[0].idType === "NONRESPONSE"){
-                    people[i].canvassContactHistory[j].identified = false;
-                    people[i].canvassContactHistory[j].refused = false;
-                    people[i].canvassContactHistory[j].nonResponse = true;
-
-                    console.log("NONRESPONSE")
-
-                    break
-
-
-                } else if (people[i].canvassContactHistory[j].idHistory[k].idResponses[0].idType === "POSITIVE" || 
-                            people[i].canvassContactHistory[j].idHistory[k].idResponses[0].idType === "NEUTRAL" ||
-                            people[i].canvassContactHistory[j].idHistory[k].idResponses[0].idType === "NEGATIVE"
-                ){
-                    people[i].canvassContactHistory[j].identified = true;
-                    people[i].canvassContactHistory[j].refused = false;
-                    people[i].canvassContactHistory[j].nonResponse = false;
-
-                    console.log("IDENTIFIED")
-
-                    break
-                }
-
-                
-            }
-            
-        }
-
-        console.log(i)
-
-
-
-
-    }
-
-*/
-
+    return    
 }
 
 const editPerson = async(detail) =>{

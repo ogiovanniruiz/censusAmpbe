@@ -72,6 +72,15 @@ const removeOrg = async (req, res, next) => {
     }
 }
 
+const getReport = async (req, res, next) => {
+    try {
+        res.send(await campaignService.getReport(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 
 
 
@@ -83,5 +92,6 @@ module.exports = {createCampaign,
                   getCampaignRequests, 
                   manageCampaignRequest,
                   removeOrg,
+                  getReport
 
                 };

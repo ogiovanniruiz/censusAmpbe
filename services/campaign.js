@@ -162,6 +162,37 @@ const removeOrg = async(detail) =>{
 
 }
 
+const getReport = async(campaign) =>{
+
+    var campaign = await Campaign.findOne({campaignID: campaign.campaignID})
+    var knocksPerActivity = []
+
+    for(var i = 0; i < campaign.canvassActivities.length; i++){
+        var histories = await Person.find({"canvassContactHistory.activityID": campaign.canvassActivities[i]._id}).count()
+        knocksPerActivity.push({knocks: histories, activity: campaign.canvassActivities[i].activityMetaData.name})
+    }
+        
+    var orgIDs = campaign.orgIDs
+    var orgs = await Organization.find({_id: {$in: orgIDs}})
+
+    var knocksPerOrg = []
+
+    for(var i = 0; i < orgs.length; i++){
+        var histories = await Person.find({"canvassContactHistory.orgID": orgs[i]._id}).count()
+        var totalRefused = await Person.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.refused": true }).count()
+        var totalNonResponse = await Person.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.nonResponse": true ,  "canvassContactHistory.refused": false}).count()
+        var totalCompleted = await Person.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.identified": true }).count()
+        knocksPerOrg.push({knocks: histories, org: orgs[i].name, completed: totalCompleted, refuses: totalRefused, nonResponses: totalNonResponse})
+    }
+
+    var totalCanvassEntries = await Person.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}}).count()
+
+    var anomolies = await Person.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}, "address": { $exists: false}}).count()
+
+    return {totalCanvassHistories: totalCanvassEntries, knocksPerOrg: knocksPerOrg, knocksPerActivity: knocksPerActivity, anomolies: anomolies}
+
+}
+
 
 module.exports = {createCampaign, 
                   getAllCampaigns, 
@@ -171,5 +202,6 @@ module.exports = {createCampaign,
                   getCampaignRequests, 
                   manageCampaignRequest,
                   removeOrg,
+                  getReport
 
                 }
