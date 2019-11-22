@@ -14,9 +14,6 @@ var geocoder = NodeGeocoder(options);
 
 
 const getNumSub = async(detail) =>{
-
-    console.log(detail.activityID)
-
     var query = {'petitionContactHistory.activityID': detail.activityID}
 
     var total = await Person.find(query).countDocuments();
@@ -81,7 +78,6 @@ const createPerson = async(detail) =>{
 }
 
 const updatePerson = async(detail) =>{
-    console.log(detail)
 
     var person = await Person.findOne({"_id": detail.person._id});
 

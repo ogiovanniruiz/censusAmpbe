@@ -126,7 +126,7 @@ const editUser = async(userDetail) =>{
 }
 
 const checkVersion = async(app) =>{
-    var version = "0.4.1"
+    var version = "0.4.3"
 
     if(app.version === version){
         return {sync: true, serverVersion: version}

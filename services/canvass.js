@@ -138,11 +138,13 @@ const idPerson = async(detail)=>{
                 person.canvassContactHistory[i].refused = detail.canvassContactHistory.refused;
                 person.canvassContactHistory[i].nonResponse = detail.canvassContactHistory.nonResponse;
                 person.canvassContactHistory[i].idHistory.push(detail.canvassContactHistory.idHistory[0])
+                //console.log(person)
                 return person.save()
             }
         }
 
         person.canvassContactHistory.push(detail.canvassContactHistory)
+       // console.log(person)
         return person.save()
     }
 }
