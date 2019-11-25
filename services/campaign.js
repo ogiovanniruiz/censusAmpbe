@@ -172,6 +172,8 @@ const getReport = async(campaign) =>{
         knocksPerActivity.push({knocks: histories, activity: campaign.canvassActivities[i].activityMetaData.name})
     }
         
+    
+
     var orgIDs = campaign.orgIDs
     var orgs = await Organization.find({_id: {$in: orgIDs}})
 
