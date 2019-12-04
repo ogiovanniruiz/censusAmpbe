@@ -81,7 +81,41 @@ const getReport = async (req, res, next) => {
     }
 }
 
+const getCanvassSummaryReport = async (req, res, next) => {
+    try {
+        res.send(await campaignService.getCanvassSummaryReport(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
 
+const getOrgSummaryReport = async (req, res, next) => {
+    try {
+        res.send(await campaignService.getOrgSummaryReport(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const getCampaignPetitionReport = async (req, res, next) => {
+    try {
+        res.send(await campaignService.getCampaignPetitionReport(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const getOverallReport = async (req, res, next) => {
+    try {
+        res.send(await campaignService.getOverallReport(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
 
 
 module.exports = {createCampaign, 
@@ -92,6 +126,9 @@ module.exports = {createCampaign,
                   getCampaignRequests, 
                   manageCampaignRequest,
                   removeOrg,
-                  getReport
-
+                  getReport,
+                  getCanvassSummaryReport,
+                  getOrgSummaryReport,
+                  getCampaignPetitionReport,
+                  getOverallReport
                 };
