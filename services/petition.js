@@ -50,6 +50,7 @@ const createPerson = async(detail) =>{
             var address = parser.parseLocation(fullAddress);
 
             if(address.number) person.address.streetNum = address.number
+            if(address.prefix) person.address.prefix = address.prefix.toUpperCase();
             if(address.street) person.address.street = address.street.toUpperCase();
             if(address.type) person.address.suffix = address.type.toUpperCase();
 

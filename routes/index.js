@@ -6,4 +6,8 @@ router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
+router.get('/healthCheck', function(req,res){
+  res.sendStatus(200);
+})
+
 module.exports = router;
