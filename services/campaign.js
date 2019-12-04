@@ -22,7 +22,6 @@ const createCampaign = async(newCampaignDetail) =>{
     } catch(e){
         throw new Error(e.message)
     }
-
 }
 
 const getAllCampaigns = async(userDetail) =>{
@@ -153,7 +152,6 @@ const removeOrg = async(detail) =>{
     Target.remove({'properties.orgID': detail.orgID, 'properties.campaignID': detail.campaignID}).exec();
 
     try {
-        console.log(campaign)
         campaign.save()
         return org.save()
     } catch(e){
@@ -171,7 +169,7 @@ const getReport = async(campaign) =>{
         var histories = await Person.find({"canvassContactHistory.activityID": campaign.canvassActivities[i]._id}).count()
         knocksPerActivity.push({knocks: histories, activity: campaign.canvassActivities[i].activityMetaData.name})
     }
-
+        
     var orgIDs = campaign.orgIDs
     var orgs = await Organization.find({_id: {$in: orgIDs}})
 
@@ -185,12 +183,24 @@ const getReport = async(campaign) =>{
         knocksPerOrg.push({knocks: histories, org: orgs[i].name, completed: totalCompleted, refuses: totalRefused, nonResponses: totalNonResponse})
     }
 
-    var totalCanvassEntries = await Person.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}}).count()
+    //var totalCanvassEntries = await Person.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}}).count()
 
-    var anomolies = await Person.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}, "address": { $exists: false}}).count()
+    var incompleteAddresses = await Person.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}, "address.streetNum": null})
+    //var noNamesGroup = await Person.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}, "firstName": null})
 
-    return {totalCanvassHistories: totalCanvassEntries, knocksPerOrg: knocksPerOrg, knocksPerActivity: knocksPerActivity, anomolies: anomolies}
+    var noNamesGroup = await Person.aggregate([{$match: {"canvassContactHistory": { $exists: true, $not: {$size: 0}}, "firstName": null }},
+                                               {$group: {_id: "$address.location", 
+                                                         houseHoldSize: { "$sum": 1 }, 
+                                                         person: {"$push": {address: "$address", canvassContactHistory: "$canvassContactHistory"} },
+                                                        }},
+                                               {$match: {"houseHoldSize": {"$gt": 1}}},                                               
+    ])
 
+    var duplicateNames = await Person.aggregate([{$match: {"canvassContactHistory": { $exists: true, $not: {$size: 0}} }},])
+
+    //return {totalCanvassHistories: totalCanvassEntries, knocksPerOrg: knocksPerOrg, knocksPerActivity: knocksPerActivity, anomolies: anomolies}
+    //return {incompleteAddresses: incompleteAddresses, noNames: noNamesGroup}
+    return {incompleteAddresses: incompleteAddresses, noNamesGroup: noNamesGroup}
 }
 
 const getCanvassSummaryReport = async(campaign) =>{
@@ -320,7 +330,8 @@ const getOverallReport = async(campaign) =>{
 }
 
 
-module.exports = {createCampaign, 
+module.exports = {
+                  createCampaign, 
                   getAllCampaigns, 
                   getCampaign, 
                   requestCampaign, 

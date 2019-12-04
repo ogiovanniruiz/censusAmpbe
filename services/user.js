@@ -3,14 +3,12 @@ var Campaign = require('../models/campaigns/campaign')
 const sha256 =  require('sha256')
 
 const loginUser = async(userDetail) => {
-
     var person = await Person.findOne({'user.loginEmail': userDetail.email, 'user.password': sha256(userDetail.password)});
     try { return person 
     } catch(e){
         throw new Error(e.message)
     }
 }
-
 
 const deleteUser = async(userDetail) =>{
     try{
@@ -126,7 +124,7 @@ const editUser = async(userDetail) =>{
 }
 
 const checkVersion = async(app) =>{
-    var version = "0.4.3"
+    var version = "0.5.0"
 
     if(app.version === version){
         return {sync: true, serverVersion: version}
@@ -136,7 +134,18 @@ const checkVersion = async(app) =>{
 }
 
 
-module.exports = {checkVersion,
+const submitAgreement = async(data) =>{
+
+    var person = await Person.findOne({"user": {$exists: true}, 'user._id': data.person.user._id});
+
+    person.user.userAgreements.push({version: data.version})
+    person.save()
+    return {success: true}    
+}
+
+
+module.exports = {submitAgreement,
+                  checkVersion,
                   loginUser, 
                   registerUser, 
                   getOauth, 

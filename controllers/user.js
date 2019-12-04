@@ -111,6 +111,16 @@ const checkVersion = async(req,res,next)=>{
     }
 }
 
+const submitAgreement = async(req,res,next)=>{
+
+    try {
+        res.send(await userService.submitAgreement(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 module.exports = {checkVersion,
                   loginUser, 
                   registerUser, 
@@ -121,4 +131,5 @@ module.exports = {checkVersion,
                   updateDevStatus, 
                   updateAssetMapLvl, 
                   getUserProfile, 
+                  submitAgreement,
                   deleteUser, editUser};

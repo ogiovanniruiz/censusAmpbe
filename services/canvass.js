@@ -117,7 +117,7 @@ const addUnit = async(detail) =>{
 
     if (!person) person = await Person.findOne({"clientID": detail.person.clientID});
     person.address.unit = detail.unit
-    person.save()
+    return person.save()
     
 }
 
@@ -132,6 +132,7 @@ const idPerson = async(detail)=>{
         console.log("PersonID: ", person._id)
         return person.save()
 
+
     }else{
         for (var i = 0; i < person.canvassContactHistory.length; i++){
             if(person.canvassContactHistory[i].activityID === detail.canvassContactHistory.activityID){
@@ -140,7 +141,6 @@ const idPerson = async(detail)=>{
                 person.canvassContactHistory[i].nonResponse = detail.canvassContactHistory.nonResponse;
                 person.canvassContactHistory[i].idHistory.push(detail.canvassContactHistory.idHistory[0])
                 console.log("PersonID: ", person._id)
-                console.log(person.c)
                 return person.save()
             }
         }
@@ -151,13 +151,62 @@ const idPerson = async(detail)=>{
     }
 }
 
+const nonResponse = async(nonResponseData) =>{
+    var nonRespondedPeople = []
+
+    for(var i = 0; i < nonResponseData.houseHold.length; i++){
+
+        var person = await Person.findOne({"_id": nonResponseData.houseHold[i]._id});
+        if (!person) person = await Person.findOne({"clientID": nonResponseData.houseHold[i].clientID});
+
+        var activityHistoryExists = false;
+
+        for(var j = 0; j < nonResponseData.scripts.length; j++){
+
+            nonResponseData.canvassContactHistory.idHistory[0].scriptID = nonResponseData.scripts[j]._id 
+
+            if(person.canvassContactHistory.length === 0){
+                person.canvassContactHistory.push(nonResponseData.canvassContactHistory)
+                console.log("PersonID: ", person._id)
+                person.save()
+                nonRespondedPeople.push(person)
+                activityHistoryExists = true;
+                
+            }else{
+                for (var k = 0; k < person.canvassContactHistory.length; k++){
+                    if(person.canvassContactHistory[k].activityID === nonResponseData.canvassContactHistory.activityID){
+                        activityHistoryExists = true;
+                        person.canvassContactHistory[k].identified = nonResponseData.canvassContactHistory.identified;
+                        person.canvassContactHistory[k].refused = nonResponseData.canvassContactHistory.refused;
+                        person.canvassContactHistory[k].nonResponse = nonResponseData.canvassContactHistory.nonResponse;
+                        person.canvassContactHistory[k].idHistory.push(nonResponseData.canvassContactHistory.idHistory[0])
+                        console.log("PersonID: ", person._id)
+                        person.save()
+                        nonRespondedPeople.push(person)
+                        break    
+                    }
+                }
+            }
+            
+            if(!activityHistoryExists){
+                console.log("New Activity History")
+                person.canvassContactHistory.push(nonResponseData.canvassContactHistory)
+                console.log("PersonID: ", person._id)
+                person.save()
+                nonRespondedPeople.push(person)
+            }
+        }
+    }
+
+    return nonRespondedPeople
+}
+
 
 const editPerson = async (data) =>{
     try{
 
         var person = await Person.findOne({"_id": data.person._id})
         if (!person) person = await Person.findOne({"clientID": data.person.clientID});
-
 
         person.firstName = data.newDetail.firstName;
         person.lastName = data.newDetail.lastName;
@@ -173,6 +222,7 @@ const editPerson = async (data) =>{
 const createPerson = async(detail) =>{
     try{
         var person = new Person(detail);
+        console.log("PersonID: ", person._id)
 
         person.save()
         return {status: "NEWPERSON", person: person};
@@ -228,5 +278,5 @@ const reverseGeocode = async(detail) =>{
 }
 
 
-module.exports = {getCanvassResidents, createPerson, idPerson, reverseGeocode, getCanvassPolygon, getCanvassParcels, editPerson, addUnit}
+module.exports = {getCanvassResidents, createPerson, idPerson, reverseGeocode, getCanvassPolygon, getCanvassParcels, editPerson, addUnit, nonResponse}
 
