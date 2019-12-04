@@ -11,6 +11,10 @@ router.post('/getCampaignRequests', campaignController.getCampaignRequests)
 router.post('/manageCampaignRequest', campaignController.manageCampaignRequest)
 router.post('/removeOrg', campaignController.removeOrg)
 router.post('/getReport', campaignController.getReport)
+router.post('/getCanvassSummaryReport', campaignController.getCanvassSummaryReport)
+router.post('/getOrgSummaryReport', campaignController.getOrgSummaryReport)
+router.post('/getCampaignPetitionReport', campaignController.getCampaignPetitionReport)
+router.post('/getOverallReport', campaignController.getOverallReport)
 
 
 module.exports = router;
