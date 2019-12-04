@@ -203,6 +203,132 @@ const getReport = async(campaign) =>{
     return {incompleteAddresses: incompleteAddresses, noNamesGroup: noNamesGroup}
 }
 
+const getCanvassSummaryReport = async(campaign) =>{
+    var persons = await Person.find({"canvassContactHistory.campaignID": campaign.campaignID})
+    var knocks = []
+
+    var identifiedTotals = 0;
+    var refusedTotals = 0;
+    var nonResponseTotals = 0;
+
+    for(var i = 0; i < persons.length; i++){
+
+        if(persons[i].canvassContactHistory[0].identified === true){
+            identifiedTotals += 1
+            continue
+        }
+
+        if(persons[i].canvassContactHistory[0].refused === true){
+            refusedTotals += 1
+            continue
+        }
+
+        if(persons[i].canvassContactHistory[0].nonResponse === true){
+            nonResponseTotals += 1
+            continue
+        }
+
+    }
+    var total = await parseInt(identifiedTotals) + parseInt(refusedTotals) + parseInt(nonResponseTotals)
+    await knocks.push({identified: identifiedTotals, refuses: refusedTotals, nonResponses: nonResponseTotals, total: total})
+
+    return {knocks: knocks}
+}
+
+
+const getOrgSummaryReport = async(campaign) =>{
+    var campaign = await Campaign.findOne({campaignID: campaign.campaignID})
+    var orgIDs = campaign.orgIDs
+
+    var orgs = await Organization.find({_id: {$in: orgIDs}})
+
+    var knocksPerOrg = []
+
+    for(var i = 0; i < orgs.length; i++){
+        var totalIdentified = await Person.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.identified": true }).count()
+        var totalRefused = await Person.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.identified": false, "canvassContactHistory.refused": true }).count()
+        var totalNonResponse = await Person.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.identified": false, "canvassContactHistory.refused": false, "canvassContactHistory.nonResponse": true}).count()
+        var total = await parseInt(totalIdentified) + parseInt(totalRefused) + parseInt(totalNonResponse)
+        await knocksPerOrg.push({org: orgs[i].name, identified: totalIdentified, refuses: totalRefused, nonResponses: totalNonResponse, total: total})
+    }
+
+    var identifiedTotals = 0;
+    var refusedTotals = 0;
+    var nonResponseTotals = 0;
+
+    for(var i = 0; i < knocksPerOrg.length; i++){
+        identifiedTotals += parseInt(knocksPerOrg[i].identified);
+        refusedTotals += parseInt(knocksPerOrg[i].refuses);
+        nonResponseTotals += parseInt(knocksPerOrg[i].nonResponses);
+    }
+    var totals = await parseInt(identifiedTotals) + parseInt(refusedTotals) + parseInt(nonResponseTotals)
+    await knocksPerOrg.unshift({org: 'Total', identified: identifiedTotals, refuses: refusedTotals, nonResponses: nonResponseTotals, total: totals})
+
+    return {knocksPerOrg: knocksPerOrg}
+}
+
+const getCampaignPetitionReport = async(campaign) =>{
+    var persons = await Person.find({"petitionContactHistory.campaignID": campaign.campaignID})
+    var knocks = []
+
+    var identifiedTotals = 0;
+    var refusedTotals = 0;
+    var nonResponseTotals = 0;
+
+    for(var i = 0; i < persons.length; i++){
+        if(persons[i].petitionContactHistory[0].identified === true){
+            identifiedTotals += 1
+            continue
+        }
+
+        if(persons[i].petitionContactHistory[0].refused === true){
+            refusedTotals += 1
+            continue
+        }
+
+        if(persons[i].petitionContactHistory[0].nonResponse === true){
+            nonResponseTotals += 1
+            continue
+        }
+    }
+    var total = await parseInt(identifiedTotals) + parseInt(refusedTotals) + parseInt(nonResponseTotals)
+    await knocks.push({identified: identifiedTotals, refuses: refusedTotals, nonResponses: nonResponseTotals, total: total})
+
+    return {knocks: knocks}
+}
+
+const getOverallReport = async(campaign) =>{
+    var persons = await Person.find({$or: [{"canvassContactHistory.campaignID": campaign.campaignID}, {"petitionContactHistory.campaignID": campaign.campaignID}]});
+    var knocks = []
+
+    var identifiedTotals = 0;
+    var refusedTotals = 0;
+    var nonResponseTotals = 0;
+
+    for(var i = 0; i < persons.length; i++){
+
+        if((persons[i].canvassContactHistory.length && persons[i].canvassContactHistory[0].identified === true) || (persons[i].petitionContactHistory.length && persons[i].petitionContactHistory[0].identified === true)){
+            identifiedTotals += 1
+            continue
+        }
+
+        if(persons[i].canvassContactHistory.length && persons[i].canvassContactHistory[0].refused === true || (persons[i].petitionContactHistory.length && persons[i].petitionContactHistory[0].refused === true)){
+            refusedTotals += 1
+            continue
+        }
+
+        if(persons[i].canvassContactHistory.length && persons[i].canvassContactHistory[0].nonResponse === true || (persons[i].petitionContactHistory.length && persons[i].petitionContactHistory[0].nonResponse === true)){
+            nonResponseTotals += 1
+            continue
+        }
+
+    }
+    var total = await parseInt(identifiedTotals) + parseInt(refusedTotals) + parseInt(nonResponseTotals)
+    await knocks.push({identified: identifiedTotals, refuses: refusedTotals, nonResponses: nonResponseTotals, total: total})
+
+    return {knocks: knocks}
+}
+
 
 module.exports = {
                   createCampaign, 
@@ -213,5 +339,9 @@ module.exports = {
                   getCampaignRequests, 
                   manageCampaignRequest,
                   removeOrg,
-                  getReport
+                  getReport,
+                  getCanvassSummaryReport,
+                  getOrgSummaryReport,
+                  getCampaignPetitionReport,
+                  getOverallReport
                 }
