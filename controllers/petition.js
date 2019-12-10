@@ -27,4 +27,13 @@ const getNumSub = async (req, res, next) => {
     }
 }
 
-module.exports = {createPerson, updatePerson, getNumSub};
+const generateLink = async (req, res, next) => {
+    try {
+        res.send(await petitionService.generateLink(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {createPerson, updatePerson, getNumSub, generateLink};

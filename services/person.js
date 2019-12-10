@@ -286,7 +286,7 @@ const constructUploadPeopleObjArray = function(data){
 
 
 const idPerson = async(detail) =>{
-
+    
     var person = await Person.findOne({"_id": detail.person._id});
 
     var idHistory = {scriptID: detail.script._id,
@@ -294,41 +294,7 @@ const idPerson = async(detail) =>{
                      idResponses: detail.idResponses,
                      locationIdentified: detail.location}
 
-    if(detail.activityType === "Canvass"){
-
-        if(person.canvassContactHistory.length === 0){
-
-            var canvassContactHistory = {
-                                            campaignID: detail.campaignID,
-                                            activityID: detail.activityID,
-                                            orgID: detail.orgID,
-                                            idHistory: idHistory
-                                        }
-
-            person.canvassContactHistory.push(canvassContactHistory)
-            return person.save()
-
-        }else{
-
-            for (var i = 0; i < person.canvassContactHistory.length; i++){
-                if(person.canvassContactHistory[i].activityID === detail.activityID){
-                    person.canvassContactHistory[i].idHistory.push(idHistory)
-                    return person.save()
-                }
-            }
-
-            var canvassContactHistory = {
-                                            campaignID: detail.campaignID,
-                                            activityID: detail.activityID,
-                                            orgID: detail.orgID,
-                                            idHistory: idHistory
-                                        }
-
-            person.canvassContactHistory.push(canvassContactHistory)
-            return person.save()
-
-        }
-    } else if (detail.activityType === "Phonebank"){
+    if (detail.activityType === "Phonebank"){
 
         if(person.phonebankContactHistory.length === 0){
 

@@ -1,7 +1,8 @@
 var Person = require('../models/people/person')
-var Parcel = require('../models/parcels/parcel')
 var NodeGeocoder = require('node-geocoder');
-var parser = require('parse-address'); 
+var parser = require('parse-address');
+var jwt = require('jsonwebtoken');
+var Campaign = require('../models/campaigns/campaign') 
 
 var options = {
     provider: 'google',
@@ -11,6 +12,22 @@ var options = {
   };
 
 var geocoder = NodeGeocoder(options);
+
+const generateLink = async(petitionDetail) =>{
+
+    var campaign = await Campaign.findOne({campaignID: petitionDetail.campaignID})
+
+    for(var i = 0; i < campaign.petitionActivities.length; i++){
+        if( campaign.petitionActivities[i]._id.toString() === petitionDetail.activityID){
+         
+            var token = jwt.sign({ petitionDetail, iat: Math.floor(Date.now() / 1000) + 30 }, 'amplify');
+            var url = process.env.fe+ "/petition?dir=" +token
+            campaign.petitionActivities[i].url = url
+            campaign.save()
+            return {url: url}
+        }
+    }
+}
 
 
 const getNumSub = async(detail) =>{
@@ -126,4 +143,4 @@ const updatePerson = async(detail) =>{
     return person.save()
 }
 
-module.exports = {createPerson, updatePerson, getNumSub}
+module.exports = {createPerson, updatePerson, getNumSub, generateLink}
