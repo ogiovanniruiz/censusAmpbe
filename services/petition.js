@@ -20,7 +20,7 @@ const generateLink = async(petitionDetail) =>{
     for(var i = 0; i < campaign.petitionActivities.length; i++){
         if( campaign.petitionActivities[i]._id.toString() === petitionDetail.activityID){
          
-            var token = jwt.sign({ petitionDetail, iat: Math.floor(Date.now() / 1000) + 30 }, 'amplify');
+            var token = jwt.sign({ petitionDetail, exp: Math.floor(Date.now() / 1000) + 30 }, 'amplify');
             var url = process.env.fe+ "/petition?dir=" +token
             campaign.petitionActivities[i].url = url
             campaign.save()
