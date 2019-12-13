@@ -10,4 +10,6 @@ router.post('/reverseGeocode', canvassController.reverseGeocode);
 router.post('/getCanvassParcels', canvassController.getCanvassParcels);
 router.post('/editPerson', canvassController.editPerson)
 router.post('/addUnit', canvassController.addUnit)
+router.post('/nonResponse', canvassController.nonResponse)
+
 module.exports = router;

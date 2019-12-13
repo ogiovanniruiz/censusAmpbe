@@ -19,4 +19,6 @@ router.post('/deleteUser', userController.deleteUser);
 router.post('/editeUser', userController.editUser);
 
 router.post('/checkVersion', userController.checkVersion);
+
+router.post('/submitAgreement', userController.submitAgreement);
 module.exports = router;
