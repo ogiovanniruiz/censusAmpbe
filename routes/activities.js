@@ -8,5 +8,6 @@ router.post('/editActivity', activityController.editActivity)
 router.post('/deleteActivity', activityController.deleteActivity)
 router.post('/getActivity', activityController.getActivity)
 router.post('/completeActivity', activityController.completeActivity)
+router.post('/sendSwordOutreach', activityController.sendSwordOutreach)
 
 module.exports = router;

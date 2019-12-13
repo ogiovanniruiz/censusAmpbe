@@ -81,15 +81,6 @@ const getReport = async (req, res, next) => {
     }
 }
 
-const getCanvassSummaryReport = async (req, res, next) => {
-    try {
-        res.send(await campaignService.getCanvassSummaryReport(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
 const getOrgSummaryReport = async (req, res, next) => {
     try {
         res.send(await campaignService.getOrgSummaryReport(req.body))
@@ -99,24 +90,32 @@ const getOrgSummaryReport = async (req, res, next) => {
     }
 }
 
-const getCampaignPetitionReport = async (req, res, next) => {
+const getActivitiesSummaryReport = async (req, res, next) => {
     try {
-        res.send(await campaignService.getCampaignPetitionReport(req.body))
+        res.send(await campaignService.getActivitiesSummaryReport(req.body))
     } catch(e) {
         console.log(e.message)
         res.sendStatus(500)
     }
 }
 
-const getOverallReport = async (req, res, next) => {
+const getscriptDetailsReport = async (req, res, next) => {
     try {
-        res.send(await campaignService.getOverallReport(req.body))
+        res.send(await campaignService.getscriptDetailsReport(req.body))
     } catch(e) {
         console.log(e.message)
         res.sendStatus(500)
     }
 }
 
+const getCustomCrossTabReport = async (req, res, next) => {
+    try {
+        res.send(await campaignService.getCustomCrossTabReport(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
 
 module.exports = {createCampaign, 
                   getAllCampaigns, 
@@ -127,8 +126,8 @@ module.exports = {createCampaign,
                   manageCampaignRequest,
                   removeOrg,
                   getReport,
-                  getCanvassSummaryReport,
                   getOrgSummaryReport,
-                  getCampaignPetitionReport,
-                  getOverallReport
+                  getActivitiesSummaryReport,
+                  getscriptDetailsReport,
+                  getCustomCrossTabReport
                 };
