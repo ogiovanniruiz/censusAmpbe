@@ -71,7 +71,6 @@ if(app.get('env') === 'census'){
   
 }
 
-
 mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true });
 mongoose.Promise = global.Promise;
 mongoose.set('useCreateIndex', true);

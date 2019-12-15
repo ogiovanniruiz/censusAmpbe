@@ -135,10 +135,11 @@ const uploadMembers = async(detail) =>{
         if(newPerson.address.prefix) addressString = addressString + newPerson.address.prefix + " "
         if(newPerson.address.street) addressString = addressString + newPerson.address.street.replace(",", " ") + " "
         if(newPerson.address.suffix) addressString = addressString + newPerson.address.suffix + " "
+        if(newPerson.address.unit) addressString = addressString + newPerson.address.unit + " "
         if(newPerson.address.city) addressString = addressString + newPerson.address.city + " "
         if(newPerson.address.zip) addressString = addressString + newPerson.address.zip
 
-
+        
         geocoder.geocode(addressString, async function(err, res) {
             
             if(err) {
@@ -231,19 +232,25 @@ const constructUploadPeopleObjArray = function(data){
                 var fullAddressString = currentLine[j] + " " + personObj["address"]["city"] + " " + "CA"
                 if(personObj["address"]["zip"]) fullAddressString + " " + personObj["address"]["zip"]
 
-                var address = parser.parseLocation(fullAddressString);     
+                var address = parser.parseLocation(fullAddressString);  
+                if(currentLine[j] === "1892 Dorjil Pl B ") console.log(address)   
 
                 personObj.address.streetNum = address.number
                 if(address.street) personObj.address.street = address.street.toUpperCase()
                 if(address.type) personObj.address.suffix = address.type.toUpperCase()
                 if(address.prefix) personObj.address.prefix = address.prefix.toUpperCase()
-                if(address.sec_unit_type && address.sec_unit_num ){personObj['address']['unit'] =  address.sec_unit_type.toUpperCase() + " " + address.sec_unit_num.toUpperCase()}
+                if(address.sec_unit_type || address.sec_unit_num ){
+                    
+                    personObj['address']['unit'] =  address.sec_unit_type.toUpperCase() + " " + address.sec_unit_num.toUpperCase()
+
+                    console.log(peopleObjs)
+                }
+
 
                 break
             }
 
         }
-        
 
         for(var j = 0; j < headers.length; j++){       
             if(headers[j] === "county") {

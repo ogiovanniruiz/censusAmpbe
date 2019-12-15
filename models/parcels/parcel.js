@@ -10,9 +10,9 @@ var ParcelSchema = new Schema(
       type: {type: String},
       geometry: {},
       properties: {
-                   membership: [{orgID: {type: String}, tags: {type: String}}],
+                   membership: [{orgID: {type: String}, tags: {type: String}}], //NOT BEING USED
                    address: Address.schema, 
-                   canvassContactHistory: [CanvassContactHistory.schema],
+                   canvassContactHistory: [CanvassContactHistory.schema], //NOT BEING USED
                    owners: [],
                    type: {type: String, enum: ["RESIDENTIAL", "NONRESIDENTIAL"]},
                    asset: idHistory.schema,

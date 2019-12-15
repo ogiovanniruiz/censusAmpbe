@@ -1,6 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var orgController = require('../controllers/organization.js')
+var multer  = require('multer');
+var upload = multer();
 
 router.post('/createOrganization', orgController.createOrganization);
 router.post('/editOrganization', orgController.editOrganization);
@@ -20,5 +22,9 @@ router.post('/getAccountPhoneNumbers', orgController.getAccountPhoneNumbers);
 
 router.post('/getOrgTags', orgController.getOrgTags);
 router.post('/createTag', orgController.createTag);
+router.post('/uploadLogo', [upload.any(),orgController.uploadLogo]);
+
+
+router.post('/getOrgLogo',  orgController.getOrgLogo);
 
 module.exports = router;
