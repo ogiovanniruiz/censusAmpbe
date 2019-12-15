@@ -1,6 +1,7 @@
 var Campaign = require('../models/campaigns/campaign')
 var Organization = require('../models/organizations/organization')
-var CensusTract = require('../models/censustracts/censustract'); 
+var CensusTract = require('../models/censustracts/censustract');
+const axios = require('axios');
 
 const createActivity = async(detail) => {
 
@@ -259,6 +260,20 @@ const completeActivity = async(detail) =>{
     return campaign.save()
 }
 
+const sendSwordOutreach = async(detail) =>{
+    var swordOutreach = "https://swordoutreachapi.azurewebsites.net/report"
+    var tokenStr = {headers: {'Content-Type': 'application/json', 'x-auth': 'fjkcxq3908daas43980120ahdnf2084mg048201a18nffl4'}};
+    var data = await JSON.stringify(detail.report);
+
+    var SwordOutreachResults = await axios.post(swordOutreach, data, tokenStr).then(response => {
+        return response
+    }).catch(error => {
+        return error
+    });
+
+    return SwordOutreachResults
+}
+
 const getActivities = async(detail) =>{
     var campaign = await Campaign.findOne({campaignID: detail.campaignID})
     var activities = []
@@ -405,4 +420,4 @@ const getActivity = async(detail) =>{
     }
 }
 
-module.exports = {createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity}
+module.exports = {createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, sendSwordOutreach}
