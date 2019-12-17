@@ -6,6 +6,7 @@ var MetaData = require('./metaData.js')
 var PetitionSchema = new Schema(
   {
     activityMetaData: MetaData.schema,
+    url: {type: String},
     swordForm: {}
   }
 );

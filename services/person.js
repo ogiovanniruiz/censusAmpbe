@@ -135,10 +135,12 @@ const uploadMembers = async(detail) =>{
         if(newPerson.address.prefix) addressString = addressString + newPerson.address.prefix + " "
         if(newPerson.address.street) addressString = addressString + newPerson.address.street.replace(",", " ") + " "
         if(newPerson.address.suffix) addressString = addressString + newPerson.address.suffix + " "
+        if(newPerson.address.unit) addressString = addressString + newPerson.address.unit + " "
         if(newPerson.address.city) addressString = addressString + newPerson.address.city + " "
         if(newPerson.address.zip) addressString = addressString + newPerson.address.zip
 
-
+        console.log(addressString)
+        
         geocoder.geocode(addressString, async function(err, res) {
             
             if(err) {
@@ -209,19 +211,26 @@ const constructUploadPeopleObjArray = function(data){
         let personObj = {address: {}, demographics:{}, voterInfo: {}}
         let currentLine = lines[i].split(",")
 
-        if(currentLine.length <= 1){break}
+        if(currentLine.length <= 1){break;}
 
         for(var j = 0; j < headers.length; j++){ 
             if(headers[j] === "city") {
                 personObj.address["city"] = currentLine[j].toUpperCase()
-                break
+                break;
             }
         }
 
         for(var j = 0; j < headers.length; j++){ 
             if(headers[j] === "zip") {
                 personObj.address["zip"] = currentLine[j]
-                break
+                break;
+            }
+        }
+
+        for(var j = 0; j < headers.length; j++){ 
+            if(headers[j] === "unit") {
+                personObj.address["unit"] = currentLine[j]
+                break;
             }
         }
 
@@ -231,19 +240,21 @@ const constructUploadPeopleObjArray = function(data){
                 var fullAddressString = currentLine[j] + " " + personObj["address"]["city"] + " " + "CA"
                 if(personObj["address"]["zip"]) fullAddressString + " " + personObj["address"]["zip"]
 
-                var address = parser.parseLocation(fullAddressString);     
+                var address = parser.parseLocation(fullAddressString);  
+                //if(currentLine[j] === "1892 Dorjil Pl B ") console.log(address)   
 
                 personObj.address.streetNum = address.number
                 if(address.street) personObj.address.street = address.street.toUpperCase()
                 if(address.type) personObj.address.suffix = address.type.toUpperCase()
                 if(address.prefix) personObj.address.prefix = address.prefix.toUpperCase()
-                if(address.sec_unit_type && address.sec_unit_num ){personObj['address']['unit'] =  address.sec_unit_type.toUpperCase() + " " + address.sec_unit_num.toUpperCase()}
+                //if(address.sec_unit_type || address.sec_unit_num ){
+                  //  personObj['address']['unit'] =  address.sec_unit_type.toUpperCase() + " " + address.sec_unit_num.toUpperCase()
+                //}
 
-                break
+                break;
             }
 
         }
-        
 
         for(var j = 0; j < headers.length; j++){       
             if(headers[j] === "county") {
@@ -286,7 +297,7 @@ const constructUploadPeopleObjArray = function(data){
 
 
 const idPerson = async(detail) =>{
-
+    
     var person = await Person.findOne({"_id": detail.person._id});
 
     var idHistory = {scriptID: detail.script._id,
@@ -294,41 +305,7 @@ const idPerson = async(detail) =>{
                      idResponses: detail.idResponses,
                      locationIdentified: detail.location}
 
-    if(detail.activityType === "Canvass"){
-
-        if(person.canvassContactHistory.length === 0){
-
-            var canvassContactHistory = {
-                                            campaignID: detail.campaignID,
-                                            activityID: detail.activityID,
-                                            orgID: detail.orgID,
-                                            idHistory: idHistory
-                                        }
-
-            person.canvassContactHistory.push(canvassContactHistory)
-            return person.save()
-
-        }else{
-
-            for (var i = 0; i < person.canvassContactHistory.length; i++){
-                if(person.canvassContactHistory[i].activityID === detail.activityID){
-                    person.canvassContactHistory[i].idHistory.push(idHistory)
-                    return person.save()
-                }
-            }
-
-            var canvassContactHistory = {
-                                            campaignID: detail.campaignID,
-                                            activityID: detail.activityID,
-                                            orgID: detail.orgID,
-                                            idHistory: idHistory
-                                        }
-
-            person.canvassContactHistory.push(canvassContactHistory)
-            return person.save()
-
-        }
-    } else if (detail.activityType === "Phonebank"){
+    if (detail.activityType === "Phonebank"){
 
         if(person.phonebankContactHistory.length === 0){
 

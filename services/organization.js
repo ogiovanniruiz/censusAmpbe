@@ -1,6 +1,7 @@
 var Organization = require('../models/organizations/organization'); 
 var Person = require('../models/people/person')
 var Campaign = require('../models/campaigns/campaign')
+const fs = require('fs');
 
 const createOrganization = async(newOrgDetail) =>{   
     var orgDetail = { name: newOrgDetail.name,
@@ -277,6 +278,36 @@ const getOrgTags= async(detail)=>{
     return org.orgTags
 }
 
+const uploadLogo = async(data) =>{
+
+    var imageData = data.files[0].buffer
+    if(imageData.length> 100000) return {msg: "Too Big"}
+    
+    var orgID = data.body.orgID
+    var fileDir = 'public/images/' + orgID + ".png"
+    
+    fs.writeFile(fileDir, imageData, 'binary', function(err){
+        if (err) throw err
+        console.log('File saved.')
+    })
+
+}
+
+const getOrgLogo = async(data) =>{
+
+    try{
+        var orgID = data.orgID
+        var fileDir = 'public/images/' + orgID + ".png"
+    
+        if(!fs.statSync(fileDir)) return {msg: "No Image"}
+
+        return {image:fs.readFileSync(fileDir)}
+
+    } catch(err){
+        console.log(err)
+    }
+}
+
 module.exports = {createOrganization, 
                   editOrganization,
                   getAllOrganizations, 
@@ -290,4 +321,4 @@ module.exports = {createOrganization,
                   removePhoneNumber,
                   addPhoneNumber,
                   getOrgPhoneNumbers,
-                  getAccountPhoneNumbers, createTag, getOrgTags}
+                  getAccountPhoneNumbers, createTag, getOrgTags, uploadLogo, getOrgLogo}

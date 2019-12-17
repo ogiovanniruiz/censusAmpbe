@@ -1,10 +1,13 @@
 var Person = require('../models/people/person')
 var Campaign = require('../models/campaigns/campaign')
 const sha256 =  require('sha256')
+var jwt = require('jsonwebtoken');
 
 const loginUser = async(userDetail) => {
     var person = await Person.findOne({'user.loginEmail': userDetail.email, 'user.password': sha256(userDetail.password)});
-    try { return person 
+    var token = jwt.sign({ version: process.env.version, exp: Math.floor(Date.now() / 1000) + 21600 }, 'amplify');
+    
+    try { return {person: person, jwt: token} 
     } catch(e){
         throw new Error(e.message)
     }
@@ -29,6 +32,7 @@ const getUserProfile = async(userDetail) =>{
 
 const registerUser = async(regDetail) => {
 
+    var token = jwt.sign({ version: process.env.version, exp: Math.floor(Date.now() / 1000) + 21600 }, 'amplify');
     var hashPassword = sha256(regDetail.password)
 
     var personDetail = {firstName: regDetail.firstName, 
@@ -44,7 +48,8 @@ const registerUser = async(regDetail) => {
                         }
     try {
         var person = new Person(personDetail);
-        return person.save();
+        person.save();
+        return {person: person, jwt: token}
 
     } catch(e){
         throw new Error(e.message)
@@ -52,24 +57,31 @@ const registerUser = async(regDetail) => {
 }
 
 const getOauth= async(userDetail) =>{
-    try{ return Person.findOne({'user.loginEmail': userDetail.email, 
-                                'firstName': userDetail.given_name, 
-                                'lastName': userDetail.family_name}).exec(); 
+    var token = jwt.sign({ version: process.env.version, exp: Math.floor(Date.now() / 1000) + 21600 }, 'amplify');
+    var person = await Person.findOne({'user.loginEmail': userDetail.email, 
+                                       'firstName': userDetail.given_name, 
+                                       'lastName': userDetail.family_name}
+                                      );
+                                       
+    try{ return {person: person, jwt: token}
     }catch(e){
         throw new Error(e.message)
     }
 }
 
 const registerOauth = async(regDetail) => {
-    personDetail = {firstName: regDetail.given_name, 
-                    lastName: regDetail.family_name,
+    personDetail = {
+        firstName: regDetail.given_name, 
+                lastName: regDetail.family_name,
                     user: {loginEmail: regDetail.email},
                     emails: regDetail.email,
                     creationInfo: {regType: "SELF"}
                     }
     try{ 
         var person = new Person(personDetail);
-        return person.save();
+        person.save();
+        var token = jwt.sign({ version: process.env.version, exp: Math.floor(Date.now() / 1000) + 21600 }, 'amplify');
+        return {person: person, jwt: token}
 
     } catch(e){
         throw new Error(e.message)
@@ -124,7 +136,7 @@ const editUser = async(userDetail) =>{
 }
 
 const checkVersion = async(app) =>{
-    var version = "0.5.0"
+    var version = process.env.version
 
     if(app.version === version){
         return {sync: true, serverVersion: version}
@@ -144,7 +156,8 @@ const submitAgreement = async(data) =>{
 }
 
 
-module.exports = {submitAgreement,
+module.exports = {
+                  submitAgreement,
                   checkVersion,
                   loginUser, 
                   registerUser, 
@@ -156,4 +169,5 @@ module.exports = {submitAgreement,
                   updateAssetMapLvl, 
                   getUserProfile, 
                   deleteUser, 
-                  editUser}
+                  editUser
+                }
