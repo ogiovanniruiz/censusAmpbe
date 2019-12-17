@@ -139,6 +139,7 @@ const uploadMembers = async(detail) =>{
         if(newPerson.address.city) addressString = addressString + newPerson.address.city + " "
         if(newPerson.address.zip) addressString = addressString + newPerson.address.zip
 
+        console.log(addressString)
         
         geocoder.geocode(addressString, async function(err, res) {
             
@@ -210,19 +211,26 @@ const constructUploadPeopleObjArray = function(data){
         let personObj = {address: {}, demographics:{}, voterInfo: {}}
         let currentLine = lines[i].split(",")
 
-        if(currentLine.length <= 1){break}
+        if(currentLine.length <= 1){break;}
 
         for(var j = 0; j < headers.length; j++){ 
             if(headers[j] === "city") {
                 personObj.address["city"] = currentLine[j].toUpperCase()
-                break
+                break;
             }
         }
 
         for(var j = 0; j < headers.length; j++){ 
             if(headers[j] === "zip") {
                 personObj.address["zip"] = currentLine[j]
-                break
+                break;
+            }
+        }
+
+        for(var j = 0; j < headers.length; j++){ 
+            if(headers[j] === "unit") {
+                personObj.address["unit"] = currentLine[j]
+                break;
             }
         }
 
@@ -233,21 +241,17 @@ const constructUploadPeopleObjArray = function(data){
                 if(personObj["address"]["zip"]) fullAddressString + " " + personObj["address"]["zip"]
 
                 var address = parser.parseLocation(fullAddressString);  
-                if(currentLine[j] === "1892 Dorjil Pl B ") console.log(address)   
+                //if(currentLine[j] === "1892 Dorjil Pl B ") console.log(address)   
 
                 personObj.address.streetNum = address.number
                 if(address.street) personObj.address.street = address.street.toUpperCase()
                 if(address.type) personObj.address.suffix = address.type.toUpperCase()
                 if(address.prefix) personObj.address.prefix = address.prefix.toUpperCase()
-                if(address.sec_unit_type || address.sec_unit_num ){
-                    
-                    personObj['address']['unit'] =  address.sec_unit_type.toUpperCase() + " " + address.sec_unit_num.toUpperCase()
+                //if(address.sec_unit_type || address.sec_unit_num ){
+                  //  personObj['address']['unit'] =  address.sec_unit_type.toUpperCase() + " " + address.sec_unit_num.toUpperCase()
+                //}
 
-                    console.log(peopleObjs)
-                }
-
-
-                break
+                break;
             }
 
         }

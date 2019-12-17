@@ -73,7 +73,12 @@ const createPerson = async(detail) =>{
 
         if(detail.address != "" && detail.city != "" && detail.zip != ""){
 
-            var fullAddress = detail.address + " " + detail.city + " CA " + detail.zip
+            var fullAddress = detail.address
+
+            //if(detail.unit) fullAddress = fullAddress + " " + detail.unit
+            if(detail.city) fullAddress = fullAddress + " " + detail.city + " CA"
+            if(detail.zip) fullAddress = fullAddress + " " + detail.zip
+
             var address = parser.parseLocation(fullAddress);
 
             if(address.number) person.address.streetNum = address.number
@@ -81,9 +86,15 @@ const createPerson = async(detail) =>{
             if(address.street) person.address.street = address.street.toUpperCase();
             if(address.type) person.address.suffix = address.type.toUpperCase();
             if(detail.unit) person.address.unit = detail.unit.toUpperCase()
+
+            var addressToGeocode = detail.address
+
+            if(detail.unit) addressToGeocode = addressToGeocode + " " + detail.unit
+            if(detail.city) addressToGeocode = addressToGeocode + " " + detail.city + " CA"
+            if(detail.zip) addressToGeocode = addressToGeocode + " " + detail.zip
             
 
-            await geocoder.geocode(fullAddress, function(err, res) {
+            await geocoder.geocode(addressToGeocode, function(err, res) {
                 if(err) {console.log(err)}
                 if(res) {
                     if(res[0]) {
