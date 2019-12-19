@@ -58,7 +58,7 @@ const uploadMembers = async (req,res,next) =>{
 
 const runMatch = async(req,res, next) => {
     try {
-        res.send(await personService.runMatch(req.body))
+        res.send(await personService.runMatch(req))
     } catch(e) {
         console.log(e.message)
         res.sendStatus(500)

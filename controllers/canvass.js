@@ -81,5 +81,14 @@ const nonResponse  = async (req, res, next) => {
     }
 }
 
-module.exports = {getCanvassPolygon, getCanvassResidents, idPerson, createPerson, reverseGeocode, getCanvassParcels, editPerson, addUnit, nonResponse};
+const updateMarkerLocation  = async (req, res, next) => {
+    try {
+        res.send(await canvassService.updateMarkerLocation(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {getCanvassPolygon, getCanvassResidents, idPerson, createPerson, reverseGeocode, getCanvassParcels, editPerson, addUnit, nonResponse, updateMarkerLocation};
 

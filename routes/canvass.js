@@ -11,5 +11,6 @@ router.post('/getCanvassParcels', canvassController.getCanvassParcels);
 router.post('/editPerson', canvassController.editPerson)
 router.post('/addUnit', canvassController.addUnit)
 router.post('/nonResponse', canvassController.nonResponse)
+router.post('/updateMarkerLocation', canvassController.updateMarkerLocation)
 
 module.exports = router;

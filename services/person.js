@@ -23,8 +23,45 @@ const getHouseHold = async(address) => {
     }
 }
 
-const runMatch = async()=>{
+const runMatch = async(data)=>{
+ 
+    var strangeFile = data.files[0].buffer.toString('utf8')
+    var lines = (strangeFile).split("\r\n");
+    var headers = lines[0].split(",");
 
+    for(var i = 0; i < lines.length; i++ ){
+
+        let currentLine = lines[i].split(",")
+        if(currentLine.length <= 1){break;}
+        var person= await Person.findOne({"firstName": currentLine[0], "middleName": currentLine[1], "lastName": currentLine[2]});
+        
+        if(person){
+            
+            for(var j = 0; j < headers.length; j++){ 
+                if(headers[j] === "address"){
+
+                    var address = parser.parseLocation(currentLine[j]);  
+
+                    person.address.streetNum = address.number
+                    if(address.street) person.address.street = address.street.toUpperCase()
+                    if(address.type) person.address.suffix = address.type.toUpperCase()
+                    if(address.prefix) person.address.prefix = address.prefix.toUpperCase()                
+                }
+
+                if(headers[j] === "unit") {
+
+                    person.address.unit = currentLine[j]
+                    for(var k = 0; person.canvassContactHistory.length; k++){
+                        person.canvassContactHistory[k].refused = false;
+                        person.canvassContactHistory[k].nonResponse = false;
+                    } 
+                    person.save()
+
+                }  
+            }  
+            console.log(person)   
+        } 
+    }
     return    
 }
 
@@ -139,7 +176,7 @@ const uploadMembers = async(detail) =>{
         if(newPerson.address.city) addressString = addressString + newPerson.address.city + " "
         if(newPerson.address.zip) addressString = addressString + newPerson.address.zip
 
-        console.log(addressString)
+       // console.log(addressString)
         
         geocoder.geocode(addressString, async function(err, res) {
             
@@ -241,8 +278,7 @@ const constructUploadPeopleObjArray = function(data){
                 if(personObj["address"]["zip"]) fullAddressString + " " + personObj["address"]["zip"]
 
                 var address = parser.parseLocation(fullAddressString);  
-                //if(currentLine[j] === "1892 Dorjil Pl B ") console.log(address)   
-
+ 
                 personObj.address.streetNum = address.number
                 if(address.street) personObj.address.street = address.street.toUpperCase()
                 if(address.type) personObj.address.suffix = address.type.toUpperCase()

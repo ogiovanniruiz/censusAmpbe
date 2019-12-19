@@ -277,6 +277,12 @@ const reverseGeocode = async(detail) =>{
     }
 }
 
+const updateMarkerLocation = async(detail) =>{
+    var person = await Person.findOne({_id: detail.person.data._id})
+    person.address.location = detail.location
+    return person.save()
+}
 
-module.exports = {getCanvassResidents, createPerson, idPerson, reverseGeocode, getCanvassPolygon, getCanvassParcels, editPerson, addUnit, nonResponse}
+
+module.exports = {getCanvassResidents, createPerson, idPerson, reverseGeocode, getCanvassPolygon, getCanvassParcels, editPerson, addUnit, nonResponse, updateMarkerLocation}
 
