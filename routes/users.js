@@ -6,6 +6,8 @@ router.post('/loginUser', userController.loginUser);
 router.post('/getUserProfile', userController.getUserProfile);
 
 router.post('/registerUser', userController.registerUser);
+router.post('/setNewPassword', userController.setNewPassword);
+router.post('/passwordReset', userController.passwordReset);
 router.post('/getOauth', userController.getOauth);
 router.post('/registerOauth', userController.registerOauth);
 
