@@ -62,40 +62,44 @@ const passwordReset = async(email) => {
     var person = await Person.findOne({'user.loginEmail': email.email});
 
     if (person){
-        var personEmail = {email: email.email}
-        try {
-            var reset = new PasswordReset(personEmail);
-            reset.save();
+        if (person.user.password) {
+            var personEmail = {email: email.email}
+            try {
+                var reset = new PasswordReset(personEmail);
+                reset.save();
 
-            let transporter = nodeMailer.createTransport({
-                host: 'smtp.gmail.com',
-                port: 465,
-                secure: true,
-                auth: {
-                    user: 'support@ieunited.org',
-                    pass: '7EA9e666!'
-                }
-            });
+                let transporter = nodeMailer.createTransport({
+                    host: 'smtp.gmail.com',
+                    port: 465,
+                    secure: true,
+                    auth: {
+                        user: 'support@ieunited.org',
+                        pass: '7EA9e666!'
+                    }
+                });
 
-            let mailOptions = {
-                to: reset.email,
-                subject: 'Password Reset Instructions',
-                html: "Someone has requested a password reset for the following account:" + "reset.email" + "<br><br>" +
-                    "If this was a mistake, just ignore this email and nothing will happen." + "<br><br>" +
-                    "Click this link to set a new password: " + "<a href='https://outreach.censusie.org/passwordreset/?upr="+reset._id+"'>set a password here.</a>"
-            };
+                let mailOptions = {
+                    to: reset.email,
+                    subject: 'Password Reset Instructions',
+                    html: "Someone has requested a password reset for the following account:" + "reset.email" + "<br><br>" +
+                        "If this was a mistake, just ignore this email and nothing will happen." + "<br><br>" +
+                        "Click this link to set a new password: " + "<a href='https://outreach.censusie.org/passwordreset/?upr="+reset._id+"'>set a password here.</a>"
+                };
 
-            transporter.sendMail(mailOptions, (error, info) => {
-                if (error) {
-                    return console.log(error);
-                }
-                console.log('Message %s sent: %s', info.messageId, info.response);
-            });
+                transporter.sendMail(mailOptions, (error, info) => {
+                    if (error) {
+                        return console.log(error);
+                    }
+                    console.log('Message %s sent: %s', info.messageId, info.response);
+                });
 
-            return {msg: "Email Sent"}
+                return {msg: "Email Sent"}
 
-        } catch(e){
-            throw new Error(e.message)
+            } catch(e){
+                throw new Error(e.message)
+            }
+        } else {
+            return {msg: "OAuth"}
         }
     } else {
         return {msg: "User not found"}
