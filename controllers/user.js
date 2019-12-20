@@ -27,6 +27,24 @@ const registerUser = async(req, res, next) => {
     }
 }
 
+const passwordReset = async(req, res, next) => {
+    try{
+        res.send(await userService.passwordReset(req.body));
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const setNewPassword = async(req, res, next) => {
+    try{
+        res.send(await userService.setNewPassword(req.body));
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 const getOauth = async (req, res, next) => {
     try {
         res.send(await userService.getOauth(req.body))
@@ -122,9 +140,11 @@ const submitAgreement = async(req,res,next)=>{
 }
 
 module.exports = {checkVersion,
-                  loginUser, 
-                  registerUser, 
-                  getOauth, 
+                  loginUser,
+                  registerUser,
+                  passwordReset,
+                  setNewPassword,
+                  getOauth,
                   registerOauth, 
                   getAllUsers, 
                   updateUserLvl, 
