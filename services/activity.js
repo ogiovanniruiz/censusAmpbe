@@ -274,6 +274,21 @@ const sendSwordOutreach = async(detail) =>{
     return SwordOutreachResults
 }
 
+const saveSwordOutreachRecord = async(detail) =>{
+
+    var campaign = await Campaign.findOne({campaignID: detail.campaignID})
+
+    if (detail.activityType === "Event"){
+        for(var i = 0; i < campaign.eventActivities.length; i++){
+            if( campaign.eventActivities[i]._id.toString() === detail.activityID){
+                campaign.eventActivities[i].swordRecordRawId = detail.record
+            }
+        }
+    }
+
+    return campaign.save()
+}
+
 const getActivities = async(detail) =>{
     var campaign = await Campaign.findOne({campaignID: detail.campaignID})
     var activities = []
@@ -420,4 +435,4 @@ const getActivity = async(detail) =>{
     }
 }
 
-module.exports = {createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, sendSwordOutreach}
+module.exports = {createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, sendSwordOutreach, saveSwordOutreachRecord}
