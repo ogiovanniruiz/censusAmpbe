@@ -108,6 +108,15 @@ const getscriptDetailsReport = async (req, res, next) => {
     }
 }
 
+const getEventsSummaryReport = async (req, res, next) => {
+    try {
+        res.send(await campaignService.getEventsSummaryReport(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 const getCustomCrossTabReport = async (req, res, next) => {
     try {
         res.send(await campaignService.getCustomCrossTabReport(req.body))
@@ -129,5 +138,6 @@ module.exports = {createCampaign,
                   getOrgSummaryReport,
                   getActivitiesSummaryReport,
                   getscriptDetailsReport,
+                  getEventsSummaryReport,
                   getCustomCrossTabReport
                 };

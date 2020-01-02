@@ -9,5 +9,6 @@ router.post('/deleteActivity', activityController.deleteActivity)
 router.post('/getActivity', activityController.getActivity)
 router.post('/completeActivity', activityController.completeActivity)
 router.post('/sendSwordOutreach', activityController.sendSwordOutreach)
+router.post('/saveSwordOutreachRecord', activityController.saveSwordOutreachRecord)
 
 module.exports = router;
