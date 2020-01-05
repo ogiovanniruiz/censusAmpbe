@@ -261,32 +261,25 @@ const completeActivity = async(detail) =>{
 }
 
 const sendSwordOutreach = async(detail) =>{
-    var swordOutreach = "https://swordoutreachapi.azurewebsites.net/report"
-    var tokenStr = {headers: {'Content-Type': 'application/json', 'x-auth': 'fjkcxq3908daas43980120ahdnf2084mg048201a18nffl4'}};
-    var data = await JSON.stringify(detail.report);
+    var tokenStr = {'headers': {'Content-Type': 'application/json', 'x-auth': 'fjkcxq3908daas43980120ahdnf2084mg048201a18nffl4'}};
 
-    var SwordOutreachResults = await axios.post(swordOutreach, data, tokenStr).then(response => {
-        return response
+    var SwordOutreachResults = await axios.post("https://swordoutreachapi.azurewebsites.net/report", detail.report, tokenStr).then(async response => {
+
+        var campaign = await Campaign.findOne({campaignID: detail.campaignID})
+        if (detail.activityType === "Event"){
+            for(var i = 0; i < campaign.eventActivities.length; i++){
+                if( campaign.eventActivities[i]._id.toString() === detail.activityID){
+                    campaign.eventActivities[i].swordRecordRawId = response.data.record
+                }
+            }
+        }
+        return campaign.save()
+
     }).catch(error => {
         return error
     });
 
     return SwordOutreachResults
-}
-
-const saveSwordOutreachRecord = async(detail) =>{
-
-    var campaign = await Campaign.findOne({campaignID: detail.campaignID})
-
-    if (detail.activityType === "Event"){
-        for(var i = 0; i < campaign.eventActivities.length; i++){
-            if( campaign.eventActivities[i]._id.toString() === detail.activityID){
-                campaign.eventActivities[i].swordRecordRawId = detail.record
-            }
-        }
-    }
-
-    return campaign.save()
 }
 
 const getActivities = async(detail) =>{
@@ -435,4 +428,4 @@ const getActivity = async(detail) =>{
     }
 }
 
-module.exports = {createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, sendSwordOutreach, saveSwordOutreachRecord}
+module.exports = {createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, sendSwordOutreach}
