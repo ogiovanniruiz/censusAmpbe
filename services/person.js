@@ -51,10 +51,14 @@ const runMatch = async(data)=>{
                 if(headers[j] === "unit") {
 
                     person.address.unit = currentLine[j]
-                    for(var k = 0; person.canvassContactHistory.length; k++){
-                        person.canvassContactHistory[k].refused = false;
-                        person.canvassContactHistory[k].nonResponse = false;
-                    } 
+                    if(person.canvassContactHistory){
+                        for(var k = 0; k < person.canvassContactHistory.length; k++){
+                            person.canvassContactHistory[k].refused = false;
+                            person.canvassContactHistory[k].nonResponse = false;
+                        } 
+
+                    }
+
                     person.save()
 
                 }  
