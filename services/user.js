@@ -1,5 +1,7 @@
+var PasswordReset = require('../models/passwordreset/passwordreset')
 var Person = require('../models/people/person')
 var Campaign = require('../models/campaigns/campaign')
+var nodeMailer = require('nodemailer');
 const sha256 =  require('sha256')
 var jwt = require('jsonwebtoken');
 
@@ -53,6 +55,70 @@ const registerUser = async(regDetail) => {
 
     } catch(e){
         throw new Error(e.message)
+    }
+}
+
+const passwordReset = async(email) => {
+    var person = await Person.findOne({'user.loginEmail': email.email});
+
+    if (person){
+        if (person.user.password) {
+            var personEmail = {email: email.email}
+            try {
+                var reset = new PasswordReset(personEmail);
+                reset.save();
+
+                let transporter = nodeMailer.createTransport({
+                    host: 'smtp.gmail.com',
+                    port: 465,
+                    secure: true,
+                    auth: {
+                        user: 'support@ieunited.org',
+                        pass: '7EA9e666!'
+                    }
+                });
+
+                let mailOptions = {
+                    to: reset.email,
+                    subject: 'Password Reset Instructions',
+                    html: "Someone has requested a password reset for the following account:" + "reset.email" + "<br><br>" +
+                        "If this was a mistake, just ignore this email and nothing will happen." + "<br><br>" +
+                        "Click this link to set a new password: " + "<a href='https://outreach.censusie.org/passwordreset/?upr="+reset._id+"'>set a password here.</a>"
+                };
+
+                transporter.sendMail(mailOptions, (error, info) => {
+                    if (error) {
+                        return console.log(error);
+                    }
+                    console.log('Message %s sent: %s', info.messageId, info.response);
+                });
+
+                return {msg: "Email Sent"}
+
+            } catch(e){
+                throw new Error(e.message)
+            }
+        } else {
+            return {msg: "OAuth"}
+        }
+    } else {
+        return {msg: "User not found"}
+    }
+}
+
+
+const setNewPassword = async(details) => {
+    try{
+        var passwordResetItem = await PasswordReset.findOne({'_id': details.upr});
+        var person = await Person.findOne({'user.loginEmail': passwordResetItem.email});
+        var hashPassword = sha256(details.password)
+
+        person.user.password = hashPassword;
+        person.save()
+
+        return PasswordReset.remove({_id: details.upr}).exec();
+    }catch(e){
+        return ''
     }
 }
 
@@ -160,7 +226,9 @@ module.exports = {
                   submitAgreement,
                   checkVersion,
                   loginUser, 
-                  registerUser, 
+                  registerUser,
+                  passwordReset,
+                  setNewPassword,
                   getOauth, 
                   registerOauth, 
                   getAllUsers, 

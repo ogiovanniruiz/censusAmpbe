@@ -17,7 +17,7 @@ var geocoder = NodeGeocoder(options);
 const generateLink = async(petitionDetail) =>{
 
     var rdr = new Rdr(petitionDetail);
-    rdr.exp = Math.floor(Date.now() / 1000) + 1209600
+    rdr.exp = Math.floor(Date.now() / 1000) + 2592000
     rdr.save()
 
 

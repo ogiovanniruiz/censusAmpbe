@@ -5,6 +5,48 @@ var mongoose = require('mongoose');
 var Target = require('../models/targets/target')
 var Script = require ('../models/campaigns/script')
 
+var languages = ["arabic",
+    "armenian",
+    "assyrian_neo_aramaic",
+    "cantonese",
+    "chaldean_neo_aramaic",
+    "chinese",
+    "farsi",
+    "filipino",
+    "hindi",
+    "hmong",
+    "iu_mien",
+    "japanese",
+    "khmer",
+    "korean",
+    "mandarin",
+    "min_nan_chinese",
+    "portuguese",
+    "punjabi",
+    "russian",
+    "spanish",
+    "tagalog",
+    "telugu",
+    "thai",
+    "ukrainian",
+    "vietnamese"]
+
+var htcGroups = ["immigrants_refugees",
+    "middle_eastern_and_north_africa",
+    "homeless_individuals_and_famili",
+    "farmworkers",
+    "veterans",
+    "latinos",
+    "asian_americans_pacific_islande",
+    "african_americans",
+    "native_americans_tribal_communi",
+    "children_ages_0_5",
+    "lesbian_gay_bisexual_transgende",
+    "limited_english_proficient_indi",
+    "people_with_disabilities",
+    "seniorsolder_adults",
+    "low_broadband_subscription_rate"]
+
 const createCampaign = async(newCampaignDetail) =>{
     var campaignDetail = {name: newCampaignDetail.name,
                           description: newCampaignDetail.description,
@@ -275,6 +317,72 @@ const getActivitiesSummaryReport = async(details) =>{
     return {knocks: knocks}
 }
 
+const getEventsSummaryReport = async(details) =>{
+    var campaign = await Campaign.findOne({campaignID: details.campaignID})
+
+    var eventActivities = campaign.eventActivities
+
+    var events = {};
+    for (var i = 0; i < eventActivities.length; i++) {
+        var eventName = eventActivities[i].orgCreatorName;
+        if (!events[eventName]) {
+            events[eventName] = [];
+        }
+        events[eventName].push(eventActivities[i]);
+    }
+
+    var eventsPerOrg = [];
+    for (var event in events) {
+
+        var numOfEvents = await events[event].length
+
+        var total_number_of_impressions = 0;
+        var total_number_of_paid_staffvolun = 0;
+        var language = {}
+        for (var langCount = 0; langCount < languages.length; langCount++) {
+            language[languages[langCount]] = 0;
+        }
+        var htcGroup = {}
+        for (var htcCount = 0; htcCount < htcGroups.length; htcCount++) {
+            htcGroup[htcGroups[htcCount]] = 0;
+        }
+        var total_htc_of_impressions = 0;
+        var funding_volunteer_hours = 0;
+
+        for (var ii = 0; ii < numOfEvents; ii++) {
+            if(events[event][ii].swordForm) {
+                total_number_of_impressions += parseInt(events[event][ii].swordForm.total_number_of_impressions);
+                total_number_of_paid_staffvolun += parseInt(events[event][ii].swordForm.total_number_of_paid_staffvolun);
+                for (var lang in language) {
+                    if (events[event][ii].swordForm["lang_" + lang]) {
+                        language[lang] += parseInt(events[event][ii].swordForm["lang_" + lang])
+                    }
+                }
+                for (var htc in htcGroup) {
+                    if (events[event][ii].swordForm[htc]) {
+                        htcGroup[htc] += parseInt(events[event][ii].swordForm[htc])
+                    }
+                }
+                total_htc_of_impressions += parseInt(events[event][ii].swordForm.total_htc_of_impressions);
+                funding_volunteer_hours += parseInt(events[event][ii].swordForm.funding_volunteer_hours);
+            }
+        }
+
+        await eventsPerOrg.push({
+            org: event,
+            numOfEvents: numOfEvents,
+            total_number_of_impressions: total_number_of_impressions,
+            total_number_of_paid_staffvolun: total_number_of_paid_staffvolun,
+            language,
+            htcGroup,
+            total_htc_of_impressions: total_htc_of_impressions,
+            funding_volunteer_hours: funding_volunteer_hours
+        })
+    }
+
+    return eventsPerOrg
+}
+
 const getCustomCrossTabReport = async(details, org, option1, option2) => {
     /*reports = [];
 
@@ -327,5 +435,6 @@ module.exports = {
                   getReport,
                   getOrgSummaryReport,
                   getActivitiesSummaryReport,
+                  getEventsSummaryReport,
                   getCustomCrossTabReport
                 }

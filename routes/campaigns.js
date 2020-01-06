@@ -13,6 +13,7 @@ router.post('/removeOrg', campaignController.removeOrg)
 router.post('/getReport', campaignController.getReport)
 router.post('/getOrgSummaryReport', campaignController.getOrgSummaryReport)
 router.post('/getActivitiesSummaryReport', campaignController.getActivitiesSummaryReport)
+router.post('/getEventsSummaryReport', campaignController.getEventsSummaryReport)
 router.post('/getCustomCrossTabReport', campaignController.getCustomCrossTabReport)
 
 

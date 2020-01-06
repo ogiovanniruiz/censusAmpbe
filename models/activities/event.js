@@ -14,7 +14,8 @@ var EventSchema = new Schema(
     location: {},
     assetID: {type: String},
     locationName: {type: String},
-    swordForm: {}
+    swordForm: {},
+    swordRecordRawId: {type: String},
   }
 );
 
