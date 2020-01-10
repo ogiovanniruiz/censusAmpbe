@@ -34,7 +34,7 @@ const getCanvassParcels = async(detail) =>{
         var parcelSearchQuery = {
             "properties.assessorCodes.primary": {$ne: null},
             "properties.assessorCodes.realUse": {$ne: null},
-            $or: [{"properties.assessorCodes.realUse":"R1"},{"properties.assessorCodes.realUse":"SFR"}]
+            //$or: [{"properties.assessorCodes.realUse":"R1"},{"properties.assessorCodes.realUse":"SFR"}]
             //"properties.type": "RESIDENTIAL",
            }
 
