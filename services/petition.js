@@ -4,6 +4,7 @@ var parser = require('parse-address');
 var jwt = require('jsonwebtoken');
 var Campaign = require('../models/campaigns/campaign') 
 var Rdr  = require('../models/activities/rdr')
+var async = require('async');
 
 var options = {
     provider: 'google',
@@ -93,7 +94,6 @@ const createPerson = async(detail) =>{
             if(detail.city) addressToGeocode = addressToGeocode + " " + detail.city + " CA"
             if(detail.zip) addressToGeocode = addressToGeocode + " " + detail.zip
             
-
             await geocoder.geocode(addressToGeocode, function(err, res) {
                 if(err) {console.log(err)}
                 if(res) {
@@ -111,8 +111,6 @@ const createPerson = async(detail) =>{
         
         person.save()
         return {status: "NEWPERSON", person: person};
-        
-
     }
     
     return {status: "EXISTS", person: foundPeople};  
@@ -166,14 +164,20 @@ const updatePerson = async(detail) =>{
 
 
 const uploadPetitions = async(data) =>{
-    console.log(data)
+
+    var orgID = data.body.orgID
+    var activityID = data.body.activityID
+    var userID = data.body.userID
+    var campaignID = parseInt(data.body.campaignID)
+    var scriptID = data.body.scriptID
+        
     var strangeFile = data.files[0].buffer.toString('utf8')
     var lines = (strangeFile).split("\n");
     var headers = lines[0].split(",");
     var peopleObjs = []
 
     for(var i = 0; i < lines.length; i++ ){
-        let personObj = {address: {}}
+        let personObj = {address: {}, preferredMethodContact: []}
         let currentLine = lines[i].split(",")
 
         if(currentLine.length <= 1){break}
@@ -193,6 +197,13 @@ const uploadPetitions = async(data) =>{
         }
 
         for(var j = 0; j < headers.length; j++){ 
+            if(headers[j] === "unit") {
+                personObj.address["unit"] = currentLine[j].toUpperCase()
+                break;
+            }
+        }
+
+        for(var j = 0; j < headers.length; j++){ 
             if(headers[j] === "address"){
 
                 var fullAddressString = currentLine[j] + " " + personObj["address"]["city"] + " " + "CA"
@@ -204,19 +215,16 @@ const uploadPetitions = async(data) =>{
                 if(address.street) personObj.address.street = address.street.toUpperCase()
                 if(address.type) personObj.address.suffix = address.type.toUpperCase()
                 if(address.prefix) personObj.address.prefix = address.prefix.toUpperCase()
-                if(address.sec_unit_type && address.sec_unit_num ){personObj['address']['unit'] =  address.sec_unit_type.toUpperCase() + " " + address.sec_unit_num.toUpperCase()}
+                //if(address.sec_unit_type && address.sec_unit_num ){personObj['address']['unit'] =  address.sec_unit_type.toUpperCase() + " " + address.sec_unit_num.toUpperCase()}
 
                 break
             }
-
         }
         
-
         for(var j = 0; j < headers.length; j++){       
             if(headers[j] === "county") {
                 personObj["address"]["county"] = currentLine[j].toUpperCase()
-            }
-            else if (headers[j] === "phones"){
+            }else if (headers[j] === "phones"){
                 if(currentLine[j]){personObj[headers[j]] = currentLine[j].replace("(", "").replace(")", "").replace("-","").replace("-","")}
             }else if(headers[j] === "firstName"){
                 personObj["firstName"] = currentLine[j]
@@ -227,13 +235,113 @@ const uploadPetitions = async(data) =>{
             }
         }
 
+        var isoDate;
+
+        
+        for(var k = 0; k < headers.length; k++){
+            if(headers[k] === "pmc_phone"){
+                if(currentLine[k] === "Y"){
+                    personObj['preferredMethodContact'].push({orgID: orgID, optInProof: activityID, method: "PHONE"})
+                }
+            }else if(headers[k] === "pmc_email"){
+                if(currentLine[k] === "Y"){
+                    personObj['preferredMethodContact'].push({orgID: orgID, optInProof: activityID, method: "EMAIL"})
+                }  
+            }else if(headers[k] === "pmc_text"){
+                if(currentLine[k] === "Y"){
+                    personObj['preferredMethodContact'].push({orgID: orgID, optInProof: activityID, method: "TEXT"})
+                }
+            } else if(headers[k] === "date"){
+                if(currentLine[k] != "date" && currentLine[k] != ""){
+                    isoDate = new Date(currentLine[k]+"T00:00:00.000Z").toISOString()
+                }
+            }
+        }
+
+        personObj['petitionContactHistory'] = [{  campaignID: campaignID, 
+                                                  orgID: orgID, 
+                                                  activityID: activityID, 
+                                                  identified: true,
+                                                  idHistory: [{date: isoDate, 
+                                                               scriptID: scriptID, 
+                                                               idBy: userID, 
+                                                               idResponses: [{question: "Complete the census form", responses: "Yes", idType: "POSITIVE"},
+                                                                             {question: "Tell friends and family about census 2020", responses: "Yes", idType: "POSITIVE"}]
+                                                              }]
+                                                }]
+
         if(personObj['firstName'] != "firstName" && personObj["firstName"] != "" && personObj ['firstName'] != undefined){
             peopleObjs.push(personObj)
         }
     }
 
-    console.log(peopleObjs)
+    var checkResults = await checkExisting(peopleObjs)
 
+    for(var j = 0; j < checkResults.newPeople.length; j++){
+        var person = new Person(checkResults.newPeople[j])
+        person.save()
+        checkResults.newPeople[j]._id = person._id
+    }
+
+    var fail = 0
+    var success = 0
+
+    async.eachSeries(checkResults.newPeople, function(newPerson, next){
+
+        let addressString = ""
+
+        if(newPerson.address.streetNum) addressString = addressString + newPerson.address.streetNum + " "
+        if(newPerson.address.prefix) addressString = addressString + newPerson.address.prefix + " "
+        if(newPerson.address.street) addressString = addressString + newPerson.address.street.replace(",", " ") + " "
+        if(newPerson.address.suffix) addressString = addressString + newPerson.address.suffix + " "
+        if(newPerson.address.unit) addressString = addressString + newPerson.address.unit + " "
+        if(newPerson.address.city) addressString = addressString + newPerson.address.city + " "
+        if(newPerson.address.zip) addressString = addressString + newPerson.address.zip
+
+        geocoder.geocode(addressString, async function(err, res) {
+            
+            if(err) {
+                fail++
+                console.log(err)
+            }
+            if(res) {
+                if(res[0]) {
+                    success++;
+                    
+                    let person = await Person.findOne({"_id": newPerson._id})
+                    person.address.location = {coordinates: [res[0].longitude, res[0].latitude], type: "Point"}
+                    person.save()
+                }
+                else {
+                    fail++
+                }
+            }
+            console.log("SUCCESS: ", success, "FAILED: ", fail)
+            next();
+        });
+    })
+
+    return {msg: "PROCESSING",  existingPeople: checkResults.existingPeople, newPeople: checkResults.newPeople.length}
+}
+
+const checkExisting = async(people) =>{
+
+    var existingPeople = [];
+    var newPeople = [];
+
+    for(var i = 0; i < people.length; i++){
+
+        let existingPerson = await Person.findOne({"firstName": people[i].firstName, "middleName": people[i].middleName, "lastName": people[i].lastName})
+    
+        if(existingPerson){
+            if(existingPerson.phones.length > 0){existingPeople.push(existingPerson)
+            }else{newPeople.push(people[i])}
+        }else{
+            newPeople.push(people[i])
+        }        
+    }
+
+    return ({existingPeople: existingPeople, newPeople: newPeople})
 }
 
 module.exports = {createPerson, updatePerson, getNumSub, generateLink, processLink, uploadPetitions}

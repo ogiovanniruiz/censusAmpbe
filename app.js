@@ -28,7 +28,7 @@ var corsOptions = { methods: 'GET,POST,PATCH,DELETE,OPTIONS',
                     optionsSuccessStatus: 200,
                     origin: ""}
 
-process.env.version = "0.5.4"
+process.env.version = "0.5.6"
 
 if(app.get('env') === 'census'){
   process.env.app_sid =  'APcfa84370fade47d9de6493f08e73b6fa'
@@ -86,6 +86,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
