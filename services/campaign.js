@@ -284,6 +284,8 @@ const getOrgSummaryReport = async(details) =>{
                             campaign.canvassActivities[ii].activityMetaData.nonResponses[b].toLowerCase().includes('/con') ||
                             campaign.canvassActivities[ii].activityMetaData.nonResponses[b].toLowerCase().includes('con/') ||
 
+                            campaign.canvassActivities[ii].activityMetaData.nonResponses[b].toLowerCase().includes('spanish') ||
+
                             campaign.canvassActivities[ii].activityMetaData.nonResponses[b].toLowerCase().startsWith('und') ||
                             campaign.canvassActivities[ii].activityMetaData.nonResponses[b].toLowerCase().includes(' und') ||
                             campaign.canvassActivities[ii].activityMetaData.nonResponses[b].toLowerCase().includes('und ') ||
@@ -295,7 +297,7 @@ const getOrgSummaryReport = async(details) =>{
                     }
                 }
             }
-            var impressionsCount = impressions.length;
+            var impressionsCount = parseInt(impressions.length) + parseInt(totalIdentified);
         }
 
         if (details['reportType'] === 'petition'){
