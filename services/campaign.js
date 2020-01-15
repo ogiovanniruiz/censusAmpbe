@@ -373,6 +373,8 @@ const getActivitiesSummaryReport = async(details) =>{
                     canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('/con') ||
                     canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('con/') ||
 
+                    canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('spanish') ||
+
                     canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().startsWith('und') ||
                     canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes(' und') ||
                     canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('und ') ||
