@@ -237,6 +237,7 @@ const uploadPetitions = async(data) =>{
 
         var isoDate;
 
+        
         for(var k = 0; k < headers.length; k++){
             if(headers[k] === "pmc_phone"){
                 if(currentLine[k] === "Y"){
@@ -251,7 +252,7 @@ const uploadPetitions = async(data) =>{
                     personObj['preferredMethodContact'].push({orgID: orgID, optInProof: activityID, method: "TEXT"})
                 }
             } else if(headers[k] === "date"){
-                if(currentLine[k] != "date"){
+                if(currentLine[k] != "date" && currentLine[k] != ""){
                     isoDate = new Date(currentLine[k]+"T00:00:00.000Z").toISOString()
                 }
             }

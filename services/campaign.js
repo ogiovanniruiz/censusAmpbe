@@ -256,12 +256,29 @@ const getOrgSummaryReport = async(details) =>{
 
     for(var i = 0; i < orgs.length; i++){
         if (details['reportType'] === 'org'){
+            
             var totalIdentified = await Person.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.identified": true }).count()
             var totalRefused = await Person.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.identified": false, "canvassContactHistory.refused": true }).count()
             var totalNonResponse = await Person.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.identified": false, "canvassContactHistory.refused": false, "canvassContactHistory.nonResponse": true}).count()
 
-            var impressions = [];
+            var totalImpressions = await Person.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.identified": false, "canvassContactHistory.refused": false, "canvassContactHistory.nonResponse": true})
+
             var impressionsCount = 0;
+
+            
+            for(var j= 0; j < totalImpressions.length; j++){   
+                if(totalImpressions[j].canvassContactHistory[0].idHistory[0].idResponses[0]){
+                    if( totalImpressions[j].canvassContactHistory[0].idHistory[0].idResponses[0].responses.toLowerCase().includes('lit') ||
+                        totalImpressions[j].canvassContactHistory[0].idHistory[0].idResponses[0].responses.toLowerCase().includes('imp') ||
+                        totalImpressions[j].canvassContactHistory[0].idHistory[0].idResponses[0].responses.toLowerCase().includes('con') ||
+                        totalImpressions[j].canvassContactHistory[0].idHistory[0].idResponses[0].responses.toLowerCase().includes('spanish') ||
+                        totalImpressions[j].canvassContactHistory[0].idHistory[0].idResponses[0].responses.toLowerCase().includes('und')){                            
+                            impressionsCount = impressionsCount + 1
+                        }
+                }
+            }
+
+            /*j
 
             for(var ii = 0; ii < campaign.canvassActivities.length; ii++){
                 if(campaign.canvassActivities[ii].activityMetaData.orgIDs.includes(orgs[i]._id)){
@@ -297,7 +314,8 @@ const getOrgSummaryReport = async(details) =>{
                     }
                 }
             }
-            var impressionsCount = parseInt(impressions.length) + parseInt(totalIdentified);
+            */
+            impressionsCount = impressionsCount + parseInt(totalIdentified)//parseInt(impressions.length) + parseInt(totalIdentified);
         }
 
         if (details['reportType'] === 'petition'){
@@ -322,6 +340,7 @@ const getOrgSummaryReport = async(details) =>{
 
         var total = await parseInt(totalIdentified) + parseInt(totalRefused) + parseInt(totalNonResponse)
         await knocksPerOrg.push({org: orgs[i].name, identified: totalIdentified, refuses: totalRefused, impressions: impressionsCount, nonResponses: totalNonResponse, total: total})
+        
     }
 
     var identifiedTotals = 0;
