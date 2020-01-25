@@ -253,6 +253,7 @@ const uploadPetitions = async(data) =>{
                 }
             } else if(headers[k] === "date"){
                 if(currentLine[k] != "date" && currentLine[k] != ""){
+                    console.log(currentLine[k])
                     isoDate = new Date(currentLine[k]+"T00:00:00.000Z").toISOString()
                 }
             }
@@ -334,8 +335,9 @@ const checkExisting = async(people) =>{
         let existingPerson = await Person.findOne({"firstName": people[i].firstName, "middleName": people[i].middleName, "lastName": people[i].lastName})
     
         if(existingPerson){
-            if(existingPerson.phones.length > 0){existingPeople.push(existingPerson)
-            }else{newPeople.push(people[i])}
+            //if(existingPerson.phones.length > 0){existingPeople.push(existingPerson)
+           // }else{newPeople.push(people[i])}
+           existingPeople.push(existingPerson)
         }else{
             newPeople.push(people[i])
         }        

@@ -179,8 +179,6 @@ const uploadMembers = async(detail) =>{
         if(newPerson.address.unit) addressString = addressString + newPerson.address.unit + " "
         if(newPerson.address.city) addressString = addressString + newPerson.address.city + " "
         if(newPerson.address.zip) addressString = addressString + newPerson.address.zip
-
-       // console.log(addressString)
         
         geocoder.geocode(addressString, async function(err, res) {
             
