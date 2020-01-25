@@ -3,6 +3,7 @@ var Parcel = require('../models/parcels/parcel')
 var Target = require('../models/targets/target')
 var async = require('async')
 var parser = require('parse-address'); 
+var Report = require('../models/reports/report')
 
 
 var NodeGeocoder = require('node-geocoder');

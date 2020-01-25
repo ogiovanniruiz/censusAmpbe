@@ -274,7 +274,7 @@ const getOrgSummaryReport = async(details) =>{
                         totalImpressions[j].canvassContactHistory[0].idHistory[0].idResponses[0].responses.toLowerCase().includes('spanish') ||
                         totalImpressions[j].canvassContactHistory[0].idHistory[0].idResponses[0].responses.toLowerCase().includes('und')){                            
                             impressionsCount = impressionsCount + 1
-                        }
+                    }
                 }
             }
 

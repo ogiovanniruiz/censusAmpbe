@@ -18,6 +18,7 @@ var textingRouter = require('./routes/texting')
 var phonebankRouter = require('./routes/phonebank')
 var canvassRouter = require('./routes/canvass')
 var petitionRouter = require('./routes/petition')
+var reportRouter = require('./routes/reports')
 
 
 var app = express();
@@ -103,5 +104,6 @@ app.use('/texting', textingRouter)
 app.use('/phonebank', phonebankRouter)
 app.use('/canvass', canvassRouter)
 app.use('/petition', petitionRouter)
+app.use('/report', reportRouter)
 
 module.exports = app;

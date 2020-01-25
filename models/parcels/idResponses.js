@@ -4,7 +4,7 @@ var Schema = mongoose.Schema;
 var IdResponsesSchema = new Schema(
     { question: {type: String},
       responses: {},
-      idType: {type: String, enum: ["POSITIVE", "NEUTRAL", "NEGATIVE", "NONRESPONSE", "REFUSED", "NONE"]},
+      idType: {type: String, enum: ["POSITIVE", "NEUTRAL", "NEGATIVE", "NONRESPONSE", "REFUSED", "NONE", "IMPRESSION"]},
     }, 
 );
 
