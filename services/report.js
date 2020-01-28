@@ -55,4 +55,107 @@ const updateReport = async(org) => {
     }
 }
 
-module.exports = {updateReport}
+const getCanvassSummaryReport = async(details) =>{
+    var reports = await Report.find({campaignID: details.campaignID, orgID: details.orgID, activityType: 'CANVASS'})
+
+    var knocksPerOrg = []
+
+    var identifiedCount  = 0;
+    var refusedCount = 0;
+    var nonResponseCount = 0;
+    var impressionsCount = 0;
+    var impressions = 0;
+
+    for(var i = 0; i < reports.length; i++){
+        if (reports[i].idResponses[0]) {
+            if (reports[i].idResponses[0].idType === 'POSITIVE' ||
+                reports[i].idResponses[0].idType === 'NEUTRAL' ||
+                reports[i].idResponses[0].idType === 'NEGATIVE'
+            ) {
+                identifiedCount = identifiedCount + 1
+            }
+            if (reports[i].idResponses[0].idType === 'REFUSED') {
+                refusedCount = refusedCount + 1
+            }
+            if (reports[i].idResponses[0].responses.toLowerCase().includes('lit') ||
+                reports[i].idResponses[0].responses.toLowerCase().includes('imp') ||
+                reports[i].idResponses[0].responses.toLowerCase().includes('con') ||
+                reports[i].idResponses[0].responses.toLowerCase().includes('spanish') ||
+                reports[i].idResponses[0].responses.toLowerCase().includes('und')) {
+                impressions = impressions + 1
+            }
+            if (reports[i].idResponses[0].idType === 'NONRESPONSE') {
+                nonResponseCount = nonResponseCount + 1
+            }
+        }
+    }
+
+    impressionsCount = impressions + parseInt(identifiedCount)
+    var total = await parseInt(identifiedCount) + parseInt(refusedCount) + parseInt(nonResponseCount)
+
+    await knocksPerOrg.push({org: details.orgName, identified: identifiedCount, refuses: refusedCount, impressions: impressionsCount, nonResponses: nonResponseCount, total: total})
+    return knocksPerOrg
+}
+
+const getPetitionSummaryReport = async(details) =>{
+    var reports = await Report.find({campaignID: details.campaignID, orgID: details.orgID, activityType: 'PETITION'})
+
+    var knocksPerOrg = []
+
+    var identifiedCount  = 0;
+
+    for(var i = 0; i < reports.length; i++){
+        if (reports[i].idResponses[0]) {
+            if (reports[i].idResponses[0].idType === 'POSITIVE' ||
+                reports[i].idResponses[0].idType === 'NEUTRAL' ||
+                reports[i].idResponses[0].idType === 'NEGATIVE'
+            ) {
+                identifiedCount = identifiedCount + 1
+            }
+        }
+    }
+
+    await knocksPerOrg.push({org: details.orgName, identified: identifiedCount})
+    return knocksPerOrg
+}
+
+const getOverallSummaryReport = async(details) =>{
+    var reports = await Report.find({campaignID: details.campaignID, orgID: details.orgID, $or:[{activityType:'CANVASS'}, {activityType:'PETITION'}]})
+
+    var knocksPerOrg = []
+
+    var identifiedCount  = 0;
+    var refusedCount = 0;
+    var nonResponseCount = 0;
+
+    for(var i = 0; i < reports.length; i++){
+        if (reports[i].idResponses[0]) {
+            if (reports[i].idResponses[0].idType === 'POSITIVE' ||
+                reports[i].idResponses[0].idType === 'NEUTRAL' ||
+                reports[i].idResponses[0].idType === 'NEGATIVE'
+            ) {
+                identifiedCount = identifiedCount + 1
+            }
+            if (reports[i].idResponses[0].idType === 'REFUSED') {
+                refusedCount = refusedCount + 1
+            }
+            if (reports[i].idResponses[0].idType === 'NONRESPONSE') {
+                nonResponseCount = nonResponseCount + 1
+            }
+        }
+    }
+
+    var total = await parseInt(identifiedCount) + parseInt(refusedCount) + parseInt(nonResponseCount)
+
+    await knocksPerOrg.push({org: details.orgName, identified: identifiedCount, refuses: refusedCount, nonResponses: nonResponseCount, total: total})
+    return knocksPerOrg
+}
+
+
+
+
+
+module.exports = {updateReport,
+                  getCanvassSummaryReport,
+                  getPetitionSummaryReport,
+                  getOverallSummaryReport}
