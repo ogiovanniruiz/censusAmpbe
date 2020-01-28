@@ -9,4 +9,34 @@ const updateReport = async (req,res,next) =>{
     }
 }
 
-module.exports = { updateReport};
+const getCanvassSummaryReport = async (req,res,next) =>{
+    try{
+        res.send(await ReportService.getCanvassSummaryReport(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const getPetitionSummaryReport = async (req,res,next) =>{
+    try{
+        res.send(await ReportService.getPetitionSummaryReport(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const getOverallSummaryReport = async (req,res,next) =>{
+    try{
+        res.send(await ReportService.getOverallSummaryReport(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {updateReport,
+                  getCanvassSummaryReport,
+                  getPetitionSummaryReport,
+                  getOverallSummaryReport};
