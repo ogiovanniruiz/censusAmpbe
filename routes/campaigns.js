@@ -16,5 +16,8 @@ router.post('/getActivitiesSummaryReport', campaignController.getActivitiesSumma
 router.post('/getEventsSummaryReport', campaignController.getEventsSummaryReport)
 router.post('/getCustomCrossTabReport', campaignController.getCustomCrossTabReport)
 
+router.post('/updateParentOrg', campaignController.updateParentOrg)
+router.post('/getParentOrg', campaignController.getParentOrg)
+
 
 module.exports = router;

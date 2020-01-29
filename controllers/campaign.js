@@ -126,7 +126,27 @@ const getCustomCrossTabReport = async (req, res, next) => {
     }
 }
 
-module.exports = {createCampaign, 
+const getParentOrg = async (req, res, next) => {
+    try {
+        res.send(await campaignService.getParentOrg(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const updateParentOrg = async (req, res, next) => {
+    try {
+        res.send(await campaignService.updateParentOrg(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {getParentOrg,
+                updateParentOrg,
+                    createCampaign, 
                   getAllCampaigns, 
                   getCampaign, 
                   requestCampaign, 

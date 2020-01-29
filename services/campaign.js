@@ -68,7 +68,6 @@ const createCampaign = async(newCampaignDetail) =>{
 }
 
 const getAllCampaigns = async(userDetail) =>{
-    
     try {
         var person = await Person.findOne({'user._id': userDetail.userID}).lean()
         
@@ -202,6 +201,29 @@ const removeOrg = async(detail) =>{
     }
 
 }
+
+const updateParentOrg = async(detail) =>{
+    try {
+        console.log(detail)
+        var campaign = await Campaign.findOne({campaignID: detail.campaignID})
+        campaign.parentOrg = detail.newParentOrg
+        campaign.save()
+
+    } catch(e){
+        throw new Error(e.message)
+    }
+}
+
+const getParentOrg = async(campaignDetail) =>{
+    try {
+        var campaign = await Campaign.findOne({campaignID: campaignDetail.campaignID})
+        return {parentOrg: campaign.parentOrg}
+    } catch(e){
+        throw new Error(e.message)
+    }
+}
+
+
 
 const getReport = async(campaign) =>{
 
@@ -519,6 +541,8 @@ const getCustomCrossTabReport = async(details, org, option1, option2) => {
 }
 
 module.exports = {
+                getParentOrg,
+                updateParentOrg,
                   createCampaign,
                   getAllCampaigns, 
                   getCampaign, 
