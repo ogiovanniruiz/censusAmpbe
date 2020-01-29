@@ -6,6 +6,15 @@ var IdHistory = require('../models/parcels/idHistory')
 var Person = require('../models/people/person')
 var async = require('async')
 var parser = require('parse-address')
+var NodeGeocoder = require('node-geocoder');
+
+var options = {
+    provider: 'google',
+    httpAdapter: 'https', 
+    apiKey: 'AIzaSyAC9-1I1ktfv9eC0THZk8N77-HEd-bcZEY', 
+    formatter: null     
+  };
+var geocoder = NodeGeocoder(options);
 
 const getParcels = async(parcelDetail) =>{
     try{
@@ -162,18 +171,6 @@ const completeHousehold = async(detail) => {
 
     try{
         var parcel = await Parcel.findOne({'properties.location.coordinates': detail.parcel.properties.location.coordinates});
-        /*
-        idHistory = {idBy: detail.userID, 
-                     locationIdentified: detail.locationIdentified}
-
-        var canvassContactHistory = {
-                                     campaignID: detail.campaignID,
-                                     activityID: detail.activityID,
-                                     orgID: detail.orgID,
-                                     idHistory: idHistory
-                                    }
-                                    */
-
         parcel.properties.canvassContactHistory.push(detail.canvassContactHistory)
         return parcel.save()
 
@@ -188,17 +185,30 @@ const deleteAsset = async(assetDetail) => {
     } catch(e){throw new Error(e.message)}
 }
 
-const search = async(parcelDetail) => {
+const search = async(address) => {
     try{
-        searchData = {}
 
-        if(parcelDetail.streetNum) searchData['properties.address.streetNum'] = parcelDetail.streetNum
-        if(parcelDetail.street) searchData['properties.address.street'] = parcelDetail.street
-        if(parcelDetail.city) searchData['properties.address.city'] = parcelDetail.city
-        if(parcelDetail.suffix) searchData['properties.address.suffix'] = parcelDetail.suffix
-        if(parcelDetail.zip) searchData['properties.address.zip'] = parcelDetail.zip
-        
-        return Parcel.find(searchData)
+        var coords = []
+        var status = ""
+        var formattedAddress = ""
+        await geocoder.geocode(address, async function(err, res) {
+            if(err) {
+                status = "Fail"   
+            }
+            if(res) {
+                if(res[0]) {
+                    console.log(res)
+                    coords = [res[0].longitude, res[0].latitude]
+                    formattedAddress = res[0].formattedAddress
+                    status = "Success"
+                }
+                else {
+                    status = "Fail"
+                }
+            }
+        });
+
+        return {coords: coords, status: status, formattedAddress: formattedAddress}
     } catch(e){throw new Error(e.message)}
 }
 

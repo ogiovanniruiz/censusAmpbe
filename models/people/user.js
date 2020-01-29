@@ -11,6 +11,7 @@ var UserSchema = new Schema(
     loginEmail: {type: String},
     globalScripts: Script.schema,
     userOrgs: [UserOrg.schema],
+    dataManager: [{camapignID: String}],
     userAgreements: [{version: String, date: {type: Date, default: Date.now}}],
     assetMapLvl: {type: String, enum: ['TRIAL', 'VOLUNTEER', 'ADMINISTRATOR'], default: "TRIAL"}
   }

@@ -72,6 +72,24 @@ const removeOrg = async (req, res, next) => {
     }
 }
 
+const getParentOrg = async (req, res, next) => {
+    try {
+        res.send(await campaignService.getParentOrg(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const updateParentOrg = async (req, res, next) => {
+    try {
+        res.send(await campaignService.updateParentOrg(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 module.exports = {createCampaign, 
                   getAllCampaigns, 
                   getCampaign, 
@@ -79,5 +97,7 @@ module.exports = {createCampaign,
                   getOrgCampaigns, 
                   getCampaignRequests, 
                   manageCampaignRequest,
-                  removeOrg
+                  removeOrg,
+                  updateParentOrg,
+                  getParentOrg
                 };

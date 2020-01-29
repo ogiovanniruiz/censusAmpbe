@@ -46,6 +46,9 @@ var htcGroups = ["immigrants_refugees",
     "low_broadband_subscription_rate"]
 
 const updateReport = async(org) => {
+    await Report.deleteMany({orgID: org._id})
+    console.log(org.name + "Reset")
+
     var people =  await People.find({"canvassContactHistory.orgID": org._id})
     var count = 0
 
@@ -184,24 +187,10 @@ const getCanvassSummaryReport = async(details) =>{
 }
 
 const getPetitionSummaryReport = async(details) =>{
-    var reports = await Report.find({campaignID: details.campaignID, orgID: details.orgID, activityType: 'PETITION'})
+    var petitionCount = await Report.find({campaignID: details.campaignID, orgID: details.orgID, activityType: 'PETITION'}).count()
 
     var knocksPerOrg = []
-
-    var identifiedCount  = 0;
-
-    for(var i = 0; i < reports.length; i++){
-        if (reports[i].idResponses[0]) {
-            if (reports[i].idResponses[0].idType === 'POSITIVE' ||
-                reports[i].idResponses[0].idType === 'NEUTRAL' ||
-                reports[i].idResponses[0].idType === 'NEGATIVE'
-            ) {
-                identifiedCount = identifiedCount + 1
-            }
-        }
-    }
-
-    await knocksPerOrg.push({org: details.orgName, identified: identifiedCount})
+    await knocksPerOrg.push({org: details.orgName, identified: petitionCount})
     return knocksPerOrg
 }
 

@@ -14,6 +14,7 @@ var CampaignSchema = new Schema(
   {
     campaignID: {type: Number},
     name: {type: String},
+    parentOrg: {type: String},
     orgIDs: [{type: String}],
     description: {type: String},
     active: {type: Boolean, default: true},
