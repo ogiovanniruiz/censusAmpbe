@@ -1,5 +1,49 @@
 var Report = require ('../models/reports/report')
 var People = require ('../models/people/person')
+var Organization = require('../models/organizations/organization')
+var Campaign = require('../models/campaigns/campaign');
+
+var languages = ["arabic",
+    "armenian",
+    "assyrian_neo_aramaic",
+    "cantonese",
+    "chaldean_neo_aramaic",
+    "chinese",
+    "farsi",
+    "filipino",
+    "hindi",
+    "hmong",
+    "iu_mien",
+    "japanese",
+    "khmer",
+    "korean",
+    "mandarin",
+    "min_nan_chinese",
+    "portuguese",
+    "punjabi",
+    "russian",
+    "spanish",
+    "tagalog",
+    "telugu",
+    "thai",
+    "ukrainian",
+    "vietnamese"]
+
+var htcGroups = ["immigrants_refugees",
+    "middle_eastern_and_north_africa",
+    "homeless_individuals_and_famili",
+    "farmworkers",
+    "veterans",
+    "latinos",
+    "asian_americans_pacific_islande",
+    "african_americans",
+    "native_americans_tribal_communi",
+    "children_ages_0_5",
+    "lesbian_gay_bisexual_transgende",
+    "limited_english_proficient_indi",
+    "people_with_disabilities",
+    "seniorsolder_adults",
+    "low_broadband_subscription_rate"]
 
 const updateReport = async(org) => {
     await Report.deleteMany({orgID: org._id})
@@ -58,10 +102,46 @@ const updateReport = async(org) => {
     }
 }
 
-const resetReport = async(details)=>{
+const getReport = async(campaign) =>{
+    var campaign = await Campaign.findOne({campaignID: campaign.campaignID})
+    var knocksPerActivity = []
 
+    for(var i = 0; i < campaign.canvassActivities.length; i++){
+        var histories = await People.find({"canvassContactHistory.activityID": campaign.canvassActivities[i]._id}).count()
+        knocksPerActivity.push({knocks: histories, activity: campaign.canvassActivities[i].activityMetaData.name})
+    }
 
+    var orgIDs = campaign.orgIDs
+    var orgs = await Organization.find({_id: {$in: orgIDs}})
 
+    var knocksPerOrg = []
+
+    for(var i = 0; i < orgs.length; i++){
+        var histories = await People.find({"canvassContactHistory.orgID": orgs[i]._id}).count()
+        var totalRefused = await People.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.refused": true }).count()
+        var totalNonResponse = await People.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.nonResponse": true ,  "canvassContactHistory.refused": false}).count()
+        var totalCompleted = await People.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.identified": true }).count()
+        knocksPerOrg.push({knocks: histories, org: orgs[i].name, completed: totalCompleted, refuses: totalRefused, nonResponses: totalNonResponse})
+    }
+
+    //var totalCanvassEntries = await People.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}}).count()
+
+    var incompleteAddresses = await People.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}, "address.streetNum": null})
+    //var noNamesGroup = await People.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}, "firstName": null})
+
+    var noNamesGroup = await People.aggregate([{$match: {"canvassContactHistory": { $exists: true, $not: {$size: 0}}, "firstName": null }},
+        {$group: {_id: "$address.location",
+                houseHoldSize: { "$sum": 1 },
+                person: {"$push": {address: "$address", canvassContactHistory: "$canvassContactHistory"} },
+            }},
+        {$match: {"houseHoldSize": {"$gt": 1}}},
+    ])
+
+    var duplicateNames = await People.aggregate([{$match: {"canvassContactHistory": { $exists: true, $not: {$size: 0}} }},])
+
+    //return {totalCanvassHistories: totalCanvassEntries, knocksPerOrg: knocksPerOrg, knocksPerActivity: knocksPerActivity, anomolies: anomolies}
+    //return {incompleteAddresses: incompleteAddresses, noNames: noNamesGroup}
+    return {incompleteAddresses: incompleteAddresses, noNamesGroup: noNamesGroup}
 }
 
 const getCanvassSummaryReport = async(details) =>{
@@ -146,12 +226,128 @@ const getOverallSummaryReport = async(details) =>{
     return knocksPerOrg
 }
 
+const getEventsSummaryReport = async(details) =>{
+    var campaign = await Campaign.findOne({campaignID: details.campaignID})
 
+    var eventActivities = campaign.eventActivities
 
+    var events = {};
+    for (var i = 0; i < eventActivities.length; i++) {
+        var eventName = eventActivities[i].orgCreatorName;
+        if (!events[eventName]) {
+            events[eventName] = [];
+        }
+        events[eventName].push(eventActivities[i]);
+    }
 
+    var eventsPerOrg = [];
+    for (var event in events) {
+
+        var numOfEvents = await events[event].length
+
+        var total_number_of_impressions = 0;
+        var total_number_of_paid_staffvolun = 0;
+        var language = {}
+        for (var langCount = 0; langCount < languages.length; langCount++) {
+            language[languages[langCount]] = 0;
+        }
+        var htcGroup = {}
+        for (var htcCount = 0; htcCount < htcGroups.length; htcCount++) {
+            htcGroup[htcGroups[htcCount]] = 0;
+        }
+        var total_htc_of_impressions = 0;
+        var funding_volunteer_hours = 0;
+
+        for (var ii = 0; ii < numOfEvents; ii++) {
+            if(events[event][ii].swordForm) {
+                total_number_of_impressions += parseInt(events[event][ii].swordForm.total_number_of_impressions);
+                total_number_of_paid_staffvolun += parseInt(events[event][ii].swordForm.total_number_of_paid_staffvolun);
+                for (var lang in language) {
+                    if (events[event][ii].swordForm["lang_" + lang]) {
+                        language[lang] += parseInt(events[event][ii].swordForm["lang_" + lang])
+                    }
+                }
+                for (var htc in htcGroup) {
+                    if (events[event][ii].swordForm[htc]) {
+                        htcGroup[htc] += parseInt(events[event][ii].swordForm[htc])
+                    }
+                }
+                total_htc_of_impressions += parseInt(events[event][ii].swordForm.total_htc_of_impressions);
+                funding_volunteer_hours += parseInt(events[event][ii].swordForm.funding_volunteer_hours);
+            }
+        }
+
+        await eventsPerOrg.push({
+            org: event,
+            numOfEvents: numOfEvents,
+            total_number_of_impressions: total_number_of_impressions,
+            total_number_of_paid_staffvolun: total_number_of_paid_staffvolun,
+            language,
+            htcGroup,
+            total_htc_of_impressions: total_htc_of_impressions,
+            funding_volunteer_hours: funding_volunteer_hours
+        })
+    }
+
+    return eventsPerOrg
+}
+
+const getActivitiesSummaryReport = async(details) =>{
+    canvassActivities = details.activities
+
+    var knocks = []
+
+    for(var i = 0; i < canvassActivities.length; i++){
+        var totalIdentified = await People.find({"canvassContactHistory.activityID": canvassActivities[i]._id, "canvassContactHistory.identified": true }).count()
+        var totalRefused = await People.find({"canvassContactHistory.activityID": canvassActivities[i]._id, "canvassContactHistory.identified": false, "canvassContactHistory.refused": true }).count()
+        var totalNonResponse = await People.find({"canvassContactHistory.activityID": canvassActivities[i]._id, "canvassContactHistory.identified": false, "canvassContactHistory.refused": false, "canvassContactHistory.nonResponse": true}).count()
+
+        var impressions = [];
+        var impressionsCount = 0;
+
+        for(var b = 0; b < canvassActivities[i].activityMetaData.nonResponses.length; b++){
+            if(canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().startsWith('lit') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes(' lit') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('lit ') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('/lit') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('lit/') ||
+
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().startsWith('imp') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes(' imp') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('imp ') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('/imp') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('imp/') ||
+
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().startsWith('con') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes(' con') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('con ') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('/con') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('con/') ||
+
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('spanish') ||
+
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().startsWith('und') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes(' und') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('und ') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('/und') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('und/')
+            ) {
+                impressions.push(canvassActivities[i].activityMetaData.nonResponses[b])
+            }
+        }
+        var impressionsCount = impressions.length;
+
+        var total = await parseInt(totalIdentified) + parseInt(totalRefused) + parseInt(totalNonResponse)
+        await knocks.push({identified: totalIdentified, impressions: impressionsCount, total: total})
+    }
+
+    return {knocks: knocks}
+}
 
 module.exports = {updateReport,
-                  resetReport,
+                  getReport,
                   getCanvassSummaryReport,
                   getPetitionSummaryReport,
-                  getOverallSummaryReport}
+                  getOverallSummaryReport,
+                  getEventsSummaryReport,
+                  getActivitiesSummaryReport}

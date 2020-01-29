@@ -9,6 +9,15 @@ const updateReport = async (req,res,next) =>{
     }
 }
 
+const getReport = async (req,res,next) =>{
+    try{
+        res.send(await ReportService.getReport(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 const getCanvassSummaryReport = async (req,res,next) =>{
     try{
         res.send(await ReportService.getCanvassSummaryReport(req.body))
@@ -36,7 +45,28 @@ const getOverallSummaryReport = async (req,res,next) =>{
     }
 }
 
+const getEventsSummaryReport = async (req,res,next) =>{
+    try{
+        res.send(await ReportService.getEventsSummaryReport(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const getActivitiesSummaryReport = async (req,res,next) =>{
+    try{
+        res.send(await ReportService.getActivitiesSummaryReport(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 module.exports = {updateReport,
+                  getReport,
                   getCanvassSummaryReport,
                   getPetitionSummaryReport,
-                  getOverallSummaryReport};
+                  getOverallSummaryReport,
+                  getEventsSummaryReport,
+                  getActivitiesSummaryReport};
