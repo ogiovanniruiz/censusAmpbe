@@ -10,11 +10,5 @@ router.post('/getOrgCampaigns', campaignController.getOrgCampaigns)
 router.post('/getCampaignRequests', campaignController.getCampaignRequests)
 router.post('/manageCampaignRequest', campaignController.manageCampaignRequest)
 router.post('/removeOrg', campaignController.removeOrg)
-router.post('/getReport', campaignController.getReport)
-router.post('/getOrgSummaryReport', campaignController.getOrgSummaryReport)
-router.post('/getActivitiesSummaryReport', campaignController.getActivitiesSummaryReport)
-router.post('/getEventsSummaryReport', campaignController.getEventsSummaryReport)
-router.post('/getCustomCrossTabReport', campaignController.getCustomCrossTabReport)
-
 
 module.exports = router;

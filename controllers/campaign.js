@@ -72,60 +72,6 @@ const removeOrg = async (req, res, next) => {
     }
 }
 
-const getReport = async (req, res, next) => {
-    try {
-        res.send(await campaignService.getReport(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
-const getOrgSummaryReport = async (req, res, next) => {
-    try {
-        res.send(await campaignService.getOrgSummaryReport(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
-const getActivitiesSummaryReport = async (req, res, next) => {
-    try {
-        res.send(await campaignService.getActivitiesSummaryReport(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
-const getscriptDetailsReport = async (req, res, next) => {
-    try {
-        res.send(await campaignService.getscriptDetailsReport(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
-const getEventsSummaryReport = async (req, res, next) => {
-    try {
-        res.send(await campaignService.getEventsSummaryReport(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
-const getCustomCrossTabReport = async (req, res, next) => {
-    try {
-        res.send(await campaignService.getCustomCrossTabReport(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
 module.exports = {createCampaign, 
                   getAllCampaigns, 
                   getCampaign, 
@@ -133,11 +79,5 @@ module.exports = {createCampaign,
                   getOrgCampaigns, 
                   getCampaignRequests, 
                   manageCampaignRequest,
-                  removeOrg,
-                  getReport,
-                  getOrgSummaryReport,
-                  getActivitiesSummaryReport,
-                  getscriptDetailsReport,
-                  getEventsSummaryReport,
-                  getCustomCrossTabReport
+                  removeOrg
                 };
