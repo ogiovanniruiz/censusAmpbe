@@ -90,42 +90,6 @@ const dbPatch = async (req, res, next) => {
     }
 }
 
-const addPhoneNumber = async (req, res, next) => {
-    try {
-        res.send(await organizationService.addPhoneNumber(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
-const removePhoneNumber = async (req, res, next) => {
-    try {
-        res.send(await organizationService.removePhoneNumber(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
-const getOrgPhoneNumbers = async (req, res, next) => {
-    try {
-        res.send(await organizationService.getOrgPhoneNumbers(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
-const getAccountPhoneNumbers = async (req, res, next) => {
-    try {
-        res.send(await organizationService.getAccountPhoneNumbers(req.body))
-    } catch(e) {
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
 const getOrgTags= async (req, res, next) => {
     try {
         res.send(await organizationService.getOrgTags(req.body))
@@ -162,7 +126,29 @@ const getOrgLogo = async (req, res, next) => {
     }
 }
 
-module.exports = {createOrganization, 
+const createTwilioSubAccount = async (req, res, next) => {
+    try {
+        res.send(await organizationService.createTwilioSubAccount(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+
+
+const getOrgPhoneNumbers = async (req, res, next) => {
+    try {
+        res.send(await organizationService.getOrgPhoneNumbers(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+
+module.exports = {createTwilioSubAccount,
+                  createOrganization, 
                   getAllOrganizations, 
                   getOrganization, 
                   requestOrganization, 
@@ -172,7 +158,4 @@ module.exports = {createOrganization,
                   getCampaignOrgs,
                   dbPatch,
                   editOrganization,                    
-                  addPhoneNumber,
-                  removePhoneNumber,
-                  getOrgPhoneNumbers,
-                  getAccountPhoneNumbers, createTag, getOrgTags, uploadLogo, getOrgLogo};
+                  getOrgPhoneNumbers, createTag, getOrgTags, uploadLogo, getOrgLogo};

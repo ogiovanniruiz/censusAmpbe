@@ -6,7 +6,7 @@ var MetaData = require('./metaData.js')
 var PhonebankSchema = new Schema(
   {
     activityMetaData: MetaData.schema,
-    phoneNum: {type: String},
+    phoneNums: [{number: {type: String}, userID: {type: String}, available: {type: Boolean, default: true}}],
     swordForm: {}
   }
 );

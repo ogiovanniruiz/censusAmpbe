@@ -27,4 +27,49 @@ const call = async (req,res,next) =>{
     }
 }
 
-module.exports = {getHouseHold, getTwilioToken, call};
+const editPerson = async (req,res,next) =>{
+    try {
+        res.send(await phonebankService.editPerson(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const createPerson = async (req,res,next) =>{
+    try {
+        res.send(await phonebankService.createPerson(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const idPerson = async (req,res,next) =>{
+    try {
+        res.send(await phonebankService.idPerson(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const nonResponse = async (req,res,next) =>{
+    try {
+        res.send(await phonebankService.nonResponse(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const allocatePhoneNumber = async (req,res,next) =>{
+    try {
+        res.send(await phonebankService.allocatePhoneNumber(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {getHouseHold, getTwilioToken, call, editPerson, createPerson, idPerson, nonResponse, allocatePhoneNumber};
