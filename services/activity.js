@@ -36,28 +36,26 @@ const createActivity = async(detail) => {
 
         campaign.canvassActivities.push(newActivity)
     } else if(detail.activityType === "Phonebank"){
+        var phoneNumberObjs = []
 
-        var newActivity = {activityMetaData:{},
-                           phoneNum: detail.selectedNumber}
+        for(var i = 0; i < detail.selectedNumbers.length;  i++){
+            phoneNumberObjs.push({number: detail.selectedNumbers[i]})
+        }
 
-        newActivity.activityMetaData = {
-            name: detail.activityName,
-            description:  detail.description,
-            targetIDs:  detail.targetIDs,
-            campaignID: detail.campaignID,
-            orgIDs: [detail.orgID],
-            createdBy: detail.createdBy,
-            nonResponses: detail.nonResponses,
-            activityScriptIDs: detail.activityScriptIDs
-            }
+        var newActivity = {activityMetaData:{   
+                                                name: detail.activityName,
+                                                description:  detail.description,
+                                                targetIDs:  detail.targetIDs,
+                                                campaignID: detail.campaignID,
+                                                orgIDs: [detail.orgID],
+                                                createdBy: detail.createdBy,
+                                                nonResponses: detail.nonResponses,
+                                                activityScriptIDs: detail.activityScriptIDs
+                                            },
+                           phoneNums: phoneNumberObjs
+                            }
 
-            //for(var i = 0; i < campaign.phoneNumbers.length; i++){
-            //    if(campaign.phoneNumbers[i].number === detail.selectedNumber){
-            //      campaign.phoneNumbers[i].available = false
-            //    }
-            //}
-
-            campaign.phonebankActivities.push(newActivity)
+        campaign.phonebankActivities.push(newActivity)
 
     }else if(detail.activityType === "Texting"){
 
@@ -86,12 +84,6 @@ const createActivity = async(detail) => {
                                         }
         var org = await Organization.findOne({"_id": detail.orgID})
         
-        for(var i = 0; i < org.phoneNumbers.length; i++){
-            if(detail.selectedNumbers.includes(org.phoneNumbers[i].number)){
-                org.phoneNumbers[i].available = false
-            }
-        }
-
         org.save()
 
         campaign.textActivities.push(newActivity)
@@ -142,9 +134,6 @@ const createActivity = async(detail) => {
                                         createdBy: detail.createdBy,
                                         activityScriptIDs: detail.activityScriptIDs
                                         }
-
-        console.log(newActivity.activityMetaData)
-
         campaign.petitionActivities.push(newActivity)
 
     }
@@ -159,8 +148,6 @@ const createActivity = async(detail) => {
 
 const editActivity = async(detail) =>{
     var campaign = await Campaign.findOne({campaignID: detail.campaignID})
-
-   // console.log(campaign)
 
     if(detail.activityType === "Canvass"){
         for(var i = 0; i < campaign.canvassActivities.length; i++){
@@ -205,6 +192,7 @@ const editActivity = async(detail) =>{
             }
         }
 
+        /*
         var org = await Organization.findOne({"_id": detail.orgID})
 
         for(var i = 0; i < org.phoneNumbers.length; i++){
@@ -213,18 +201,29 @@ const editActivity = async(detail) =>{
             }
         }
         org.save()
+        */
 
     }else if(detail.activityType === "Phonebank"){
+
         for(var i = 0; i < campaign.phonebankActivities.length; i++){
             if( campaign.phonebankActivities[i]._id.toString() === detail.activityID){
                 campaign.phonebankActivities[i].activityMetaData.name = detail.newActivityDetail.activityName
                 campaign.phonebankActivities[i].activityMetaData.description = detail.newActivityDetail.description
-                campaign.phonebankActivities[i].activityMetaData.targetIDs = detail.newActivityDetail.targetIDs
                 campaign.phonebankActivities[i].activityMetaData.nonResponses = detail.newActivityDetail.nonResponses
-                campaign.phonebankActivities[i].activityMetaData.activityScriptIDs = detail.newActivityDetail.activityScriptIDs
-                campaign.phonebankActivities[i].phoneNum = detail.newActivityDetail.selectedNumber
+                campaign.phonebankActivities[i].phoneNums.concat(phoneNumberObjs)
+            
+                for(var j = 0; j < detail.newActivityDetail.selectedNumbers.length;  j++){
+                    campaign.phonebankActivities[i].phoneNums.push({number: detail.newActivityDetail.selectedNumbers[j]})
+                }
+                break
             }
         }
+
+
+
+
+
+
     }else if(detail.activityType === "Petition"){
         for(var i = 0; i < campaign.petitionActivities.length; i++){
             if( campaign.petitionActivities[i]._id.toString() === detail.activityID){
@@ -362,28 +361,18 @@ const deleteActivity = async(detail) =>{
                     org.phoneNumbers[i].available = true
                 }
             }
-
         }
 
         org.save()
 
     } else if (detail.activityType === "Phonebank"){
-        var numberToRelease = ""
+        
         for(var i = 0; i < campaign.phonebankActivities.length; i++){
             if( campaign.phonebankActivities[i]._id.toString() === detail.activityID){
-                numberToRelease = campaign.phonebankActivities[i].phoneNum
                 campaign.phonebankActivities.splice(i, 1); 
 
             }
         }
-
-        for(var j = 0; j < campaign.phoneNumbers.length; j++){
-            if(campaign.phoneNumbers[j].number === numberToRelease){
-                campaign.phoneNumbers[j].available = true
-            }
-        }
-
-
     }
 
     return campaign.save()
@@ -428,4 +417,40 @@ const getActivity = async(detail) =>{
     }
 }
 
-module.exports = {createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, sendSwordOutreach}
+const releaseNumber = async(detail) =>{
+    var campaign = await Campaign.findOne({campaignID: detail.campaignID})
+
+    if ( detail.activityType === "Texting"){
+
+        for(var i = 0; i < campaign.textActivities.length; i++){
+            if( campaign.textActivities[i]._id.toString() === detail.activityID){
+
+                for(var j = 0; j < campaign.textActivities[i].phoneNums.length; j++){
+                    if(campaign.textActivities[i].phoneNums[j].number === detail.number){
+                        campaign.textActivities[i].phoneNums.splice(j, 1); 
+                        campaign.save()
+                        return campaign.textActivities[i]
+                    }
+                }
+            }
+        }
+    } else if (detail.activityType === "Phonebank"){
+
+        for(var i = 0; i < campaign.phonebankActivities.length; i++){
+            if( campaign.phonebankActivities[i]._id.toString() === detail.activityID){
+                for(var j = 0; j < campaign.phonebankActivities[i].phoneNums.length; j++){
+                    if(campaign.phonebankActivities[i].phoneNums[j].number === detail.number){
+                        campaign.phonebankActivities[i].phoneNums.splice(j, 1); 
+                        campaign.save()
+                        return campaign.phonebankActivities[i]
+                    }
+                }
+            }
+        }
+    }
+
+    return campaign.save()
+
+}
+
+module.exports = {createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, sendSwordOutreach, releaseNumber}

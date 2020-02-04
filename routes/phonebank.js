@@ -7,4 +7,11 @@ router.post('/getHouseHold', phonebankController.getHouseHold);
 router.post('/getTwilioToken', phonebankController.getTwilioToken);
 router.post('/call', twilio.webhook( {validate: false}),phonebankController.call)
 
+router.post('/createPerson', phonebankController.createPerson);
+router.post('/idPerson', phonebankController.idPerson);
+router.post('/editPerson', phonebankController.editPerson);
+router.post('/nonResponse', phonebankController.nonResponse);
+router.post('/allocatePhoneNumber', phonebankController.allocatePhoneNumber);
+router.post('/completeHouseHold', phonebankController.completeHouseHold);
+
 module.exports = router;

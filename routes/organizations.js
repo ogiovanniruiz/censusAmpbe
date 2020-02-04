@@ -15,16 +15,13 @@ router.post('/updateOrgLevel', orgController.updateOrgLevel)
 router.post('/getCampaignOrgs', orgController.getCampaignOrgs)
 router.post('/dbPatch', orgController.dbPatch)
 
-router.post('/addPhoneNumber', orgController.addPhoneNumber);
-router.post('/removePhoneNumber', orgController.removePhoneNumber);
-router.post('/getOrgPhoneNumbers', orgController.getOrgPhoneNumbers);
-router.post('/getAccountPhoneNumbers', orgController.getAccountPhoneNumbers);
-
 router.post('/getOrgTags', orgController.getOrgTags);
 router.post('/createTag', orgController.createTag);
 router.post('/uploadLogo', [upload.any(),orgController.uploadLogo]);
-
-
 router.post('/getOrgLogo',  orgController.getOrgLogo);
+
+router.post('/createTwilioSubAccount',  orgController.createTwilioSubAccount);
+router.post('/getOrgPhoneNumbers', orgController.getOrgPhoneNumbers);
+
 
 module.exports = router;

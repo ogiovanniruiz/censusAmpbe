@@ -2,6 +2,7 @@ var Organization = require('../models/organizations/organization');
 var Person = require('../models/people/person')
 var Campaign = require('../models/campaigns/campaign')
 const fs = require('fs');
+var url = require('url');
 
 const createOrganization = async(newOrgDetail) =>{   
     var orgDetail = { name: newOrgDetail.name,
@@ -217,54 +218,6 @@ const dbPatch = async(detail) =>{
 
 }
 
-const removePhoneNumber = async(detail) =>{
-
-    var org = await Organization.findOne({"_id": detail.orgID})
-
-    for(var i = 0; i < org.phoneNumbers.length; i++){
-        if(org.phoneNumbers[i].number === detail.phoneNumber){
-            org.phoneNumbers.splice(i,1)
-            return org.save()
-        }
-    }
-}
-const addPhoneNumber = async(detail) =>{
-
-    var org = await Organization.findOne({"_id": detail.orgID})
-
-    for(var i = 0; i < org.phoneNumbers.length; i++){
-        if(org.phoneNumbers[i].number === detail.phoneNumber){
-            return({msg: "Phone Number already exists.", success: false})
-        }
-    }
-
-    org.phoneNumbers.push({number: detail.phoneNumber, available: true})
-
-    org.save()
-
-    return {msg: "Phone Number Created.", success: true}
-
-}
-
-const getOrgPhoneNumbers = async(detail) =>{
-
-    var org = await Organization.findOne({"_id": detail.orgID})
-
-    return org.phoneNumbers
-}
-
-const getAccountPhoneNumbers = async()=>{
-
-    const client = require('twilio')(process.env.accountSid, process.env.authToken);
-
-    var numbers = await client.incomingPhoneNumbers
-    .list({limit: 20})
-    .then(incomingPhoneNumbers => {return incomingPhoneNumbers.map(i => i.phoneNumber)});
-
-
-    return numbers
-
-}
 
 const createTag= async(detail) =>{
     var org = await Organization.findOne({"_id": detail.orgID})
@@ -308,6 +261,79 @@ const getOrgLogo = async(data) =>{
     }
 }
 
+const createTwilioSubAccount = async(orgID) =>{
+    try{
+        var org = await Organization.findOne({"_id": orgID.orgID})
+        const superClient = require('twilio')("ACa75c4991d267cf482e49798a667157e1", "f4fbc33e1d6b0fba8d8b0bedd909238a");
+        var accountExists = false;
+        var existingAccount = {}
+        
+        await superClient.api.accounts.list({friendlyName: org.name, status: "active", limit: 20})
+                           .then(accounts => accounts.forEach(a => 
+                            {
+                                accountExists = true
+                                existingAccount = a
+                            }
+                           ));
+
+        if(!accountExists){ 
+            console.log("Account is new."); 
+            
+            var account = await client.api.accounts.create({friendlyName: org.name}).then(account => {
+                return account;
+            });
+
+            org.twilioAccount.sid = account.sid;
+            org.twilioAccount.authToken = account.authToken;
+            
+
+            const subClient = require('twilio')(account.sid, account.authToken);
+
+            var app = await subClient.applications.create({voiceMethod: 'GET', voiceUrl: 'http://localhost:3000/phonebank/call',friendlyName: 'voice_api'})
+                                        .then(application => {
+                                            
+                                            console.log(application.sid)
+                                            return application
+                           });
+            org.twilioAccount.app_sid = app.sid
+            org.save();
+
+        }else{
+            org.twilioAccount.sid = existingAccount.sid;
+            org.twilioAccount.authToken = existingAccount.authToken;
+            const subClient = require('twilio')(existingAccount.sid, existingAccount.authToken);
+
+            var voice_url = process.env.be + '/phonebank/call'
+            var app = await subClient.applications.create({voiceMethod: 'GET', voiceUrl: voice_url,friendlyName: 'voice_api'})
+                                        .then(application => {
+                                            
+                                            console.log(application.sid)
+                                            return application
+                           });
+            org.twilioAccount.app_sid = app.sid
+            org.save();
+            console.log("Account Exists");
+        }
+
+    } catch(err){
+        console.log(err)
+    }
+}
+
+
+const getOrgPhoneNumbers = async(detail) =>{
+
+    var org = await Organization.findOne({"_id": detail.orgID})
+
+    const client = require('twilio')(org.twilioAccount.sid, org.twilioAccount.authToken);
+
+    var numbers = await client.incomingPhoneNumbers
+    .list({limit: 20})
+    .then(incomingPhoneNumbers => {return incomingPhoneNumbers.map(i => i.phoneNumber)});
+
+    return numbers
+}
+
 module.exports = {createOrganization, 
                   editOrganization,
                   getAllOrganizations, 
@@ -318,7 +344,5 @@ module.exports = {createOrganization,
                   updateOrgLevel,
                   getCampaignOrgs,
                   dbPatch,                  
-                  removePhoneNumber,
-                  addPhoneNumber,
                   getOrgPhoneNumbers,
-                  getAccountPhoneNumbers, createTag, getOrgTags, uploadLogo, getOrgLogo}
+                  createTag, getOrgTags, uploadLogo, getOrgLogo, createTwilioSubAccount}
