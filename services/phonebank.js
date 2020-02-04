@@ -3,7 +3,6 @@ var Campaign = require('../models/campaigns/campaign')
 var Target = require('../models/targets/target')
 var Organization = require('../models/organizations/organization'); 
 
-
 var twilio = require('twilio');
 var VoiceResponse = twilio.twiml.VoiceResponse;
 var ClientCapability = require('twilio').jwt.ClientCapability;
@@ -11,8 +10,8 @@ var ClientCapability = require('twilio').jwt.ClientCapability;
 const getHouseHold = async(detail) => {
 
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
-    var searchParameters = {"phonebankContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, identified: true}}}}
-
+    //var searchParameters = {"phonebankContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, identified: true}}}}
+    var searchParameters = {"phonebankContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, houseHoldComplete: true}}}}
     /*
     for(var i = 0; i < targets.length; i++){
         if(targets[i].properties.params.targetType === "ORGMEMBERS"){
@@ -61,7 +60,15 @@ const getHouseHold = async(detail) => {
 
     var people = await Person.aggregate([ 
         {$match: searchParameters},
-        {$group : { _id : {streetNum: "$address.streetNum", 
+        {$group : { _id : {streetNum: "$address.streetNum",
+                            suffix: "$address.suffix",
+                            prefix:  "$address.prefix",
+                            city: "$address.city",
+                            state: "$address.state",
+                            county: "$address.county",
+                            zip: "$address.zip",
+                            unit: "$address.unit",
+                            location: "$address.location",
                            street: "$address.street"}, 
                     people: { $push: {firstName: '$firstName',
                                         middleName: '$middleName',
@@ -121,8 +128,8 @@ const editPerson = async(detail) =>{
 }
 
 const createPerson = async(detail)=>{
-    console.log(detail)
-
+    var person = new Person(detail.newPerson);
+    return person.save()
 }
 
 const idPerson = async(detail)=>{
@@ -134,13 +141,13 @@ const idPerson = async(detail)=>{
                      idResponses: detail.idResponses,
                      locationIdentified: detail.location}
 
-
     if(person.phonebankContactHistory.length === 0){
 
         var phonebankContactHistory = {
                                         campaignID: detail.campaignID,
                                         activityID: detail.activityID,
                                         orgID: detail.orgID,
+                                        identified: true,
                                         idHistory: idHistory
                                     }
 
@@ -148,7 +155,6 @@ const idPerson = async(detail)=>{
         return person.save()
 
     }else{
-
 
         for (var i = 0; i < person.phonebankContactHistory.length; i++){
             if(person.phonebankContactHistory[i].activityID === detail.activityID){
@@ -161,17 +167,80 @@ const idPerson = async(detail)=>{
                                         campaignID: detail.campaignID,
                                         activityID: detail.activityID,
                                         orgID: detail.orgID,
+                                        identified: true,
                                         idHistory: idHistory
                                     }
 
         person.phonebankContactHistory.push(phonebankContactHistory)
         return person.save()
-
     }
 }
 
 const nonResponse = async(detail)=>{
+    var person = await Person.findOne({"_id": detail.person._id});
+    var refused = false;
 
+
+    if(detail.idType === 'REFUSED'){
+        refused = true;
+    }
+
+
+    var idHistory = {scriptID: detail.script._id,
+        idBy: detail.userID,
+        idResponses: detail.idResponses,
+        locationIdentified: detail.location}
+
+    if(person.phonebankContactHistory.length === 0){
+
+        var phonebankContactHistory = {
+                                        campaignID: detail.campaignID,
+                                        activityID: detail.activityID,
+                                        orgID: detail.orgID,
+                                        refused: refused,
+                                        nonResponse: true,
+                        
+                                        idHistory: idHistory
+                                    }
+
+        person.phonebankContactHistory.push(phonebankContactHistory)
+        return person.save()
+    
+    }else{
+    
+        for (var i = 0; i < person.phonebankContactHistory.length; i++){
+            if(person.phonebankContactHistory[i].activityID === detail.activityID){
+                person.phonebankContactHistory[i].idHistory.push(idHistory)
+                return person.save()
+            }
+        }
+
+        var phonebankContactHistory = {
+                                        campaignID: detail.campaignID,
+                                        activityID: detail.activityID,
+                                        orgID: detail.orgID,
+                                        refused: refused,
+                                        nonResponse: true,
+                                        
+                                        idHistory: idHistory
+                                    }
+    
+        person.phonebankContactHistory.push(phonebankContactHistory)
+        return person.save()
+    }
+}
+
+const completeHouseHold = async(detail)=>{
+    var person = await Person.findOne({"_id": detail.person._id});
+
+    if(detail.activityType === "Phonebank"){
+        for(var i = 0; i < person.phonebankContactHistory.length; i++){
+            if(person.phonebankContactHistory[i].activityID === detail.activityID){
+                person.phonebankContactHistory[i].houseHoldComplete = true;
+                return person.save()
+            }
+        }
+    } 
 }
 
 const allocatePhoneNumber = async(detail) =>{
@@ -191,4 +260,12 @@ const allocatePhoneNumber = async(detail) =>{
     }
 }
 
-module.exports = {getHouseHold, call, getTwilioToken, editPerson, createPerson, idPerson, nonResponse, allocatePhoneNumber}
+module.exports = {getHouseHold, 
+                  call, 
+                  getTwilioToken, 
+                  editPerson, 
+                  createPerson, 
+                  idPerson, 
+                  nonResponse, 
+                  allocatePhoneNumber, 
+                  completeHouseHold}

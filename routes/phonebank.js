@@ -12,5 +12,6 @@ router.post('/idPerson', phonebankController.idPerson);
 router.post('/editPerson', phonebankController.editPerson);
 router.post('/nonResponse', phonebankController.nonResponse);
 router.post('/allocatePhoneNumber', phonebankController.allocatePhoneNumber);
+router.post('/completeHouseHold', phonebankController.completeHouseHold);
 
 module.exports = router;

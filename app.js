@@ -29,7 +29,7 @@ var corsOptions = { methods: 'GET,POST,PATCH,DELETE,OPTIONS',
                     optionsSuccessStatus: 200,
                     origin: ""}
 
-process.env.version = "0.5.6"
+process.env.version = "0.5.7"
 
 if(app.get('env') === 'census'){
   process.env.app_sid =  'APcfa84370fade47d9de6493f08e73b6fa'

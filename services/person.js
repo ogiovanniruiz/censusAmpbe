@@ -219,21 +219,17 @@ const checkExisting = async(people) =>{
         let existingPerson = await Person.findOne({"phones": people[i].phones})
     
         if(existingPerson){
-
             if(existingPerson.phones.length > 0){
                 existingPeople.push(existingPerson)
             }else{
                 newPeople.push(people[i])
             }
-        
         } 
         else{
 
             newPeople.push(people[i])
         }        
     }
-
-    
 
     return ({existingPeople: existingPeople, newPeople: newPeople})
 }

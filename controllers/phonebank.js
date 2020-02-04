@@ -72,4 +72,21 @@ const allocatePhoneNumber = async (req,res,next) =>{
     }
 }
 
-module.exports = {getHouseHold, getTwilioToken, call, editPerson, createPerson, idPerson, nonResponse, allocatePhoneNumber};
+const completeHouseHold = async (req,res,next) =>{
+    try {
+        res.send(await phonebankService.completeHouseHold(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {getHouseHold, 
+                 getTwilioToken, 
+                 call, 
+                 editPerson, 
+                 createPerson, 
+                 idPerson, 
+                 nonResponse, 
+                 allocatePhoneNumber, 
+                 completeHouseHold};
