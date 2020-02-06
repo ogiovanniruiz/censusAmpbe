@@ -1,6 +1,7 @@
 var Person = require('../models/people/person')
 var Campaign = require('../models/campaigns/campaign')
 var Target = require('../models/targets/target')
+var Organization = require('../models/organizations/organization'); 
 
 const resetTextBank = async(detail) =>{
 
@@ -170,16 +171,19 @@ const getIdentifiedPeople = async(detail) =>{
 
 const sendText = async(detail) =>{
 
+    var org = await Organization.findOne({"_id": detail.orgID})
+
     var number = detail.person.phones[0]
     var script = detail.initTextMsg
 
-    var accountSid = process.env.accountSid;
-    var authToken = process.env.authToken;
+    var accountSid = org.twilioAccount.sid;
+    var authToken = org.twilioAccount.authToken;
 
     const client = require('twilio')(accountSid, authToken);
 
     try {
         var person = await Person.findOne({_id: detail.person._id})
+        
 
         client.messages.create({
                 body: script, 
