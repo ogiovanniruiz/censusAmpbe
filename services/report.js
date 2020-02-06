@@ -1,6 +1,7 @@
-var Report = require ('../models/reports/report')
-var People = require ('../models/people/person')
-var Organization = require('../models/organizations/organization')
+var Report = require ('../models/reports/report');
+var People = require ('../models/people/person');
+var Organization = require('../models/organizations/organization');
+var CensusTract = require('../models/censustracts/censustract');
 var Campaign = require('../models/campaigns/campaign');
 
 var languages = ["arabic",
@@ -108,48 +109,6 @@ const updateReport = async(org) => {
     return {orgName: org.name}
 }
 
-const getReport = async(campaign) =>{
-    var campaign = await Campaign.findOne({campaignID: campaign.campaignID})
-    var knocksPerActivity = []
-
-    for(var i = 0; i < campaign.canvassActivities.length; i++){
-        var histories = await People.find({"canvassContactHistory.activityID": campaign.canvassActivities[i]._id}).count()
-        knocksPerActivity.push({knocks: histories, activity: campaign.canvassActivities[i].activityMetaData.name})
-    }
-
-    var orgIDs = campaign.orgIDs
-    var orgs = await Organization.find({_id: {$in: orgIDs}})
-
-    var knocksPerOrg = []
-
-    for(var i = 0; i < orgs.length; i++){
-        var histories = await People.find({"canvassContactHistory.orgID": orgs[i]._id}).count()
-        var totalRefused = await People.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.refused": true }).count()
-        var totalNonResponse = await People.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.nonResponse": true ,  "canvassContactHistory.refused": false}).count()
-        var totalCompleted = await People.find({"canvassContactHistory.orgID": orgs[i]._id, "canvassContactHistory.identified": true }).count()
-        knocksPerOrg.push({knocks: histories, org: orgs[i].name, completed: totalCompleted, refuses: totalRefused, nonResponses: totalNonResponse})
-    }
-
-    //var totalCanvassEntries = await People.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}}).count()
-
-    var incompleteAddresses = await People.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}, "address.streetNum": null})
-    //var noNamesGroup = await People.find({"canvassContactHistory": { $exists: true, $not: {$size: 0}}, "firstName": null})
-
-    var noNamesGroup = await People.aggregate([{$match: {"canvassContactHistory": { $exists: true, $not: {$size: 0}}, "firstName": null }},
-        {$group: {_id: "$address.location",
-                houseHoldSize: { "$sum": 1 },
-                person: {"$push": {address: "$address", canvassContactHistory: "$canvassContactHistory"} },
-            }},
-        {$match: {"houseHoldSize": {"$gt": 1}}},
-    ])
-
-    var duplicateNames = await People.aggregate([{$match: {"canvassContactHistory": { $exists: true, $not: {$size: 0}} }},])
-
-    //return {totalCanvassHistories: totalCanvassEntries, knocksPerOrg: knocksPerOrg, knocksPerActivity: knocksPerActivity, anomolies: anomolies}
-    //return {incompleteAddresses: incompleteAddresses, noNames: noNamesGroup}
-    return {incompleteAddresses: incompleteAddresses, noNamesGroup: noNamesGroup}
-}
-
 const getCanvassSummaryReport = async(details) =>{
     var reports = await Report.find({campaignID: details.campaignID, orgID: details.orgID, activityType: 'CANVASS'})
 
@@ -195,19 +154,21 @@ const getCanvassSummaryReport = async(details) =>{
 const getPetitionSummaryReport = async(details) =>{
     var petitionCount = await Report.find({campaignID: details.campaignID, orgID: details.orgID, activityType: 'PETITION'}).count()
 
-    var knocksPerOrg = []
-    await knocksPerOrg.push({org: details.orgName, identified: petitionCount})
-    return knocksPerOrg
+    var petitionsPerOrg = []
+    await petitionsPerOrg.push({org: details.orgName, identified: petitionCount})
+    return petitionsPerOrg
 }
 
 const getOverallSummaryReport = async(details) =>{
     var reports = await Report.find({campaignID: details.campaignID, orgID: details.orgID, $or:[{activityType:'CANVASS'}, {activityType:'PETITION'}]})
 
-    var knocksPerOrg = []
+    var recordsPerOrg = []
 
     var identifiedCount  = 0;
     var refusedCount = 0;
     var nonResponseCount = 0;
+    var impressionsCount = 0;
+    var impressions = 0;
 
     for(var i = 0; i < reports.length; i++){
         if (reports[i].idResponses[0]) {
@@ -216,6 +177,13 @@ const getOverallSummaryReport = async(details) =>{
                 reports[i].idResponses[0].idType === 'NEGATIVE'
             ) {
                 identifiedCount = identifiedCount + 1
+            }
+            if (reports[i].idResponses[0].responses.toLowerCase().includes('lit') ||
+                reports[i].idResponses[0].responses.toLowerCase().includes('imp') ||
+                reports[i].idResponses[0].responses.toLowerCase().includes('con') ||
+                reports[i].idResponses[0].responses.toLowerCase().includes('spanish') ||
+                reports[i].idResponses[0].responses.toLowerCase().includes('und')) {
+                impressions = impressions + 1
             }
             if (reports[i].idResponses[0].idType === 'REFUSED') {
                 refusedCount = refusedCount + 1
@@ -226,10 +194,11 @@ const getOverallSummaryReport = async(details) =>{
         }
     }
 
+    impressionsCount = impressions + parseInt(identifiedCount)
     var total = await parseInt(identifiedCount) + parseInt(refusedCount) + parseInt(nonResponseCount)
 
-    await knocksPerOrg.push({org: details.orgName, identified: identifiedCount, refuses: refusedCount, nonResponses: nonResponseCount, total: total})
-    return knocksPerOrg
+    await recordsPerOrg.push({org: details.orgName, identified: identifiedCount, refuses: refusedCount, impressions: impressionsCount, nonResponses: nonResponseCount, total: total})
+    return recordsPerOrg
 }
 
 const getEventsSummaryReport = async(details) =>{
@@ -312,32 +281,11 @@ const getActivitiesSummaryReport = async(details) =>{
         var impressionsCount = 0;
 
         for(var b = 0; b < canvassActivities[i].activityMetaData.nonResponses.length; b++){
-            if(canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().startsWith('lit') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes(' lit') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('lit ') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('/lit') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('lit/') ||
-
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().startsWith('imp') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes(' imp') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('imp ') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('/imp') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('imp/') ||
-
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().startsWith('con') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes(' con') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('con ') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('/con') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('con/') ||
-
+            if (canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('lit') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('imp') ||
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('con') ||
                 canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('spanish') ||
-
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().startsWith('und') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes(' und') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('und ') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('/und') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('und/')
-            ) {
+                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('und')) {
                 impressions.push(canvassActivities[i].activityMetaData.nonResponses[b])
             }
         }
@@ -350,10 +298,283 @@ const getActivitiesSummaryReport = async(details) =>{
     return {knocks: knocks}
 }
 
+const getBlockGroupCanvassSummaryReport = async(details) =>{
+    var reports = await Report.find({campaignID: details.campaignID, activityType: 'CANVASS'})
+    var blockGroupRecord = []
+
+    var blockGroupCoordinates = []
+
+    for(var i = 0; i < reports.length; i++){
+        if (reports[i].location.coordinates.length) {
+            await blockGroupCoordinates.push(reports[i].location.coordinates)
+        }
+    }
+
+    var blockGroups = []
+
+    if(blockGroupCoordinates.length) {
+        var blockGroup = await CensusTract.find({
+            "geometry": {
+                $geoIntersects: {
+                    $geometry: {
+                        type: "MultiPoint",
+                        coordinates: blockGroupCoordinates
+                    }
+                }
+            }
+        });
+        await blockGroups.push({CensusTracts: blockGroup})
+    }
+
+    if(blockGroups.length) {
+        for(var j = 0; j < blockGroups[0]['CensusTracts'].length; j++){
+
+            var blockGroupReports = []
+            var identifiedCount  = 0;
+            var refusedCount = 0;
+            var nonResponseCount = 0;
+            var impressionsCount = 0;
+            var impressions = 0;
+
+            var blockGroupReports = await Report.find({
+                campaignID: details.campaignID,
+                activityType: 'CANVASS',
+                "location": {
+                    $geoIntersects: {
+                        $geometry: {
+                            type: "Polygon",
+                            coordinates: blockGroups[0]['CensusTracts'][j].geometry.coordinates[0]
+                        }
+                    }
+                }
+            })
+
+            for(var k = 0; k < blockGroupReports.length; k++){
+                if (blockGroupReports[k].idResponses[0]) {
+                    if (blockGroupReports[k].idResponses[0].idType === 'POSITIVE' ||
+                        blockGroupReports[k].idResponses[0].idType === 'NEUTRAL' ||
+                        blockGroupReports[k].idResponses[0].idType === 'NEGATIVE'
+                    ) {
+                        identifiedCount = identifiedCount + 1
+                    }
+                    if (blockGroupReports[k].idResponses[0].idType === 'REFUSED') {
+                        refusedCount = refusedCount + 1
+                    }
+                    if (blockGroupReports[k].idResponses[0].responses.toLowerCase().includes('lit') ||
+                        blockGroupReports[k].idResponses[0].responses.toLowerCase().includes('imp') ||
+                        blockGroupReports[k].idResponses[0].responses.toLowerCase().includes('con') ||
+                        blockGroupReports[k].idResponses[0].responses.toLowerCase().includes('spanish') ||
+                        blockGroupReports[k].idResponses[0].responses.toLowerCase().includes('und')) {
+                        impressions = impressions + 1
+                    }
+                    if (blockGroupReports[k].idResponses[0].idType === 'NONRESPONSE') {
+                        nonResponseCount = nonResponseCount + 1
+                    }
+                }
+                if(j === 0 && k <= 10){
+                    console.log(blockGroups[0]['CensusTracts'][j]._id)
+                    console.log(blockGroupReports[k]._id)
+                    console.log(blockGroupReports[k].location.coordinates)
+                }
+            }
+
+            impressionsCount = impressions + parseInt(identifiedCount)
+            var total = await parseInt(identifiedCount) + parseInt(refusedCount) + parseInt(nonResponseCount)
+
+            await blockGroupRecord.push({blockGroup: blockGroups[0]['CensusTracts'][j].properties.geoid, identified: identifiedCount, refuses: refusedCount, impressions: impressionsCount, nonResponses: nonResponseCount, total: total})
+
+        }
+    }
+    return blockGroupRecord;
+}
+
+const getBlockGroupOrgSummaryReport = async(details) =>{
+    var reports = await Report.find({campaignID: details.campaignID, orgID: details.orgID, activityType: 'CANVASS'})
+    var blockGroupRecord = []
+
+    var blockGroupCoordinates = []
+
+    for(var i = 0; i < reports.length; i++){
+        if (reports[i].location.coordinates.length) {
+            await blockGroupCoordinates.push(reports[i].location.coordinates)
+        }
+    }
+
+    var blockGroups = []
+
+    if(blockGroupCoordinates.length) {
+        var blockGroup = await CensusTract.find({
+            "geometry": {
+                $geoIntersects: {
+                    $geometry: {
+                        type: "MultiPoint",
+                        coordinates: blockGroupCoordinates
+                    }
+                }
+            }
+        });
+        await blockGroups.push({CensusTracts: blockGroup})
+    }
+
+    if(blockGroups.length) {
+        for(var j = 0; j < blockGroups[0]['CensusTracts'].length; j++){
+
+            var blockGroupReports = []
+            var identifiedCount  = 0;
+            var refusedCount = 0;
+            var nonResponseCount = 0;
+            var impressionsCount = 0;
+            var impressions = 0;
+
+            var blockGroupReports = await Report.find({
+                campaignID: details.campaignID,
+                orgID: details.orgID,
+                activityType: 'CANVASS',
+                "location": {
+                    $geoIntersects: {
+                        $geometry: {
+                            type: "Polygon",
+                            coordinates: blockGroups[0]['CensusTracts'][j].geometry.coordinates[0]
+                        }
+                    }
+                }
+            })
+
+            for(var k = 0; k < blockGroupReports.length; k++){
+                if (blockGroupReports[k].idResponses[0]) {
+                    if (blockGroupReports[k].idResponses[0].idType === 'POSITIVE' ||
+                        blockGroupReports[k].idResponses[0].idType === 'NEUTRAL' ||
+                        blockGroupReports[k].idResponses[0].idType === 'NEGATIVE'
+                    ) {
+                        identifiedCount = identifiedCount + 1
+                    }
+                    if (blockGroupReports[k].idResponses[0].idType === 'REFUSED') {
+                        refusedCount = refusedCount + 1
+                    }
+                    if (blockGroupReports[k].idResponses[0].responses.toLowerCase().includes('lit') ||
+                        blockGroupReports[k].idResponses[0].responses.toLowerCase().includes('imp') ||
+                        blockGroupReports[k].idResponses[0].responses.toLowerCase().includes('con') ||
+                        blockGroupReports[k].idResponses[0].responses.toLowerCase().includes('spanish') ||
+                        blockGroupReports[k].idResponses[0].responses.toLowerCase().includes('und')) {
+                        impressions = impressions + 1
+                    }
+                    if (blockGroupReports[k].idResponses[0].idType === 'NONRESPONSE') {
+                        nonResponseCount = nonResponseCount + 1
+                    }
+                }
+                if(j === 0 && k === 0){
+                    console.log(blockGroups[0]['CensusTracts'][j]._id)
+                    console.log(blockGroupReports[k]._id)
+                    console.log(blockGroupReports[k].location.coordinates)
+                }
+            }
+
+            impressionsCount = impressions + parseInt(identifiedCount)
+            var total = await parseInt(identifiedCount) + parseInt(refusedCount) + parseInt(nonResponseCount)
+
+            await blockGroupRecord.push({blockGroup: blockGroups[0]['CensusTracts'][j].properties.geoid, identified: identifiedCount, refuses: refusedCount, impressions: impressionsCount, nonResponses: nonResponseCount, total: total})
+        }
+    }
+    return blockGroupRecord;
+}
+
+const getBlockGroupOverallSummaryReport = async(details) =>{
+    var reports = await Report.find({campaignID: details.campaignID, orgID: details.orgID, $or:[{activityType:'CANVASS'}, {activityType:'PETITION'}]})
+    var blockGroupRecord = []
+
+    var blockGroupCoordinates = []
+
+    for(var i = 0; i < reports.length; i++){
+        if (reports[i].location.coordinates.length) {
+            await blockGroupCoordinates.push(reports[i].location.coordinates)
+        }
+    }
+
+    var blockGroups = []
+
+    if(blockGroupCoordinates.length) {
+        var blockGroup = await CensusTract.find({
+            "geometry": {
+                $geoIntersects: {
+                    $geometry: {
+                        type: "MultiPoint",
+                        coordinates: blockGroupCoordinates
+                    }
+                }
+            }
+        });
+        await blockGroups.push({CensusTracts: blockGroup})
+    }
+
+    if(blockGroups.length) {
+        for(var j = 0; j < blockGroups[0]['CensusTracts'].length; j++){
+
+            var blockGroupReports = []
+            var identifiedCount  = 0;
+            var refusedCount = 0;
+            var nonResponseCount = 0;
+            var impressionsCount = 0;
+            var impressions = 0;
+
+            var blockGroupReports = await Report.find({
+                campaignID: details.campaignID,
+                orgID: details.orgID,
+                $or:[{activityType:'CANVASS'}, {activityType:'PETITION'}],
+                "location": {
+                    $geoIntersects: {
+                        $geometry: {
+                            type: "Polygon",
+                            coordinates: blockGroups[0]['CensusTracts'][j].geometry.coordinates[0]
+                        }
+                    }
+                }
+            })
+
+            for(var k = 0; k < blockGroupReports.length; k++){
+                if (blockGroupReports[k].idResponses[0]) {
+                    if (blockGroupReports[k].idResponses[0].idType === 'POSITIVE' ||
+                        blockGroupReports[k].idResponses[0].idType === 'NEUTRAL' ||
+                        blockGroupReports[k].idResponses[0].idType === 'NEGATIVE'
+                    ) {
+                        identifiedCount = identifiedCount + 1
+                    }
+                    if (blockGroupReports[k].idResponses[0].idType === 'REFUSED') {
+                        refusedCount = refusedCount + 1
+                    }
+                    if (blockGroupReports[k].idResponses[0].responses.toLowerCase().includes('lit') ||
+                        blockGroupReports[k].idResponses[0].responses.toLowerCase().includes('imp') ||
+                        blockGroupReports[k].idResponses[0].responses.toLowerCase().includes('con') ||
+                        blockGroupReports[k].idResponses[0].responses.toLowerCase().includes('spanish') ||
+                        blockGroupReports[k].idResponses[0].responses.toLowerCase().includes('und')) {
+                        impressions = impressions + 1
+                    }
+                    if (blockGroupReports[k].idResponses[0].idType === 'NONRESPONSE') {
+                        nonResponseCount = nonResponseCount + 1
+                    }
+                }
+                if(j === 0 && k === 0){
+                    console.log(blockGroups[0]['CensusTracts'][j]._id)
+                    console.log(blockGroupReports[k]._id)
+                    console.log(blockGroupReports[k].location.coordinates)
+                }
+            }
+
+            impressionsCount = impressions + parseInt(identifiedCount)
+            var total = await parseInt(identifiedCount) + parseInt(refusedCount) + parseInt(nonResponseCount)
+
+            await blockGroupRecord.push({blockGroup: blockGroups[0]['CensusTracts'][j].properties.geoid, identified: identifiedCount, refuses: refusedCount, impressions: impressionsCount, nonResponses: nonResponseCount, total: total})
+
+        }
+    }
+    return blockGroupRecord;
+}
+
 module.exports = {updateReport,
-                  getReport,
                   getCanvassSummaryReport,
                   getPetitionSummaryReport,
                   getOverallSummaryReport,
                   getEventsSummaryReport,
-                  getActivitiesSummaryReport}
+                  getActivitiesSummaryReport,
+                  getBlockGroupCanvassSummaryReport,
+                  getBlockGroupOrgSummaryReport,
+                  getBlockGroupOverallSummaryReport}
