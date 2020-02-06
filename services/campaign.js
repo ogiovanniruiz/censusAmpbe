@@ -182,8 +182,8 @@ const getParentOrg = async(campaignDetail) =>{
 
 
 module.exports = {createCampaign,
-                    getParentOrg,
-                    updateParentOrg,
+                  getParentOrg,
+                  updateParentOrg,
                   getAllCampaigns, 
                   getCampaign, 
                   requestCampaign, 

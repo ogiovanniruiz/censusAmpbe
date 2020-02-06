@@ -9,15 +9,6 @@ const updateReport = async (req,res,next) =>{
     }
 }
 
-const getReport = async (req,res,next) =>{
-    try{
-        res.send(await ReportService.getReport(req.body))
-    } catch(e){
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
 const getCanvassSummaryReport = async (req,res,next) =>{
     try{
         res.send(await ReportService.getCanvassSummaryReport(req.body))
@@ -63,10 +54,39 @@ const getActivitiesSummaryReport = async (req,res,next) =>{
     }
 }
 
+const getBlockGroupCanvassSummaryReport = async (req,res,next) =>{
+    try{
+        res.send(await ReportService.getBlockGroupCanvassSummaryReport(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const getBlockGroupOrgSummaryReport = async (req,res,next) =>{
+    try{
+        res.send(await ReportService.getBlockGroupOrgSummaryReport(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const getBlockGroupOverallSummaryReport = async (req,res,next) =>{
+    try{
+        res.send(await ReportService.getBlockGroupOverallSummaryReport(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 module.exports = {updateReport,
-                  getReport,
                   getCanvassSummaryReport,
                   getPetitionSummaryReport,
                   getOverallSummaryReport,
                   getEventsSummaryReport,
-                  getActivitiesSummaryReport};
+                  getActivitiesSummaryReport,
+                  getBlockGroupCanvassSummaryReport,
+                  getBlockGroupOrgSummaryReport,
+                  getBlockGroupOverallSummaryReport};
