@@ -46,32 +46,34 @@ var htcGroups = ["immigrants_refugees",
     "low_broadband_subscription_rate"]
 
 const updateReport = async(org) => {
-    await Report.deleteMany({orgID: org._id})
-    console.log(org.name + "Reset")
-
     var people =  await People.find({"canvassContactHistory.orgID": org._id})
+    var latestReport = await Report.findOne({}, {}, { sort: { 'reportDate' : -1 } });
+    if(!latestReport) latestReport = {reportDate: 0}
+    //var latestReport = {reportDate: 0}
     var count = 0
 
     for(var i = 0; i < people.length; i++){        
         for(var j = 0; j < people[i].canvassContactHistory.length; j++){
             if(people[i].canvassContactHistory[j].orgID === org._id){
                 for(var k = 0; k < people[i].canvassContactHistory[j].idHistory.length; k++){
-                    var report = new Report({campaignID: people[i].canvassContactHistory[j].campaignID,
-                                             orgID: people[i].canvassContactHistory[j].orgID,
-                                             userID: people[i].canvassContactHistory[j].idHistory[k].idBy,
-                                             idResponses: people[i].canvassContactHistory[j].idHistory[k].idResponses,
-                                             personID: people[i]._id,
-                                             activityType: "CANVASS",
-                                             location: people[i].canvassContactHistory[j].idHistory[k].locationIdentified,
-                                             activityID: people[i].canvassContactHistory[j].activityID,
-                                            }
-                                            );
-                    report.save()
-                    count = count + 1
-                    console.log(count)
+                    if(latestReport.reportDate < people[i].canvassContactHistory[j].idHistory[k].date){                    
+                        var report = new Report({campaignID: people[i].canvassContactHistory[j].campaignID,
+                                                 orgID: people[i].canvassContactHistory[j].orgID,
+                                                 userID: people[i].canvassContactHistory[j].idHistory[k].idBy,
+                                                 idResponses: people[i].canvassContactHistory[j].idHistory[k].idResponses,
+                                                 personID: people[i]._id,
+                                                 idDate: people[i].canvassContactHistory[j].idHistory[k].date,
+                                                 activityType: "CANVASS",
+                                                 location: people[i].address.location,
+                                                 activityID: people[i].canvassContactHistory[j].activityID,
+                                                }
+                                                );
+                        report.save()
+                        count = count + 1
+                        console.log('Canvass', org.name,": ",count)
+                    }
                 }                
             }
-        
         }
     }
 
@@ -82,24 +84,28 @@ const updateReport = async(org) => {
         for(var j = 0; j < people[i].petitionContactHistory.length; j++){
             if(people[i].petitionContactHistory[j].orgID === org._id){
                 for(var k = 0; k < people[i].petitionContactHistory[j].idHistory.length; k++){
-                    var report = new Report({campaignID: people[i].petitionContactHistory[j].campaignID,
-                                             orgID: people[i].petitionContactHistory[j].orgID,
-                                             userID: people[i].petitionContactHistory[j].idHistory[k].idBy,
-                                             idResponses: people[i].petitionContactHistory[j].idHistory[k].idResponses,
-                                             personID: people[i]._id,
-                                             activityType: "PETITION",
-                                             location: people[i].petitionContactHistory[j].idHistory[k].locationIdentified,
-                                             activityID: people[i].petitionContactHistory[j].activityID,
-                                            }
-                                            );
-                    report.save()
-                    count = count + 1
-                    console.log(count)
+                    if(latestReport.reportDate < people[i].petitionContactHistory[j].idHistory[k].date){
+                        var report = new Report({campaignID: people[i].petitionContactHistory[j].campaignID,
+                                                 orgID: people[i].petitionContactHistory[j].orgID,
+                                                 userID: people[i].petitionContactHistory[j].idHistory[k].idBy,
+                                                 idResponses: people[i].petitionContactHistory[j].idHistory[k].idResponses,
+                                                 personID: people[i]._id,
+                                                 idDate: people[i].petitionContactHistory[j].idHistory[k].date,
+                                                 activityType: "PETITION",
+                                                 location: people[i].address.location,
+                                                 activityID: people[i].petitionContactHistory[j].activityID,
+                                                }
+                                                );
+                        report.save()
+                        count = count + 1
+                        console.log('Petition',org.name, ": ",count)
+                    }
                 }                
             }
-        
         }
     }
+
+    return {orgName: org.name}
 }
 
 const getReport = async(campaign) =>{
