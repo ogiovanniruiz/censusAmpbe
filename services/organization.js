@@ -251,13 +251,14 @@ const getOrgLogo = async(data) =>{
     try{
         var orgID = data.orgID
         var fileDir = 'public/images/' + orgID + ".png"
-    
-        if(!fs.statSync(fileDir)) return {msg: "No Image"}
-
         return {image:fs.readFileSync(fileDir)}
 
     } catch(err){
-        console.log(err)
+        if(err.code == 'ENOENT'){
+            console.log("No Logo Exists")
+        }else{
+            console.log(err)
+        }
     }
 }
 
@@ -325,13 +326,21 @@ const getOrgPhoneNumbers = async(detail) =>{
 
     var org = await Organization.findOne({"_id": detail.orgID})
 
-    const client = require('twilio')(org.twilioAccount.sid, org.twilioAccount.authToken);
+    if(org.twilioAccount.sid && org.twilioAccount.authToken){
+        const client = require('twilio')(org.twilioAccount.sid, org.twilioAccount.authToken);
 
-    var numbers = await client.incomingPhoneNumbers
-    .list({limit: 20})
-    .then(incomingPhoneNumbers => {return incomingPhoneNumbers.map(i => i.phoneNumber)});
+        var numbers = await client.incomingPhoneNumbers
+        .list({limit: 20})
+        .then(incomingPhoneNumbers => {return incomingPhoneNumbers.map(i => i.phoneNumber)});
+        return numbers
 
-    return numbers
+    }
+
+    return null
+
+
+
+
 }
 
 module.exports = {createOrganization, 

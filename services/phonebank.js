@@ -57,6 +57,8 @@ const getHouseHold = async(detail) => {
         }
     }
 
+    console.log(searchParameters)
+
 
     var people = await Person.aggregate([ 
         {$match: searchParameters},
@@ -104,6 +106,7 @@ const getTwilioToken = async(detail) =>{
 }
 
 const call = async(detail) =>{
+    console.log(detail)
     console.log("Calling...");
     
     var number = detail.number;
@@ -147,7 +150,9 @@ const idPerson = async(detail)=>{
                                         campaignID: detail.campaignID,
                                         activityID: detail.activityID,
                                         orgID: detail.orgID,
+                    
                                         identified: true,
+                                        complete: true,
                                         idHistory: idHistory
                                     }
 
@@ -155,10 +160,13 @@ const idPerson = async(detail)=>{
         return person.save()
 
     }else{
-
         for (var i = 0; i < person.phonebankContactHistory.length; i++){
             if(person.phonebankContactHistory[i].activityID === detail.activityID){
                 person.phonebankContactHistory[i].idHistory.push(idHistory)
+                person.phonebankContactHistory[i].identified = true;
+                //person.phonebankContactHistory[i].complete = true;
+                person.phonebankContactHistory[i].nonResponse = false;
+                person.phonebankContactHistory[i].refused = false;
                 return person.save()
             }
         }
@@ -168,6 +176,7 @@ const idPerson = async(detail)=>{
                                         activityID: detail.activityID,
                                         orgID: detail.orgID,
                                         identified: true,
+                                        //complete: true,
                                         idHistory: idHistory
                                     }
 
@@ -199,6 +208,7 @@ const nonResponse = async(detail)=>{
                                         orgID: detail.orgID,
                                         refused: refused,
                                         nonResponse: true,
+                                        identified: false,
                         
                                         idHistory: idHistory
                                     }
@@ -211,6 +221,10 @@ const nonResponse = async(detail)=>{
         for (var i = 0; i < person.phonebankContactHistory.length; i++){
             if(person.phonebankContactHistory[i].activityID === detail.activityID){
                 person.phonebankContactHistory[i].idHistory.push(idHistory)
+                person.phonebankContactHistory[i].identified = false;
+                //person.phonebankContactHistory[i].complete = true;
+                person.phonebankContactHistory[i].nonResponse = true;
+                person.phonebankContactHistory[i].refused = refused;
                 return person.save()
             }
         }
@@ -221,7 +235,8 @@ const nonResponse = async(detail)=>{
                                         orgID: detail.orgID,
                                         refused: refused,
                                         nonResponse: true,
-                                        
+                                        //complete: true,
+                                        identified: false,
                                         idHistory: idHistory
                                     }
     

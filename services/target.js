@@ -30,9 +30,11 @@ const createTarget = async(detail) => {
         newTarget.properties.targetName = detail.targetName
         newTarget.properties.status = "LOCKED" 
         newTarget.properties.params.targetType = detail.targetType;
+        newTarget.properties.queries = []
 
         if(detail.targetType === "ORGMEMBERS"){
-            newTarget.properties.params.id = detail.orgID;
+            //newTarget.properties.params.id = detail.orgID;
+            newTarget.properties.queries.push({queryType: detail.targetType, param: detail.orgID})
         } else if (detail.targetType === "SCRIPT"){
             newTarget.properties.params.id = detail.scriptID;
             newTarget.properties.params.subParam = detail.scriptResponseType

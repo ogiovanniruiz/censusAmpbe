@@ -390,6 +390,7 @@ const getBlockGroupCanvassSummaryReport = async(details) =>{
 
 const getBlockGroupOrgSummaryReport = async(details) =>{
     var reports = await Report.find({campaignID: details.campaignID, orgID: details.orgID, activityType: 'CANVASS'})
+    console.log(reports)
     var blockGroupRecord = []
 
     var blockGroupCoordinates = []
