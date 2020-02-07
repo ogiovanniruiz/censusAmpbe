@@ -9,6 +9,7 @@ router.post('/getOverallSummaryReport', reportController.getOverallSummaryReport
 router.post('/getEventsSummaryReport', reportController.getEventsSummaryReport);
 router.post('/getActivitiesSummaryReport', reportController.getActivitiesSummaryReport);
 router.post('/getBlockGroupCanvassSummaryReport', reportController.getBlockGroupCanvassSummaryReport);
+router.post('/getBlockGroupCanvassSummaryReport2', reportController.getBlockGroupCanvassSummaryReport2);
 router.post('/getBlockGroupOrgSummaryReport', reportController.getBlockGroupOrgSummaryReport);
 router.post('/getBlockGroupOverallSummaryReport', reportController.getBlockGroupOverallSummaryReport);
 
