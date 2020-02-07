@@ -63,6 +63,15 @@ const getBlockGroupCanvassSummaryReport = async (req,res,next) =>{
     }
 }
 
+const getBlockGroupCanvassSummaryReport2 = async (req,res,next) =>{
+    try{
+        res.send(await ReportService.getBlockGroupCanvassSummaryReport2(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 const getBlockGroupOrgSummaryReport = async (req,res,next) =>{
     try{
         res.send(await ReportService.getBlockGroupOrgSummaryReport(req.body))
@@ -88,5 +97,6 @@ module.exports = {updateReport,
                   getEventsSummaryReport,
                   getActivitiesSummaryReport,
                   getBlockGroupCanvassSummaryReport,
+                  getBlockGroupCanvassSummaryReport2,
                   getBlockGroupOrgSummaryReport,
                   getBlockGroupOverallSummaryReport};
