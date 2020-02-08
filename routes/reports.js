@@ -12,5 +12,6 @@ router.post('/getBlockGroupCanvassSummaryReport', reportController.getBlockGroup
 router.post('/getBlockGroupCanvassSummaryReport2', reportController.getBlockGroupCanvassSummaryReport2);
 router.post('/getBlockGroupOrgSummaryReport', reportController.getBlockGroupOrgSummaryReport);
 router.post('/getBlockGroupOverallSummaryReport', reportController.getBlockGroupOverallSummaryReport);
+router.post('/getBlockGroupOverallSummaryReport2', reportController.getBlockGroupOverallSummaryReport2);
 
 module.exports = router;
