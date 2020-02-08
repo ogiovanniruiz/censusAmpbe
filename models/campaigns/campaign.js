@@ -19,6 +19,7 @@ var CampaignSchema = new Schema(
     description: {type: String},
     active: {type: Boolean, default: true},
     requests: [{type: String}],
+    dataManagers: [{type: String}],
     textActivities: [TextActivity.schema],
     canvassActivities: [CanvassActvity.schema],
     eventActivities: [EventActivity.schema],
