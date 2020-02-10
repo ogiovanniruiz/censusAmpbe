@@ -11,6 +11,7 @@ router.post('/getActivitiesSummaryReport', reportController.getActivitiesSummary
 router.post('/getBlockGroupCanvassSummaryReport', reportController.getBlockGroupCanvassSummaryReport);
 router.post('/getBlockGroupCanvassSummaryReport2', reportController.getBlockGroupCanvassSummaryReport2);
 router.post('/getBlockGroupOrgSummaryReport', reportController.getBlockGroupOrgSummaryReport);
+router.post('/getBlockGroupOrgSummaryReport2', reportController.getBlockGroupOrgSummaryReport2);
 router.post('/getBlockGroupOverallSummaryReport', reportController.getBlockGroupOverallSummaryReport);
 router.post('/getBlockGroupOverallSummaryReport2', reportController.getBlockGroupOverallSummaryReport2);
 
