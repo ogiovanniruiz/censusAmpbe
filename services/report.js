@@ -49,6 +49,7 @@ var htcGroups = ["immigrants_refugees",
 const updateReport = async(org) => {
     var people =  await People.find({"canvassContactHistory.orgID": org._id})
     var latestReport = await Report.findOne({}, {}, { sort: { 'reportDate' : -1 } });
+    
     if(!latestReport) latestReport = {reportDate: 0}
     //var latestReport = {reportDate: 0}
     var count = 0
@@ -67,8 +68,7 @@ const updateReport = async(org) => {
                                                  activityType: "CANVASS",
                                                  location: people[i].address.location,
                                                  activityID: people[i].canvassContactHistory[j].activityID,
-                                                }
-                                                );
+                                                });
                         report.save()
                         count = count + 1
                         console.log('Canvass', org.name,": ",count)
@@ -380,7 +380,7 @@ const getBlockGroupCanvassSummaryReport2 = async(details) =>{
 
 const getBlockGroupOrgSummaryReport = async(details) =>{
     var reports = await Report.find({campaignID: details.campaignID, orgID: details.orgID, activityType: 'CANVASS'})
-    console.log(reports)
+
     var blockGroupRecord = []
 
     var blockGroupCoordinates = []
