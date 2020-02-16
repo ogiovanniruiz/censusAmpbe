@@ -18,4 +18,13 @@ const uploadOccupancy = async (req, res, next) => {
     }
 }
 
-module.exports = {getAllCensusTracts, uploadOccupancy};
+const getAllBlockGroups = async (req, res, next) => {
+    try {
+        res.send(await censustractService.getAllBlockGroups(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = {getAllCensusTracts, uploadOccupancy, getAllBlockGroups};

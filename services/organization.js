@@ -280,17 +280,19 @@ const createTwilioSubAccount = async(orgID) =>{
         if(!accountExists){ 
             console.log("Account is new."); 
             
-            var account = await client.api.accounts.create({friendlyName: org.name}).then(account => {
+            var account = await superClient.api.accounts.create({friendlyName: org.name}).then(account => {
                 return account;
             });
 
             org.twilioAccount.sid = account.sid;
             org.twilioAccount.authToken = account.authToken;
+
+            var voice_url = process.env.be + '/phonebank/call'
             
 
             const subClient = require('twilio')(account.sid, account.authToken);
 
-            var app = await subClient.applications.create({voiceMethod: 'GET', voiceUrl: 'http://localhost:3000/phonebank/call',friendlyName: 'voice_api'})
+            var app = await subClient.applications.create({voiceMethod: 'POST', voiceUrl: voice_url,friendlyName: 'voice_api'})
                                         .then(application => {
                                             
                                             console.log(application.sid)
@@ -305,7 +307,7 @@ const createTwilioSubAccount = async(orgID) =>{
             const subClient = require('twilio')(existingAccount.sid, existingAccount.authToken);
 
             var voice_url = process.env.be + '/phonebank/call'
-            var app = await subClient.applications.create({voiceMethod: 'GET', voiceUrl: voice_url,friendlyName: 'voice_api'})
+            var app = await subClient.applications.create({voiceMethod: 'POST', voiceUrl: voice_url,friendlyName: 'voice_api'})
                                         .then(application => {
                                             
                                             console.log(application.sid)

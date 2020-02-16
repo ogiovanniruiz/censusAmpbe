@@ -27,9 +27,10 @@ var mongoose = require('mongoose');
 var mongoDB = ""
 var corsOptions = { methods: 'GET,POST,PATCH,DELETE,OPTIONS',
                     optionsSuccessStatus: 200,
-                    origin: ""}
+                    origin: ""
+                  }
 
-process.env.version = "0.5.7"
+process.env.version = "0.5.9"
 
 if(app.get('env') === 'census'){
   process.env.app_sid =  'APcfa84370fade47d9de6493f08e73b6fa'
@@ -41,7 +42,7 @@ if(app.get('env') === 'census'){
   mongoDB = 'mongodb://root:7EA9e666!@AmplifyMongo/v2db?authSource=admin';
   corsOptions.origin = 'https://outreach.censusie.org'
   
-}else if(app.get('env') === 'devServer'){
+} else if(app.get('env') === 'devServer'){
 
   process.env.app_sid =  'APcfa84370fade47d9de6493f08e73b6fa'
   process.env.accountSid = 'ACa9bc84bd822620cbfd617c0dad7752e6'
@@ -52,16 +53,16 @@ if(app.get('env') === 'census'){
   mongoDB = 'mongodb://root:7EA9e666!@devAmplifyMongo/v2db?authSource=admin';
   corsOptions.origin = 'https://dev.outreach.censusie.org'
 
-}else if(app.get('env') === 'campaigns'){
+} else if(app.get('env') === 'campaigns'){
 
-  process.env.app_sid =  'AP3445c5a3471c40dbca2fd426cc205417'
-  process.env.accountSid = 'ACc923c4760fbb4e54694ca4e2275dc132'
-  process.env.authToken = '3220b02b69c5ff27397dfd8f6eec6c3d'
-  process.env.fe = 'https://amp.ieunited.org'
-  process.env.be = 'https://amp.be.ieunited.org'
+  process.env.app_sid =  'AP3445c5a3471c40dbca2fd426cc205417';
+  process.env.accountSid = 'ACc923c4760fbb4e54694ca4e2275dc132';
+  process.env.authToken = '3220b02b69c5ff27397dfd8f6eec6c3d';
+  process.env.fe = 'https://amp.ieunited.org';
+  process.env.be = 'https://amp.be.ieunited.org';
 
   mongoDB = 'mongodb://root:7EA9e666!@mongoCampaigns/v2db?authSource=admin';
-  corsOptions.origin = 'https://amp.ieunited.org'
+  corsOptions.origin = 'https://amp.ieunited.org';
 
 }else if(app.get('env') === 'development'){
 

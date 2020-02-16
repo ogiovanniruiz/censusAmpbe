@@ -13,6 +13,7 @@ var PhonebankContactHistorySchema = new Schema(
         refused: {type: Boolean, default: false},
         nonResponse: {type: Boolean, deault: false},
         idHistory: [idHistory.schema],
+        reserved: {type: String}
     }
 );
 

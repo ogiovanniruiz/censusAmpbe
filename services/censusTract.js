@@ -14,12 +14,21 @@ const getAllCensusTracts= async(parcelDetail) =>{
 
             var tracts = await CensusTract.find({"properties.location": {$geoWithin: { $geometry: {type: "Polygon" , coordinates: [arrayCoords] }}}})
             return tracts
-        } else{
+        } else {
             //var tracts = await CensusTract.find({"properties.lrs": {$gte: 27.0}})
             var tracts = await CensusTract.find()
             return tracts
         }
 
+    } catch(e){
+        throw new Error(e.message)
+    }
+}
+
+const getAllBlockGroups = async()=>{
+    try {
+        var tracts = await CensusTract.find()
+        return tracts
     } catch(e){
         throw new Error(e.message)
     }
@@ -50,4 +59,4 @@ const uploadOccupancy = async(detail) =>{
     }
 }
 
-module.exports = {getAllCensusTracts, uploadOccupancy}
+module.exports = {getAllCensusTracts, uploadOccupancy, getAllBlockGroups}

@@ -45,7 +45,6 @@ const getCanvassParcels = async(detail) =>{
             }
         }
 
-
         if(targetCoordinates.length > 0){
             parcelSearchQuery['properties.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" ,
                                                                                      coordinates: targetCoordinates}}}

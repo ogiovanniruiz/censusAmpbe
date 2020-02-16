@@ -13,7 +13,8 @@ var AddressSchema = new Schema(
       county: {type: String},
       zip: {type: String, trim: true},
       location: {type: { type: String },
-                 coordinates: { type: [Number] }}  
+                 coordinates: { type: [Number] }},
+      locationAccuracy: {type: String}  
       
     }
 );

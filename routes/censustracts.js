@@ -5,6 +5,7 @@ var multer  = require('multer');
 var upload = multer();
 
 router.post('/getAllCensusTracts', censusTractController.getAllCensusTracts);
+router.post('/getAllBlockGroups', censusTractController.getAllBlockGroups);
 router.post('/uploadOccupancy', [upload.any(), censusTractController.uploadOccupancy]);
 
 module.exports = router;
