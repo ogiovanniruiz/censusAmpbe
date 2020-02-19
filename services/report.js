@@ -47,33 +47,81 @@ var htcGroups = ["immigrants_refugees",
     "low_broadband_subscription_rate"]
 
 const updateReport = async(org) => {
-        var people =  await People.find({"canvassContactHistory.orgID": org._id})
-        //var latestReport = await Report.findOne({}, {}, { sort: { 'reportDate' : -1 } });
-        //if(!latestReport) latestReport = {reportDate: 0}
-        var latestReport = {reportDate: 0}
-        var count = 0
-    
-        for(var i = 0; i < people.length; i++){        
-            for(var j = 0; j < people[i].canvassContactHistory.length; j++){
-                if(people[i].canvassContactHistory[j].orgID === org._id){
-                    for(var k = 0; k < people[i].canvassContactHistory[j].idHistory.length; k++){
-                        if(latestReport.reportDate < people[i].canvassContactHistory[j].idHistory[k].date){                    
-                            var report = new Report({campaignID: people[i].canvassContactHistory[j].campaignID,
-                                                     orgID: people[i].canvassContactHistory[j].orgID,
-                                                     userID: people[i].canvassContactHistory[j].idHistory[k].idBy,
-                                                     idResponses: people[i].canvassContactHistory[j].idHistory[k].idResponses,
-                                                     personID: people[i]._id,
-                                                     idDate: people[i].canvassContactHistory[j].idHistory[k].date,
-                                                     activityType: "CANVASS",
-                                                     location: people[i].address.location,
-                                                     activityID: people[i].canvassContactHistory[j].activityID,
-                                                    });
-                            report.save()
-                            count = count + 1
-                            console.log('Canvass', org.name,": ",count)
-                        }
-                    }                
+
+    const agg = [
+        {
+            '$match': {
+                '_id': {
+                    '$exists': true
                 }
+            }
+        }
+    ];
+    var Census = await CensusTract.aggregate(agg);
+
+    for(var i = 0; i < Census.length; i++){
+        const agg2 = [
+            {
+                '$match': {
+                    'address.location.coordinates': { $elemMatch: { $exists: true } },
+                    'address.blockgroupID': { $exists: false },
+                    'address.location': {
+                        '$geoIntersects': {
+                            '$geometry': {
+                                'type': 'Polygon',
+                                'coordinates': Census[i].geometry.coordinates[0]
+                            }
+                        }
+                    }
+                }
+            }, {
+                '$group': {
+                    '_id': null,
+                    'records': {
+                        '$push': '$_id'
+                    }
+                }
+            }
+        ];
+        var saveBlockgroupID = await People.aggregate(agg2);
+
+        if(saveBlockgroupID.length) {
+            var updated = await People.update(
+                { _id: {$in: saveBlockgroupID[0].records} },
+                { 'address.blockgroupID': Census[i].properties.geoid },
+                { upsert: false, multi: true,}
+            );
+            console.log(updated)
+        }
+    }
+
+    /*var people =  await People.find({"canvassContactHistory.orgID": org._id})
+    var latestReport = await Report.findOne({}, {}, { sort: { 'reportDate' : -1 } });
+    if(!latestReport) latestReport = {reportDate: 0}
+    //var latestReport = {reportDate: 0}
+    var count = 0
+
+    for(var i = 0; i < people.length; i++){        
+        for(var j = 0; j < people[i].canvassContactHistory.length; j++){
+            if(people[i].canvassContactHistory[j].orgID === org._id){
+                for(var k = 0; k < people[i].canvassContactHistory[j].idHistory.length; k++){
+                    if(latestReport.reportDate < people[i].canvassContactHistory[j].idHistory[k].date){                    
+                        var report = new Report({campaignID: people[i].canvassContactHistory[j].campaignID,
+                                                 orgID: people[i].canvassContactHistory[j].orgID,
+                                                 userID: people[i].canvassContactHistory[j].idHistory[k].idBy,
+                                                 idResponses: people[i].canvassContactHistory[j].idHistory[k].idResponses,
+                                                 personID: people[i]._id,
+                                                 idDate: people[i].canvassContactHistory[j].idHistory[k].date,
+                                                 activityType: "CANVASS",
+                                                 location: people[i].address.location,
+                                                 activityID: people[i].canvassContactHistory[j].activityID,
+                                                }
+                                                );
+                        report.save()
+                        count = count + 1
+                        console.log('Canvass', org.name,": ",count)
+                    }
+                }                
             }
         }
     
@@ -107,7 +155,9 @@ const updateReport = async(org) => {
     
         return {orgName: org.name}
     }
-    
+
+    return {orgName: org.name}*/
+}
 
 const getCanvassSummaryReport = async(details) =>{
 
