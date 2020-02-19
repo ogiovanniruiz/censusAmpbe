@@ -11,7 +11,7 @@ const resetTextBank = async(detail) =>{
     for(var i = 0; i <  people.length; i++){
 
         for(var j = 0; j < people[i].textContactHistory.length; j++){
-            if(people[i].textContactHistory[j].identified === false && people[i].textContactHistory[j].activityID === detail.activityID){
+            if(people[i].textContactHistory[j].activityID === detail.activityID){
                 people[i].textContactHistory.splice(j,1)
                 people[i].save()
             }
@@ -32,7 +32,7 @@ const lockNewPeople = async(detail) =>{
                             }
 
     
-
+/*
     for(var i = 0; i < targets.length; i++){
         if(targets[i].properties.params.targetType === "ORGMEMBERS"){
             searchParameters['membership.orgID'] = targets[i].properties.params.id
@@ -48,6 +48,37 @@ const lockNewPeople = async(detail) =>{
                                                                                                     
                                                                                                     }
     }
+*/
+    var targetCoordinates = []
+
+    var hasQueries = false;
+ 
+     for(var i = 0; i < targets.length; i++){
+         if(targets[i]['geometry']){ targetCoordinates.push(targets[i]['geometry']['coordinates'][0])}
+         if(targets[i].properties.queries.length > 0){hasQueries  = true;}
+     }
+ 
+     if(targetCoordinates.length > 0){
+         searchParameters['address.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" , 
+         coordinates: targetCoordinates}}}
+     }
+ 
+     if(hasQueries){
+         for(var i = 0; i < targets.length; i++){                                   
+             for(var j = 0; j < targets[i].properties.queries.length; j++){
+                 if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
+                     searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
+                 }
+                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
+ 
+                 }
+ 
+                 if(targets[i].properties.queries[j].queryType === "TAGS"){
+ 
+                 }
+             }                                                             
+         }
+     }
 
     console.log(searchParameters)
 
@@ -88,7 +119,7 @@ const getTextMetaData = async(detail) =>{
 
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
     var searchParametersTotal = {"phones": { $exists: true, $not: {$size: 0}}}
-
+/*
     for(var i = 0; i < targets.length; i++){
         if(targets[i].properties.params.targetType === "ORGMEMBERS"){
             searchParametersTotal['membership.orgID'] = targets[i].properties.params.id
@@ -103,6 +134,37 @@ const getTextMetaData = async(detail) =>{
                                                                                                             idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}]
         }
     }
+*/
+    var targetCoordinates = []
+
+    var hasQueries = false;
+ 
+     for(var i = 0; i < targets.length; i++){
+         if(targets[i]['geometry']){ targetCoordinates.push(targets[i]['geometry']['coordinates'][0])}
+         if(targets[i].properties.queries.length > 0){hasQueries  = true;}
+     }
+ 
+     if(targetCoordinates.length > 0){
+        searchParametersTotal['address.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" , 
+         coordinates: targetCoordinates}}}
+     }
+ 
+     if(hasQueries){
+         for(var i = 0; i < targets.length; i++){                                   
+             for(var j = 0; j < targets[i].properties.queries.length; j++){
+                 if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
+                    searchParametersTotal['membership.orgID'] = targets[i].properties.queries[j].param
+                 }
+                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
+ 
+                 }
+ 
+                 if(targets[i].properties.queries[j].queryType === "TAGS"){
+ 
+                 }
+             }                                                             
+         }
+     }
 
     var totalPeople = await Person.find(searchParametersTotal).count();
 
@@ -159,7 +221,7 @@ const loadLockedPeople = async(detail) =>{
 
 const getRespondedPeople = async(detail) =>{
 
-    var people = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, identified: false }}}).limit(5);   
+    var people = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: false }}}).limit(5);   
     return people
 }
 
@@ -269,6 +331,121 @@ const updateConversation = async(person) =>{
     return updatedPerson
 }
 
+const idPerson = async(detail)=>{
+
+    var person = await Person.findOne({"_id": detail.person._id});
+
+    var idHistory = {scriptID: detail.script._id,
+                     idBy: detail.userID,
+                     idResponses: detail.idResponses,
+                     locationIdentified: detail.location}
+
+    if(person.textContactHistory.length === 0){
+
+        var textContactHistory = {
+                                        campaignID: detail.campaignID,
+                                        activityID: detail.activityID,
+                                        orgID: detail.orgID,
+                                        identified: true,
+                                        complete: true,
+                                        idHistory: idHistory
+                                    }
+
+        person.textContactHistory.push(textContactHistory)
+        return person.save()
+
+    }else{
+
+        for (var i = 0; i < person.textContactHistory.length; i++){
+            if(person.textContactHistory[i].activityID === detail.activityID){
+                person.textContactHistory[i].idHistory.push(idHistory)
+                person.textContactHistory[i].identified = true;
+                person.textContactHistory[i].complete = true;
+                person.textContactHistory[i].nonResponse = false;
+                person.textContactHistory[i].refused = false;
+                return person.save()
+            }
+        }
+
+        var textContactHistory = {
+                                        campaignID: detail.campaignID,
+                                        activityID: detail.activityID,
+                                        orgID: detail.orgID,
+                                        identified: true,
+                                        complete: true,
+                                        idHistory: idHistory
+                                }
+
+        person.textContactHistory.push(textContactHistory)
+        return person.save()
+    }
+}
+
+const nonResponse = async(detail)=>{
+    var person = await Person.findOne({"_id": detail.person._id});
+    var refused = false;
+
+
+    if(detail.idType === 'REFUSED'){
+        refused = true;
+    }
+
+
+    var idHistory = {scriptID: detail.script._id,
+        idBy: detail.userID,
+        idResponses: detail.idResponses,
+        locationIdentified: detail.location}
+
+    if(person.textContactHistory.length === 0){
+
+        var textContactHistory = {
+                                        campaignID: detail.campaignID,
+                                        activityID: detail.activityID,
+                                        orgID: detail.orgID,
+                                        refused: refused,
+                                        nonResponse: true,
+                                        identified: false,
+                                        complete: true,
+                                        idHistory: idHistory
+                                    }
+
+        person.textContactHistory.push(textContactHistory)
+        return person.save()
+    
+    }else{
+
+        console.log("HERE")
+    
+        for (var i = 0; i < person.textContactHistory.length; i++){
+            if(person.textContactHistory[i].activityID === detail.activityID){
+                console.log("THIS ONE")
+                person.textContactHistory[i].idHistory.push(idHistory)
+                person.textContactHistory[i].identified = false;
+                person.textContactHistory[i].complete = true;
+                person.textContactHistory[i].nonResponse = true;
+                person.textContactHistory[i].refused = refused;
+                console.log(person.textContactHistory[i])
+                return person.save()
+            }
+        }
+
+        var textContactHistory = {
+                                        campaignID: detail.campaignID,
+                                        activityID: detail.activityID,
+                                        orgID: detail.orgID,
+                                        refused: refused,
+                                        complete: true,
+                                        nonResponse: true,
+                                        identified: false,
+                                        idHistory: idHistory
+                                    }
+    
+        person.textContactHistory.push(textContactHistory)
+        return person.save()
+    }
+}
+
+
 
 module.exports = {loadLockedPeople, 
                   getRespondedPeople, 
@@ -276,9 +453,10 @@ module.exports = {loadLockedPeople,
                   sendText, 
                   receiveTexts, 
                   updateConversation, 
-              
+                  idPerson,
+                  nonResponse,
                   getTextMetaData,
-                    getIdentifiedPeople, 
-                    allocatePhoneNumber,
-                    resetTextBank
+                  getIdentifiedPeople, 
+                  allocatePhoneNumber,
+                  resetTextBank
                 }

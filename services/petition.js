@@ -5,6 +5,7 @@ var jwt = require('jsonwebtoken');
 var Campaign = require('../models/campaigns/campaign') 
 var Rdr  = require('../models/activities/rdr')
 var async = require('async');
+var CensusTract = require('../models/censustracts/censustract');
 
 var options = {
     provider: 'google',
@@ -63,10 +64,10 @@ const createPerson = async(detail) =>{
         foundPeople = await Person.find(preExistCheckQuery)
     }
 
-
     if(foundPeople.length === 0){
 
         var person = new Person(detail.person);
+
         person.address = {city: detail.city.toUpperCase(),
                           county: detail.county,
                           state: "CA",
@@ -99,8 +100,7 @@ const createPerson = async(detail) =>{
                 if(res) {
                     if(res[0]) {
                         person.address.location = {coordinates: [res[0].longitude, res[0].latitude], type: "Point"}
-                        person.save()
-                        
+                        person.save()                        
                     }
                 }
             });

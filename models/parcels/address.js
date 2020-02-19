@@ -14,8 +14,8 @@ var AddressSchema = new Schema(
       zip: {type: String, trim: true},
       location: {type: { type: String },
                  coordinates: { type: [Number] }},
-      blockgroupID: {type: String}
-      
+      locationAccuracy: {type: String},   
+      blockgroupID: {type: String}   
     }
 );
 

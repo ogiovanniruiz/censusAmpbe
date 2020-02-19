@@ -4,6 +4,7 @@ var Target = require('../models/targets/target')
 var async = require('async')
 var parser = require('parse-address'); 
 var Report = require('../models/reports/report')
+var CensusTract = require('../models/censustracts/censustract');
 
 
 var NodeGeocoder = require('node-geocoder');
@@ -44,7 +45,6 @@ const getCanvassParcels = async(detail) =>{
                 targetCoordinates.push(targets[i]['geometry']['coordinates'][0])
             }
         }
-
 
         if(targetCoordinates.length > 0){
             parcelSearchQuery['properties.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" ,
@@ -225,7 +225,18 @@ const createPerson = async(detail) =>{
         var person = new Person(detail);
         console.log("PersonID: ", person._id)
 
+        var blockGroup = await CensusTract.findOne({"geometry":        {
+            '$geoIntersects': {
+                '$geometry': person.address.location
+            }
+        }})
+        if(blockGroup){
+            person.address.blockgroupID = blockGroup.properties.geoid
+        }
+
+
         person.save()
+        
         return {status: "NEWPERSON", person: person};
     }catch(e){
         throw new Error(e.message)

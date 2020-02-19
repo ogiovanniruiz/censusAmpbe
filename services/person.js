@@ -162,11 +162,14 @@ const uploadMembers = async(detail) =>{
     for(var j = 0; j < checkResults.newPeople.length; j++){
         var person = new Person(checkResults.newPeople[j])
         person.save()
+        console.log(j)
         checkResults.newPeople[j]._id = person._id
     }
 
     var fail = 0
     var success = 0
+
+    /*
 
     async.eachSeries(checkResults.newPeople, function(newPerson, next){
 
@@ -179,6 +182,12 @@ const uploadMembers = async(detail) =>{
         if(newPerson.address.unit) addressString = addressString + newPerson.address.unit + " "
         if(newPerson.address.city) addressString = addressString + newPerson.address.city + " "
         if(newPerson.address.zip) addressString = addressString + newPerson.address.zip
+
+        console.log("GOOGLE GEOCODE DISABLED...CONTINUING..")
+        success ++
+        
+
+
         
         geocoder.geocode(addressString, async function(err, res) {
             
@@ -201,8 +210,10 @@ const uploadMembers = async(detail) =>{
             console.log("SUCCESS: ", success, "FAILED: ", fail)
             next();
         });
+        
 
     })
+    */
 
     return {msg: "PROCESSING",  existingPeople: checkResults.existingPeople}
 
@@ -331,6 +342,7 @@ const constructUploadPeopleObjArray = function(data){
 
 
 const idPerson = async(detail) =>{
+    console.log(detail)
     
     var person = await Person.findOne({"_id": detail.person._id});
 
@@ -383,7 +395,7 @@ const idPerson = async(detail) =>{
                                             activityID: detail.activityID,
                                             orgID: detail.orgID,
                                             idHistory: idHistory
-                                        }
+                                    }
 
             person.textContactHistory.push(textContactHistory)
             return person.save()
@@ -410,6 +422,7 @@ const idPerson = async(detail) =>{
 
         }
     } else if(detail.activityType === "Petition"){
+        console.log(person)
         if(person.petitionContactHistory.length === 0){
 
             var petitionContactHistory = {

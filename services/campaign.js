@@ -7,48 +7,50 @@ var Target = require('../models/targets/target')
 const createCampaign = async(newCampaignDetail) =>{
     var campaignDetail = {name: newCampaignDetail.name,
                           description: newCampaignDetail.description,
-                          orgIDs: [newCampaignDetail.orgID]
+                          orgIDs: [newCampaignDetail.orgID],
+                          dataManagers: [newCampaignDetail.userID],
+
     }
 
     var campaign = new Campaign(campaignDetail);
-    campaign.save()
+    campaign.save();
     
-    var org = await Organization.findOne({'_id': newCampaignDetail.orgID})
-    org.campaignIDs.push(campaign.campaignID)
+    var org = await Organization.findOne({'_id': newCampaignDetail.orgID});
+    org.campaignIDs.push(campaign.campaignID);
 
     try {
-        return org.save()
+        return org.save();
           
     } catch(e){
-        throw new Error(e.message)
+        throw new Error(e.message);
     }
 }
 
 const getAllCampaigns = async(userDetail) =>{
     try {
-        var person = await Person.findOne({'user._id': userDetail.userID}).lean()
+        var person = await Person.findOne({'user._id': userDetail.userID}).lean();
         
-        var orgIDs = person.user.userOrgs.map(x => mongoose.Types.ObjectId(x.orgID))
-        var orgs = await Organization.find({_id: {$in: orgIDs}})
+        var orgIDs = person.user.userOrgs.map(x => mongoose.Types.ObjectId(x.orgID));
+        var orgs = await Organization.find({_id: {$in: orgIDs}});
         
-        var campaignIDs = orgs.map(x => x.campaignIDs)
+        var campaignIDs = orgs.map(x => x.campaignIDs);
         const flatIDs = campaignIDs.flat(1);
 
         return Campaign.find({campaignID: {$in: flatIDs}}).exec(); 
     } catch(e){
-        throw new Error(e.message)
+        throw new Error(e.message);
     }
 }
 
 const getOrgCampaigns = async(orgDetail) =>{
     try{
-        var org = await Organization.findOne({_id: orgDetail.orgID})
+        var org = await Organization.findOne({_id: orgDetail.orgID});
         
         var campaignIDs = org.campaignIDs;
         return Campaign.find({campaignID: {$in: campaignIDs}}).exec(); 
 
     } catch(e){
-        throw new Error(e.message)
+        throw new Error(e.message);
     }
 }
 
@@ -161,10 +163,9 @@ const removeOrg = async(detail) =>{
 
 const updateParentOrg = async(detail) =>{
     try {
-        console.log(detail)
-        var campaign = await Campaign.findOne({campaignID: detail.campaignID})
-        campaign.parentOrg = detail.newParentOrg
-        campaign.save()
+        var campaign = await Campaign.findOne({campaignID: detail.campaignID});
+        campaign.parentOrg = detail.newParentOrg;
+        campaign.save();
 
     } catch(e){
         throw new Error(e.message)
