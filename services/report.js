@@ -47,7 +47,55 @@ var htcGroups = ["immigrants_refugees",
     "low_broadband_subscription_rate"]
 
 const updateReport = async(org) => {
-    var people =  await People.find({"canvassContactHistory.orgID": org._id})
+
+    const agg = [
+        {
+            '$match': {
+                '_id': {
+                    '$exists': true
+                }
+            }
+        }
+    ];
+    var Census = await CensusTract.aggregate(agg);
+
+    for(var i = 0; i < Census.length; i++){
+        const agg2 = [
+            {
+                '$match': {
+                    'address.location.coordinates': { $elemMatch: { $exists: true } },
+                    'address.blockgroupID': { $exists: false },
+                    'address.location': {
+                        '$geoIntersects': {
+                            '$geometry': {
+                                'type': 'Polygon',
+                                'coordinates': Census[i].geometry.coordinates[0]
+                            }
+                        }
+                    }
+                }
+            }, {
+                '$group': {
+                    '_id': null,
+                    'records': {
+                        '$push': '$_id'
+                    }
+                }
+            }
+        ];
+        var saveBlockgroupID = await People.aggregate(agg2);
+
+        if(saveBlockgroupID.length) {
+            var updated = await People.update(
+                { _id: {$in: saveBlockgroupID[0].records} },
+                { 'address.blockgroupID': Census[i].properties.geoid },
+                { upsert: false, multi: true,}
+            );
+            console.log(updated)
+        }
+    }
+
+    /*var people =  await People.find({"canvassContactHistory.orgID": org._id})
     var latestReport = await Report.findOne({}, {}, { sort: { 'reportDate' : -1 } });
     if(!latestReport) latestReport = {reportDate: 0}
     //var latestReport = {reportDate: 0}
@@ -106,7 +154,7 @@ const updateReport = async(org) => {
         }
     }
 
-    return {orgName: org.name}
+    return {orgName: org.name}*/
 }
 
 const getCanvassSummaryReport = async(details) =>{
