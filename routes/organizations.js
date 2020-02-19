@@ -22,6 +22,8 @@ router.post('/getOrgLogo',  orgController.getOrgLogo);
 
 router.post('/createTwilioSubAccount',  orgController.createTwilioSubAccount);
 router.post('/getOrgPhoneNumbers', orgController.getOrgPhoneNumbers);
+router.post('/checkTwilioSubAccount',  orgController.checkTwilioSubAccount);
+router.post('/buyPhoneNumber', orgController.buyPhoneNumber);
 
 
 module.exports = router;

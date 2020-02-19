@@ -47,6 +47,7 @@ var htcGroups = ["immigrants_refugees",
     "low_broadband_subscription_rate"]
 
 const updateReport = async(org) => {
+    console.log("THIS")
 
     const agg = [
         {

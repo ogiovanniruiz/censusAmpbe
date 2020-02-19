@@ -146,8 +146,30 @@ const getOrgPhoneNumbers = async (req, res, next) => {
     }
 }
 
+const checkTwilioSubAccount = async (req, res, next) => {
+    try {
+        res.send(await organizationService.checkTwilioSubAccount(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
 
-module.exports = {createTwilioSubAccount,
+
+
+const buyPhoneNumber = async (req, res, next) => {
+    try {
+        res.send(await organizationService.buyPhoneNumber(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+
+module.exports = {checkTwilioSubAccount,
+                buyPhoneNumber,
+                createTwilioSubAccount,
                   createOrganization, 
                   getAllOrganizations, 
                   getOrganization, 

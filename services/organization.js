@@ -261,6 +261,7 @@ const getOrgLogo = async(data) =>{
 }
 
 const createTwilioSubAccount = async(orgID) =>{
+    console.log("THIS SHOULD NOT BE HAPPENING")
     try{
         var org = await Organization.findOne({"_id": orgID.orgID})
         const superClient = require('twilio')("ACa75c4991d267cf482e49798a667157e1", "f4fbc33e1d6b0fba8d8b0bedd909238a");
@@ -337,10 +338,42 @@ const getOrgPhoneNumbers = async(detail) =>{
     }
 
     return null
+}
 
+const checkTwilioSubAccount = async(detail) =>{
+    var org = await Organization.findOne({"_id": detail.orgID})
+    const superClient = require('twilio')("ACa75c4991d267cf482e49798a667157e1", "f4fbc33e1d6b0fba8d8b0bedd909238a");
+    var accountExists = false;
+    
+    await superClient.api.accounts.list({friendlyName: org.name, status: "active", limit: 20})
+                       .then(accounts => accounts.forEach(a => 
+                        {
+                            accountExists = true
+                            existingAccount = a
+                        }
+                       ));
 
+    if(!accountExists){ 
+        return {msg: "Account does not exist", status: false}
+    }else{
+        return {msg: "Account Exists", status: true}
+      
+    }
+}
 
+const buyPhoneNumber = async(detail) =>{
+    console.log(detail)
+    var org = await Organization.findOne({"_id": detail.orgID})
 
+    if(org.twilioAccount.sid && org.twilioAccount.authToken){
+        const client = require('twilio')(org.twilioAccount.sid, org.twilioAccount.authToken);
+
+    await client.incomingPhoneNumbers
+      .create({areaCode: detail.areaCode})
+      .then(incoming_phone_number => console.log(incoming_phone_number.sid));
+    }
+
+    return { msg: "Success", status: true}
 }
 
 module.exports = {createOrganization, 
@@ -354,4 +387,4 @@ module.exports = {createOrganization,
                   getCampaignOrgs,
                   dbPatch,                  
                   getOrgPhoneNumbers,
-                  createTag, getOrgTags, uploadLogo, getOrgLogo, createTwilioSubAccount}
+                  createTag, getOrgTags, uploadLogo, getOrgLogo, createTwilioSubAccount, checkTwilioSubAccount, buyPhoneNumber}
