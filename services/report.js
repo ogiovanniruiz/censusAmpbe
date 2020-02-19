@@ -48,6 +48,8 @@ var htcGroups = ["immigrants_refugees",
 
 const updateReport = async(org) => {
 
+    console.log('start')
+
     const agg = [
         {
             '$match': {
@@ -94,6 +96,8 @@ const updateReport = async(org) => {
             console.log(updated)
         }
     }
+    console.log('done')
+    return {}
 
     /*var people =  await People.find({"canvassContactHistory.orgID": org._id})
     var latestReport = await Report.findOne({}, {}, { sort: { 'reportDate' : -1 } });
