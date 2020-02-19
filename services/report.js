@@ -961,6 +961,7 @@ const getBlockGroupCanvassSummaryReport = async(details) =>{
             }
         }
     ];
+    
     var reportsCords = await People.aggregate(agg);
 
     if (reportsCords.length) {

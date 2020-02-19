@@ -214,8 +214,6 @@ const dbPatch = async(detail) =>{
     } catch(e){
         throw new Error(e.message)
     }
-
-
 }
 
 

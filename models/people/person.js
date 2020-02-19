@@ -31,7 +31,7 @@ var PersonSchema = new Schema(
     creationInfo: CreationInfo.schema,
     preferredMethodContact: [PreferredMethodContact.schema],
     clientID: {type: String}
-  }
+  }//,{ collection : 'voterfile' }
 );
 
 

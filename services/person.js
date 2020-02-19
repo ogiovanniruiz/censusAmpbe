@@ -342,6 +342,7 @@ const constructUploadPeopleObjArray = function(data){
 
 
 const idPerson = async(detail) =>{
+    console.log(detail)
     
     var person = await Person.findOne({"_id": detail.person._id});
 
@@ -394,7 +395,7 @@ const idPerson = async(detail) =>{
                                             activityID: detail.activityID,
                                             orgID: detail.orgID,
                                             idHistory: idHistory
-                                        }
+                                    }
 
             person.textContactHistory.push(textContactHistory)
             return person.save()
@@ -421,6 +422,7 @@ const idPerson = async(detail) =>{
 
         }
     } else if(detail.activityType === "Petition"){
+        console.log(person)
         if(person.petitionContactHistory.length === 0){
 
             var petitionContactHistory = {
