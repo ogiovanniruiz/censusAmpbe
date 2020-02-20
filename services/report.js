@@ -128,34 +128,36 @@ const updateReport = async(org) => {
                 }                
             }
         }
-    }
 
-    var people =  await People.find({"petitionContactHistory.orgID": org._id})
-    var count = 0
+        var people =  await People.find({"petitionContactHistory.orgID": org._id})
+        var count = 0
 
-    for(var i = 0; i < people.length; i++){        
-        for(var j = 0; j < people[i].petitionContactHistory.length; j++){
-            if(people[i].petitionContactHistory[j].orgID === org._id){
-                for(var k = 0; k < people[i].petitionContactHistory[j].idHistory.length; k++){
-                    if(latestReport.reportDate < people[i].petitionContactHistory[j].idHistory[k].date){
-                        var report = new Report({campaignID: people[i].petitionContactHistory[j].campaignID,
-                                                 orgID: people[i].petitionContactHistory[j].orgID,
-                                                 userID: people[i].petitionContactHistory[j].idHistory[k].idBy,
-                                                 idResponses: people[i].petitionContactHistory[j].idHistory[k].idResponses,
-                                                 personID: people[i]._id,
-                                                 idDate: people[i].petitionContactHistory[j].idHistory[k].date,
-                                                 activityType: "PETITION",
-                                                 location: people[i].address.location,
-                                                 activityID: people[i].petitionContactHistory[j].activityID,
-                                                }
-                                                );
-                        report.save()
-                        count = count + 1
-                        console.log('Petition',org.name, ": ",count)
+        for(var i = 0; i < people.length; i++){
+            for(var j = 0; j < people[i].petitionContactHistory.length; j++){
+                if(people[i].petitionContactHistory[j].orgID === org._id){
+                    for(var k = 0; k < people[i].petitionContactHistory[j].idHistory.length; k++){
+                        if(latestReport.reportDate < people[i].petitionContactHistory[j].idHistory[k].date){
+                            var report = new Report({campaignID: people[i].petitionContactHistory[j].campaignID,
+                                                     orgID: people[i].petitionContactHistory[j].orgID,
+                                                     userID: people[i].petitionContactHistory[j].idHistory[k].idBy,
+                                                     idResponses: people[i].petitionContactHistory[j].idHistory[k].idResponses,
+                                                     personID: people[i]._id,
+                                                     idDate: people[i].petitionContactHistory[j].idHistory[k].date,
+                                                     activityType: "PETITION",
+                                                     location: people[i].address.location,
+                                                     activityID: people[i].petitionContactHistory[j].activityID,
+                                                    }
+                                                    );
+                            report.save()
+                            count = count + 1
+                            console.log('Petition',org.name, ": ",count)
+                        }
                     }
-                }                
+                }
             }
         }
+
+        return {orgName: org.name}
     }
 
     return {orgName: org.name}*/

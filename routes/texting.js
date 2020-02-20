@@ -12,4 +12,9 @@ router.post('/getTextMetaData', textingController.getTextMetaData);
 router.post('/getIdentifiedPeople', textingController.getIdentifiedPeople)
 router.post('/allocatePhoneNumber', textingController.allocatePhoneNumber)
 router.post('/resetTextBank', textingController.resetTextBank)
+
+router.post('/idPerson', textingController.idPerson)
+router.post('/nonResponse', textingController.nonResponse)
+router.post('/completePerson', textingController.completePerson)
+
 module.exports = router;

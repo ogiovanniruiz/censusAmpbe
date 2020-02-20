@@ -11,21 +11,18 @@ const getHouseHold = async(detail) => {
 
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
     //var searchParameters = {"phonebankContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, identified: true}}}}
-    var searchParameters = {"phonebankContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, houseHoldComplete: true}}}}
+    //var searchParameters = {"phonebankContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, houseHoldComplete: true}}}}
+
+    var searchParameters = {"phones": {$not: {$size: 0}},
     /*
-    for(var i = 0; i < targets.length; i++){
-        if(targets[i].properties.params.targetType === "ORGMEMBERS"){
-            searchParameters['membership'] = targets[i].properties.params.id;
-        } else if (targets[i].properties.params.targetType === "SCRIPT"){
-            searchParameters['$or'] = [{'textContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
-                                                                                                            idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}, 
-                                       {'canvassContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
-                                                                                                            idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}, 
-                                       {'phonebankContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
-                                                                                                          idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}]
-        }
-    }
+                $or:[{"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, reserved: detail.userID}},},
+                     {"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, reserved: {$exists: false}}}}],
     */
+            $or:[{"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, houseHoldComplete: false}}},
+                 {"phonebankContactHistory": {$exists: false}},
+                 {"phonebankContactHistory": {$size: 0}}
+                ]}
+
    var targetCoordinates = []
 
    var hasQueries = false;
@@ -37,48 +34,73 @@ const getHouseHold = async(detail) => {
 
     if(targetCoordinates.length > 0){
         searchParameters['address.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" , 
-        coordinates: targetCoordinates}}}
+                                                                            coordinates: targetCoordinates}}}
     }
 
     if(hasQueries){
         for(var i = 0; i < targets.length; i++){                                   
             for(var j = 0; j < targets[i].properties.queries.length; j++){
-                if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
-                    searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
-                }
-                if(targets[i].properties.queries[j].queryType === "SCRIPT"){
-
+                if(targets[i].properties.queries[j].queryType === "PAV"){
+                    searchParameters['voterInfo.pav'] = targets[i].properties.queries[j].param
                 }
 
-                if(targets[i].properties.queries[j].queryType === "TAGS"){
+                if(targets[i].properties.queries[j].queryType === "PRECINCT"){
+                    searchParameters['voterInfo.precinct'] = {$regex: targets[i].properties.queries[j].param}
+                }
 
+                if(targets[i].properties.queries[j].queryType === "PROPENSITY"){
+                    var low = targets[i].properties.queries[j].subParam
+                    var hi = targets[i].properties.queries[j].param
+                    searchParameters['voterInfo.propensity'] = { $gt :  low/100, $lt : hi/100}
                 }
             }                                                             
         }
     }
 
+    console.log(searchParameters)
 
     var people = await Person.aggregate([ 
         {$match: searchParameters},
+        
         {$group : { _id : {streetNum: "$address.streetNum",
-                            suffix: "$address.suffix",
-                            prefix:  "$address.prefix",
-                            city: "$address.city",
-                            state: "$address.state",
-                            county: "$address.county",
-                            zip: "$address.zip",
-                            unit: "$address.unit",
-                            location: "$address.location",
+                           suffix: "$address.suffix",
+                           prefix:  "$address.prefix",
+                           city: "$address.city",
+                           state: "$address.state",
+                           county: "$address.county",
+                           zip: "$address.zip",
+                           unit: "$address.unit",
                            street: "$address.street"}, 
                     people: { $push: {firstName: '$firstName',
-                                        middleName: '$middleName',
+                                      middleName: '$middleName',
                                       lastName: '$lastName', 
                                       phones: '$phones',
                                       emails: '$emails',
                                       address: '$address',
                                       phonebankContactHistory: '$phonebankContactHistory',
-                                      _id: "$_id"}}}}
-        ]).allowDiskUse(true)
+                                      voterInfo: '$voterInfo',
+                                      _id: "$_id"}}}},{$sample: { size: 10 } }
+        ]).allowDiskUse(true).limit(1)
+
+    /*
+    if(people[0]){
+        if(people[0].people){
+            for(var i = 0; i < people[0].people.length; i++){
+                var person = await Person.findOne({"_id": people[0].people[i]._id})
+                for(var j = 0; j < person.phonebankContactHistory.length; j++){
+                    if(person.phonebankContactHistory[j].campaignID === detail.campaignID){
+                        person.phonebankContactHistory[j].reserved = detail.userID;
+                        person.save()
+                        break
+    
+                    }
+                }
+            }
+        }
+    }*/
+
+
+
     
     try { return people[0] 
     } catch(e){
@@ -107,11 +129,8 @@ const call = async(detail) =>{
     console.log("Calling...");
     
     var number = detail.number;
-  
     var twiml = new VoiceResponse();
-    
     var dial = twiml.dial({callerId : detail.origin});
-    
     dial.number(number);
 
     return twiml.toString();
@@ -155,10 +174,12 @@ const idPerson = async(detail)=>{
         return person.save()
 
     }else{
-
         for (var i = 0; i < person.phonebankContactHistory.length; i++){
             if(person.phonebankContactHistory[i].activityID === detail.activityID){
                 person.phonebankContactHistory[i].idHistory.push(idHistory)
+                person.phonebankContactHistory[i].identified = true;
+                person.phonebankContactHistory[i].nonResponse = false;
+                person.phonebankContactHistory[i].refused = false;
                 return person.save()
             }
         }
@@ -185,7 +206,6 @@ const nonResponse = async(detail)=>{
         refused = true;
     }
 
-
     var idHistory = {scriptID: detail.script._id,
         idBy: detail.userID,
         idResponses: detail.idResponses,
@@ -199,7 +219,7 @@ const nonResponse = async(detail)=>{
                                         orgID: detail.orgID,
                                         refused: refused,
                                         nonResponse: true,
-                        
+                                        identified: false,
                                         idHistory: idHistory
                                     }
 
@@ -211,6 +231,9 @@ const nonResponse = async(detail)=>{
         for (var i = 0; i < person.phonebankContactHistory.length; i++){
             if(person.phonebankContactHistory[i].activityID === detail.activityID){
                 person.phonebankContactHistory[i].idHistory.push(idHistory)
+                person.phonebankContactHistory[i].identified = false;
+                person.phonebankContactHistory[i].nonResponse = true;
+                person.phonebankContactHistory[i].refused = refused;
                 return person.save()
             }
         }
@@ -221,7 +244,7 @@ const nonResponse = async(detail)=>{
                                         orgID: detail.orgID,
                                         refused: refused,
                                         nonResponse: true,
-                                        
+                                        identified: false,
                                         idHistory: idHistory
                                     }
     
@@ -269,3 +292,14 @@ module.exports = {getHouseHold,
                   nonResponse, 
                   allocatePhoneNumber, 
                   completeHouseHold}
+
+
+                                  /*
+                if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
+                    searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
+                }
+                if(targets[i].properties.queries[j].queryType === "SCRIPT"){
+                }
+
+                if(targets[i].properties.queries[j].queryType === "TAGS"){
+                }*/

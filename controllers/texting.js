@@ -95,12 +95,42 @@ const resetTextBank = async (req,res,next) =>{
     }
 }
 
+const idPerson = async (req,res,next) =>{
+    try {
+        res.send(await textingService.idPerson(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const nonResponse = async (req,res,next) =>{
+    try {
+        res.send(await textingService.nonResponse(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const completePerson = async (req,res,next) =>{
+    try {
+        res.send(await textingService.completePerson(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 module.exports = {loadLockedPeople, 
     sendText, 
     lockNewPeople, 
     getRespondedPeople, 
     receiveTexts, 
-    updateConversation, 
+    updateConversation,
+    idPerson, 
+    nonResponse,
+    completePerson,
   
     getTextMetaData,
     getIdentifiedPeople,

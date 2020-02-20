@@ -1,5 +1,4 @@
 var Target = require('../models/targets/target');
-var Campaign = require('../models/campaigns/campaign'); 
 var CensusTract = require('../models/censustracts/censustract'); 
 
 const createTarget = async(detail) => {
@@ -30,15 +29,22 @@ const createTarget = async(detail) => {
         newTarget.properties.targetName = detail.targetName
         newTarget.properties.status = "LOCKED" 
         newTarget.properties.params.targetType = detail.targetType;
+        newTarget.properties.queries = []
 
         if(detail.targetType === "ORGMEMBERS"){
-            newTarget.properties.params.id = detail.orgID;
-        } else if (detail.targetType === "SCRIPT"){
-            newTarget.properties.params.id = detail.scriptID;
-            newTarget.properties.params.subParam = detail.scriptResponseType
-        } else if (detail.targetType === "TAG"){
-            newTarget.properties.params.id = detail.tag;
+            newTarget.properties.queries.push({queryType: detail.targetType, param: detail.orgID})
         }
+
+        if(detail.precinct != ''){
+            newTarget.properties.queries.push({queryType: "PRECINCT", param: detail.precinct})
+        }
+
+        if(detail.pav){
+            newTarget.properties.queries.push({queryType: "PAV", param: detail.pav})
+        }
+
+        newTarget.properties.queries.push({queryType: "PROPENSITY", param: detail.hiPropensity, subParam: detail.lowPropensity})
+
 
     } else if(detail.type === "POLYGON"){
     
@@ -58,11 +64,11 @@ const createTarget = async(detail) => {
 
             newTarget.properties.queries.push({queryType: detail.targetType, param: detail.tag })
         
-        
-        
         }
     
     }
+
+    console.log(newTarget.properties.queries)
 
     var target = new Target(newTarget);
 

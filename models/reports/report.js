@@ -16,7 +16,8 @@ var ReportSchema = new Schema(
     activityID: {type: String}, 
     reportDate: {type: Date, default: Date.now},  
     swordSubmit: {type: Boolean, default: false},  
-    idDate: {type: Date} 
+    idDate: {type: Date}, 
+    geoid: {type: String}
   }
 );
 
