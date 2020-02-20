@@ -261,7 +261,6 @@ const getOrgLogo = async(data) =>{
 }
 
 const createTwilioSubAccount = async(orgID) =>{
-    console.log("THIS SHOULD NOT BE HAPPENING")
     try{
         var org = await Organization.findOne({"_id": orgID.orgID})
         const superClient = require('twilio')("ACa75c4991d267cf482e49798a667157e1", "f4fbc33e1d6b0fba8d8b0bedd909238a");
@@ -276,9 +275,7 @@ const createTwilioSubAccount = async(orgID) =>{
                             }
                            ));
 
-        if(!accountExists){ 
-            console.log("Account is new."); 
-            
+        if(!accountExists){             
             var account = await superClient.api.accounts.create({friendlyName: org.name}).then(account => {
                 return account;
             });
@@ -298,7 +295,7 @@ const createTwilioSubAccount = async(orgID) =>{
                                             return application
                            });
             org.twilioAccount.app_sid = app.sid
-            org.save();
+            return org.save();
 
         }else{
             org.twilioAccount.sid = existingAccount.sid;
@@ -313,12 +310,12 @@ const createTwilioSubAccount = async(orgID) =>{
                                             return application
                            });
             org.twilioAccount.app_sid = app.sid
-            org.save();
-            console.log("Account Exists");
+            return org.save();
         }
 
     } catch(err){
         console.log(err)
+        return err
     }
 }
 
@@ -334,7 +331,6 @@ const getOrgPhoneNumbers = async(detail) =>{
         .list({limit: 20})
         .then(incomingPhoneNumbers => {return incomingPhoneNumbers.map(i => i.phoneNumber)});
         return numbers
-
     }
 
     return null
