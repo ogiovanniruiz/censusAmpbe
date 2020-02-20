@@ -985,8 +985,6 @@ const getActivitiesSummaryReport = async(details) =>{
 }
 
 const getBlockGroupCanvassSummaryReport = async(details) =>{
-    var blockGroupRecord = []
-
     const agg = [
         {
             '$unwind': {
@@ -996,7 +994,10 @@ const getBlockGroupCanvassSummaryReport = async(details) =>{
         }, {
             '$match': {
                 'canvassContactHistory.campaignID': details.campaignID,
-                'canvassContactHistory.orgID': details.orgID
+                'canvassContactHistory.orgID': details.orgID,
+                'address.blockgroupID': {
+                    '$exists': true
+                }
             }
         }, {
             '$unwind': {
@@ -1005,250 +1006,132 @@ const getBlockGroupCanvassSummaryReport = async(details) =>{
             }
         }, {
             '$group': {
-                '_id': null,
-                'records': {
-                    '$push': '$address.location.coordinates'
+                '_id': '$address.blockgroupID',
+                'blockgroups': {
+                    '$push': {
+                        '$arrayElemAt': [
+                            '$$ROOT.canvassContactHistory.idHistory.idResponses', 0
+                        ]
+                    }
                 }
+            }
+        }, {
+            '$unwind': {
+                'path': '$blockgroups'
+            }
+        }, {
+            '$project': {
+                'blockgroups': 1,
+                'identified': {
+                    '$cond': {
+                        'if': {
+                            '$or': [
+                                {
+                                    '$eq': [
+                                        '$blockgroups.idType', 'POSITIVE'
+                                    ]
+                                }, {
+                                    '$eq': [
+                                        '$blockgroups.idType', 'NEUTRAL'
+                                    ]
+                                }, {
+                                    '$eq': [
+                                        '$blockgroups.idType', 'NEGATIVE'
+                                    ]
+                                }
+                            ]
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                },
+                'refuses': {
+                    '$cond': {
+                        'if': {
+                            '$eq': [
+                                '$blockgroups.idType', 'REFUSED'
+                            ]
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                },
+                'impressions': {
+                    '$cond': {
+                        'if': {
+                            '$regexFind': {
+                                'input': "$blockgroups.responses",
+                                'regex': '(?i)lit|imp|con|spanish|und'
+                            }
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                },
+                'nonResponses': {
+                    '$cond': {
+                        'if': {
+                            '$eq': [
+                                '$blockgroups.idType', 'NONRESPONSE'
+                            ]
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                }
+            }
+        }, {
+            '$group': {
+                '_id': '$_id',
+                'identified': {
+                    '$sum': {
+                        '$add': [
+                            '$identified'
+                        ]
+                    }
+                },
+                'refuses': {
+                    '$sum': {
+                        '$add': [
+                            '$refuses'
+                        ]
+                    }
+                },
+                'impressions': {
+                    '$sum': {
+                        '$add': [
+                            '$impressions', '$identified'
+                        ]
+                    }
+                },
+                'nonResponses': {
+                    '$sum': {
+                        '$add': [
+                            '$nonResponses'
+                        ]
+                    }
+                },
+                'total': {
+                    '$sum': {
+                        '$add': [
+                            '$identified', '$refuses', '$nonResponses'
+                        ]
+                    }
+                }
+            }
+        }, {
+            '$project': {
+                'blockGroup': '$_id',
+                'identified': 1,
+                'refuses': 1,
+                'impressions': 1,
+                'nonResponses': 1,
+                'total': 1
             }
         }
     ];
-    var reportsCords = await People.aggregate(agg);
+    var blockGroupRecord = await People.aggregate(agg);
 
-    if (reportsCords.length) {
-        const agg2 = [
-            {
-                '$match': {
-                    'geometry': {
-                        '$geoIntersects': {
-                            '$geometry': {
-                                'type': 'MultiPoint',
-                                'coordinates': reportsCords[0].records
-                            }
-                        }
-                    }
-                }
-            }
-        ];
-        var reportsCords2 = await CensusTract.aggregate(agg2);
-
-        for(var i = 0; i < reportsCords2.length; i++){
-            const agg3 = [
-                {
-                    '$unwind': {
-                        'path': '$canvassContactHistory',
-                        'preserveNullAndEmptyArrays': false
-                    }
-                }, {
-                    '$match': {
-                        'canvassContactHistory.campaignID': details.campaignID,
-                        'canvassContactHistory.orgID': details.orgID
-                    }
-                }, {
-                    '$unwind': {
-                        'path': '$canvassContactHistory.idHistory',
-                        'preserveNullAndEmptyArrays': false
-                    }
-                }, {
-                    '$match': {
-                        'address.location': {
-                            '$geoIntersects': {
-                                '$geometry': {
-                                    'type': 'Polygon',
-                                    'coordinates': reportsCords2[i].geometry.coordinates[0]
-                                }
-                            }
-                        }
-                    }
-                }, {
-                    '$facet': {
-                        'identified': [
-                            {
-                                '$match': {
-                                    'canvassContactHistory.idHistory.idResponses.0.idType': {
-                                        '$in': [
-                                            'POSITIVE', 'NEUTRAL', 'NEGATIVE'
-                                        ]
-                                    }
-                                }
-                            }, {
-                                '$group': {
-                                    '_id': null,
-                                    'num': {
-                                        '$sum': 1
-                                    }
-                                }
-                            }
-                        ],
-                        'refuses': [
-                            {
-                                '$match': {
-                                    'canvassContactHistory.idHistory.idResponses.0.idType': 'REFUSED'
-                                }
-                            }, {
-                                '$group': {
-                                    '_id': null,
-                                    'num': {
-                                        '$sum': 1
-                                    }
-                                }
-                            }
-                        ],
-                        'impressions': [
-                            {
-                                '$match': {
-                                    'canvassContactHistory.idHistory.idResponses.0.responses': {
-                                        '$regex': '(?i)lit|imp|con|spanish|und'
-                                    }
-                                }
-                            }, {
-                                '$group': {
-                                    '_id': null,
-                                    'num': {
-                                        '$sum': 1
-                                    }
-                                }
-                            }
-                        ],
-                        'nonResponses': [
-                            {
-                                '$match': {
-                                    'canvassContactHistory.idHistory.idResponses.0.idType': 'NONRESPONSE'
-                                }
-                            }, {
-                                '$group': {
-                                    '_id': null,
-                                    'num': {
-                                        '$sum': 1
-                                    }
-                                }
-                            }
-                        ],
-                        'total': [
-                            {
-                                '$group': {
-                                    '_id': null
-                                }
-                            }
-                        ]
-                    }
-                }, {
-                    '$project': {
-                        'identified': {
-                            '$cond': [
-                                {
-                                    '$arrayElemAt': [
-                                        '$identified.num', 0
-                                    ]
-                                }, {
-                                    '$arrayElemAt': [
-                                        '$identified.num', 0
-                                    ]
-                                }, 0
-                            ]
-                        },
-                        'refuses': {
-                            '$cond': [
-                                {
-                                    '$arrayElemAt': [
-                                        '$refuses.num', 0
-                                    ]
-                                }, {
-                                    '$arrayElemAt': [
-                                        '$refuses.num', 0
-                                    ]
-                                }, 0
-                            ]
-                        },
-                        'impressions': {
-                            '$add': [
-                                {
-                                    '$cond': [
-                                        {
-                                            '$arrayElemAt': [
-                                                '$identified.num', 0
-                                            ]
-                                        }, {
-                                            '$arrayElemAt': [
-                                                '$identified.num', 0
-                                            ]
-                                        }, 0
-                                    ]
-                                }, {
-                                    '$cond': [
-                                        {
-                                            '$arrayElemAt': [
-                                                '$impressions.num', 0
-                                            ]
-                                        }, {
-                                            '$arrayElemAt': [
-                                                '$impressions.num', 0
-                                            ]
-                                        }, 0
-                                    ]
-                                }
-                            ]
-                        },
-                        'nonResponses': {
-                            '$cond': [
-                                {
-                                    '$size': '$nonResponses'
-                                }, {
-                                    '$arrayElemAt': [
-                                        '$nonResponses.num', 0
-                                    ]
-                                }, 0
-                            ]
-                        },
-                        'total': {
-                            '$add': [
-                                {
-                                    '$cond': [
-                                        {
-                                            '$arrayElemAt': [
-                                                '$identified.num', 0
-                                            ]
-                                        }, {
-                                            '$arrayElemAt': [
-                                                '$identified.num', 0
-                                            ]
-                                        }, 0
-                                    ]
-                                }, {
-                                    '$cond': [
-                                        {
-                                            '$arrayElemAt': [
-                                                '$refuses.num', 0
-                                            ]
-                                        }, {
-                                            '$arrayElemAt': [
-                                                '$refuses.num', 0
-                                            ]
-                                        }, 0
-                                    ]
-                                }, {
-                                    '$cond': [
-                                        {
-                                            '$arrayElemAt': [
-                                                '$nonResponses.num', 0
-                                            ]
-                                        }, {
-                                            '$arrayElemAt': [
-                                                '$nonResponses.num', 0
-                                            ]
-                                        }, 0
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                }
-            ];
-            var reportsCords3 = await People.aggregate(agg3);
-
-            await blockGroupRecord.push({blockGroup: reportsCords2[i].properties.geoid, identified: reportsCords3[0].identified, refuses: reportsCords3[0].refuses, impressions: reportsCords3[0].impressions, nonResponses: reportsCords3[0].nonResponses, total: reportsCords3[0].total})
-        }
-        return blockGroupRecord;
-    }
     return blockGroupRecord;
 
     /*******************/
@@ -1341,8 +1224,6 @@ const getBlockGroupCanvassSummaryReport2 = async(details) =>{
 }
 
 const getBlockGroupOrgSummaryReport = async(details) =>{
-    var blockGroupRecord = []
-
     const agg = [
         {
             '$unwind': {
@@ -1352,7 +1233,10 @@ const getBlockGroupOrgSummaryReport = async(details) =>{
         }, {
             '$match': {
                 'canvassContactHistory.campaignID': details.campaignID,
-                'canvassContactHistory.orgID': details.orgID
+                'canvassContactHistory.orgID': details.orgID,
+                'address.blockgroupID': {
+                    '$exists': true
+                }
             }
         }, {
             '$unwind': {
@@ -1361,248 +1245,132 @@ const getBlockGroupOrgSummaryReport = async(details) =>{
             }
         }, {
             '$group': {
-                '_id': null,
-                'records': {
-                    '$push': '$address.location.coordinates'
+                '_id': '$address.blockgroupID',
+                'blockgroups': {
+                    '$push': {
+                        '$arrayElemAt': [
+                            '$$ROOT.canvassContactHistory.idHistory.idResponses', 0
+                        ]
+                    }
                 }
+            }
+        }, {
+            '$unwind': {
+                'path': '$blockgroups'
+            }
+        }, {
+            '$project': {
+                'blockgroups': 1,
+                'identified': {
+                    '$cond': {
+                        'if': {
+                            '$or': [
+                                {
+                                    '$eq': [
+                                        '$blockgroups.idType', 'POSITIVE'
+                                    ]
+                                }, {
+                                    '$eq': [
+                                        '$blockgroups.idType', 'NEUTRAL'
+                                    ]
+                                }, {
+                                    '$eq': [
+                                        '$blockgroups.idType', 'NEGATIVE'
+                                    ]
+                                }
+                            ]
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                },
+                'refuses': {
+                    '$cond': {
+                        'if': {
+                            '$eq': [
+                                '$blockgroups.idType', 'REFUSED'
+                            ]
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                },
+                'impressions': {
+                    '$cond': {
+                        'if': {
+                            '$regexFind': {
+                                'input': "$blockgroups.responses",
+                                'regex': '(?i)lit|imp|con|spanish|und'
+                            }
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                },
+                'nonResponses': {
+                    '$cond': {
+                        'if': {
+                            '$eq': [
+                                '$blockgroups.idType', 'NONRESPONSE'
+                            ]
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                }
+            }
+        }, {
+            '$group': {
+                '_id': '$_id',
+                'identified': {
+                    '$sum': {
+                        '$add': [
+                            '$identified'
+                        ]
+                    }
+                },
+                'refuses': {
+                    '$sum': {
+                        '$add': [
+                            '$refuses'
+                        ]
+                    }
+                },
+                'impressions': {
+                    '$sum': {
+                        '$add': [
+                            '$impressions', '$identified'
+                        ]
+                    }
+                },
+                'nonResponses': {
+                    '$sum': {
+                        '$add': [
+                            '$nonResponses'
+                        ]
+                    }
+                },
+                'total': {
+                    '$sum': {
+                        '$add': [
+                            '$identified', '$refuses', '$nonResponses'
+                        ]
+                    }
+                }
+            }
+        }, {
+            '$project': {
+                'blockGroup': '$_id',
+                'identified': 1,
+                'refuses': 1,
+                'impressions': 1,
+                'nonResponses': 1,
+                'total': 1
             }
         }
     ];
-    var reportsCords = await People.aggregate(agg);
+    var blockGroupRecord = await People.aggregate(agg);
 
-    if (reportsCords.length) {
-        const agg2 = [
-            {
-                '$match': {
-                    'geometry': {
-                        '$geoIntersects': {
-                            '$geometry': {
-                                'type': 'MultiPoint',
-                                'coordinates': reportsCords[0].records
-                            }
-                        }
-                    }
-                }
-            }
-        ];
-        var reportsCords2 = await CensusTract.aggregate(agg2);
-
-        const agg3 = [
-            {
-                '$unwind': {
-                    'path': '$canvassContactHistory',
-                    'preserveNullAndEmptyArrays': false
-                }
-            }, {
-                '$match': {
-                    'canvassContactHistory.campaignID': details.campaignID,
-                    'canvassContactHistory.orgID': details.orgID
-                }
-            }, {
-                '$unwind': {
-                    'path': '$canvassContactHistory.idHistory',
-                    'preserveNullAndEmptyArrays': false
-                }
-            }, {
-                '$match': {
-                    'address.location': {
-                        '$geoIntersects': {
-                            '$geometry': {
-                                'type': 'Polygon',
-                                'coordinates': reportsCords2[0].geometry.coordinates[0]
-                            }
-                        }
-                    }
-                }
-            }, {
-                '$facet': {
-                    'identified': [
-                        {
-                            '$match': {
-                                'canvassContactHistory.idHistory.idResponses.0.idType': {
-                                    '$in': [
-                                        'POSITIVE', 'NEUTRAL', 'NEGATIVE'
-                                    ]
-                                }
-                            }
-                        }, {
-                            '$group': {
-                                '_id': null,
-                                'num': {
-                                    '$sum': 1
-                                }
-                            }
-                        }
-                    ],
-                    'refuses': [
-                        {
-                            '$match': {
-                                'canvassContactHistory.idHistory.idResponses.0.idType': 'REFUSED'
-                            }
-                        }, {
-                            '$group': {
-                                '_id': null,
-                                'num': {
-                                    '$sum': 1
-                                }
-                            }
-                        }
-                    ],
-                    'impressions': [
-                        {
-                            '$match': {
-                                'canvassContactHistory.idHistory.idResponses.0.responses': {
-                                    '$regex': '(?i)lit|imp|con|spanish|und'
-                                }
-                            }
-                        }, {
-                            '$group': {
-                                '_id': null,
-                                'num': {
-                                    '$sum': 1
-                                }
-                            }
-                        }
-                    ],
-                    'nonResponses': [
-                        {
-                            '$match': {
-                                'canvassContactHistory.idHistory.idResponses.0.idType': 'NONRESPONSE'
-                            }
-                        }, {
-                            '$group': {
-                                '_id': null,
-                                'num': {
-                                    '$sum': 1
-                                }
-                            }
-                        }
-                    ],
-                    'total': [
-                        {
-                            '$group': {
-                                '_id': null
-                            }
-                        }
-                    ]
-                }
-            }, {
-                '$project': {
-                    'identified': {
-                        '$cond': [
-                            {
-                                '$arrayElemAt': [
-                                    '$identified.num', 0
-                                ]
-                            }, {
-                                '$arrayElemAt': [
-                                    '$identified.num', 0
-                                ]
-                            }, 0
-                        ]
-                    },
-                    'refuses': {
-                        '$cond': [
-                            {
-                                '$arrayElemAt': [
-                                    '$refuses.num', 0
-                                ]
-                            }, {
-                                '$arrayElemAt': [
-                                    '$refuses.num', 0
-                                ]
-                            }, 0
-                        ]
-                    },
-                    'impressions': {
-                        '$add': [
-                            {
-                                '$cond': [
-                                    {
-                                        '$arrayElemAt': [
-                                            '$identified.num', 0
-                                        ]
-                                    }, {
-                                        '$arrayElemAt': [
-                                            '$identified.num', 0
-                                        ]
-                                    }, 0
-                                ]
-                            }, {
-                                '$cond': [
-                                    {
-                                        '$arrayElemAt': [
-                                            '$impressions.num', 0
-                                        ]
-                                    }, {
-                                        '$arrayElemAt': [
-                                            '$impressions.num', 0
-                                        ]
-                                    }, 0
-                                ]
-                            }
-                        ]
-                    },
-                    'nonResponses': {
-                        '$cond': [
-                            {
-                                '$size': '$nonResponses'
-                            }, {
-                                '$arrayElemAt': [
-                                    '$nonResponses.num', 0
-                                ]
-                            }, 0
-                        ]
-                    },
-                    'total': {
-                        '$add': [
-                            {
-                                '$cond': [
-                                    {
-                                        '$arrayElemAt': [
-                                            '$identified.num', 0
-                                        ]
-                                    }, {
-                                        '$arrayElemAt': [
-                                            '$identified.num', 0
-                                        ]
-                                    }, 0
-                                ]
-                            }, {
-                                '$cond': [
-                                    {
-                                        '$arrayElemAt': [
-                                            '$refuses.num', 0
-                                        ]
-                                    }, {
-                                        '$arrayElemAt': [
-                                            '$refuses.num', 0
-                                        ]
-                                    }, 0
-                                ]
-                            }, {
-                                '$cond': [
-                                    {
-                                        '$arrayElemAt': [
-                                            '$nonResponses.num', 0
-                                        ]
-                                    }, {
-                                        '$arrayElemAt': [
-                                            '$nonResponses.num', 0
-                                        ]
-                                    }, 0
-                                ]
-                            }
-                        ]
-                    }
-                }
-            }
-        ];
-        var reportsCords3 = await People.aggregate(agg3);
-
-        await blockGroupRecord.push({blockGroup: reportsCords2[0].properties.geoid, identified: reportsCords3[0].identified, refuses: reportsCords3[0].refuses, impressions: reportsCords3[0].impressions, nonResponses: reportsCords3[0].nonResponses, total: reportsCords3[0].total})
-        return blockGroupRecord;
-    }
     return blockGroupRecord;
 
     /*******************/
@@ -1699,7 +1467,10 @@ const getBlockGroupOverallSummaryReport = async(details) =>{
         }, {
             '$match': {
                 'canvassContactHistory.campaignID': details.campaignID,
-                'canvassContactHistory.orgID': details.orgID
+                'canvassContactHistory.orgID': details.orgID,
+                'address.blockgroupID': {
+                    '$exists': true
+                }
             }
         }, {
             '$unwind': {
@@ -1708,251 +1479,132 @@ const getBlockGroupOverallSummaryReport = async(details) =>{
             }
         }, {
             '$group': {
-                '_id': null,
-                'records': {
-                    '$push': '$address.location.coordinates'
+                '_id': '$address.blockgroupID',
+                'blockgroups': {
+                    '$push': {
+                        '$arrayElemAt': [
+                            '$$ROOT.canvassContactHistory.idHistory.idResponses', 0
+                        ]
+                    }
                 }
+            }
+        }, {
+            '$unwind': {
+                'path': '$blockgroups'
+            }
+        }, {
+            '$project': {
+                'blockgroups': 1,
+                'identified': {
+                    '$cond': {
+                        'if': {
+                            '$or': [
+                                {
+                                    '$eq': [
+                                        '$blockgroups.idType', 'POSITIVE'
+                                    ]
+                                }, {
+                                    '$eq': [
+                                        '$blockgroups.idType', 'NEUTRAL'
+                                    ]
+                                }, {
+                                    '$eq': [
+                                        '$blockgroups.idType', 'NEGATIVE'
+                                    ]
+                                }
+                            ]
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                },
+                'refuses': {
+                    '$cond': {
+                        'if': {
+                            '$eq': [
+                                '$blockgroups.idType', 'REFUSED'
+                            ]
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                },
+                'impressions': {
+                    '$cond': {
+                        'if': {
+                            '$regexFind': {
+                                'input': "$blockgroups.responses",
+                                'regex': '(?i)lit|imp|con|spanish|und'
+                            }
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                },
+                'nonResponses': {
+                    '$cond': {
+                        'if': {
+                            '$eq': [
+                                '$blockgroups.idType', 'NONRESPONSE'
+                            ]
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                }
+            }
+        }, {
+            '$group': {
+                '_id': '$_id',
+                'identified': {
+                    '$sum': {
+                        '$add': [
+                            '$identified'
+                        ]
+                    }
+                },
+                'refuses': {
+                    '$sum': {
+                        '$add': [
+                            '$refuses'
+                        ]
+                    }
+                },
+                'impressions': {
+                    '$sum': {
+                        '$add': [
+                            '$impressions', '$identified'
+                        ]
+                    }
+                },
+                'nonResponses': {
+                    '$sum': {
+                        '$add': [
+                            '$nonResponses'
+                        ]
+                    }
+                },
+                'total': {
+                    '$sum': {
+                        '$add': [
+                            '$identified', '$refuses', '$nonResponses'
+                        ]
+                    }
+                }
+            }
+        }, {
+            '$project': {
+                'blockGroup': '$_id',
+                'identified': 1,
+                'refuses': 1,
+                'impressions': 1,
+                'nonResponses': 1,
+                'total': 1
             }
         }
     ];
-    var reportsCords = await People.aggregate(agg);
+    var blockGroupRecord = await People.aggregate(agg);
 
-    if (reportsCords.length) {
-        const agg2 = [
-            {
-                '$match': {
-                    'geometry': {
-                        '$geoIntersects': {
-                            '$geometry': {
-                                'type': 'MultiPoint',
-                                'coordinates': reportsCords[0].records
-                            }
-                        }
-                    }
-                }
-            }
-        ];
-        var reportsCords2 = await CensusTract.aggregate(agg2);
-
-        for(var i = 0; i < reportsCords2.length; i++){
-            const agg3 = [
-                {
-                    '$unwind': {
-                        'path': '$canvassContactHistory',
-                        'preserveNullAndEmptyArrays': false
-                    }
-                }, {
-                    '$match': {
-                        'canvassContactHistory.campaignID': details.campaignID,
-                        'canvassContactHistory.orgID': details.orgID
-                    }
-                }, {
-                    '$unwind': {
-                        'path': '$canvassContactHistory.idHistory',
-                        'preserveNullAndEmptyArrays': false
-                    }
-                }, {
-                    '$match': {
-                        'address.location': {
-                            '$geoIntersects': {
-                                '$geometry': {
-                                    'type': 'Polygon',
-                                    'coordinates': reportsCords2[i].geometry.coordinates[0]
-                                }
-                            }
-                        }
-                    }
-                }, {
-                    '$facet': {
-                        'identified': [
-                            {
-                                '$match': {
-                                    'canvassContactHistory.idHistory.idResponses.0.idType': {
-                                        '$in': [
-                                            'POSITIVE', 'NEUTRAL', 'NEGATIVE'
-                                        ]
-                                    }
-                                }
-                            }, {
-                                '$group': {
-                                    '_id': null,
-                                    'num': {
-                                        '$sum': 1
-                                    }
-                                }
-                            }
-                        ],
-                        'refuses': [
-                            {
-                                '$match': {
-                                    'canvassContactHistory.idHistory.idResponses.0.idType': 'REFUSED'
-                                }
-                            }, {
-                                '$group': {
-                                    '_id': null,
-                                    'num': {
-                                        '$sum': 1
-                                    }
-                                }
-                            }
-                        ],
-                        'impressions': [
-                            {
-                                '$match': {
-                                    'canvassContactHistory.idHistory.idResponses.0.responses': {
-                                        '$regex': '(?i)lit|imp|con|spanish|und'
-                                    }
-                                }
-                            }, {
-                                '$group': {
-                                    '_id': null,
-                                    'num': {
-                                        '$sum': 1
-                                    }
-                                }
-                            }
-                        ],
-                        'nonResponses': [
-                            {
-                                '$match': {
-                                    'canvassContactHistory.idHistory.idResponses.0.idType': 'NONRESPONSE'
-                                }
-                            }, {
-                                '$group': {
-                                    '_id': null,
-                                    'num': {
-                                        '$sum': 1
-                                    }
-                                }
-                            }
-                        ],
-                        'total': [
-                            {
-                                '$group': {
-                                    '_id': null
-                                }
-                            }
-                        ]
-                    }
-                }, {
-                    '$project': {
-                        'identified': {
-                            '$cond': [
-                                {
-                                    '$arrayElemAt': [
-                                        '$identified.num', 0
-                                    ]
-                                }, {
-                                    '$arrayElemAt': [
-                                        '$identified.num', 0
-                                    ]
-                                }, 0
-                            ]
-                        },
-                        'refuses': {
-                            '$cond': [
-                                {
-                                    '$arrayElemAt': [
-                                        '$refuses.num', 0
-                                    ]
-                                }, {
-                                    '$arrayElemAt': [
-                                        '$refuses.num', 0
-                                    ]
-                                }, 0
-                            ]
-                        },
-                        'impressions': {
-                            '$add': [
-                                {
-                                    '$cond': [
-                                        {
-                                            '$arrayElemAt': [
-                                                '$identified.num', 0
-                                            ]
-                                        }, {
-                                            '$arrayElemAt': [
-                                                '$identified.num', 0
-                                            ]
-                                        }, 0
-                                    ]
-                                }, {
-                                    '$cond': [
-                                        {
-                                            '$arrayElemAt': [
-                                                '$impressions.num', 0
-                                            ]
-                                        }, {
-                                            '$arrayElemAt': [
-                                                '$impressions.num', 0
-                                            ]
-                                        }, 0
-                                    ]
-                                }
-                            ]
-                        },
-                        'nonResponses': {
-                            '$cond': [
-                                {
-                                    '$size': '$nonResponses'
-                                }, {
-                                    '$arrayElemAt': [
-                                        '$nonResponses.num', 0
-                                    ]
-                                }, 0
-                            ]
-                        },
-                        'total': {
-                            '$add': [
-                                {
-                                    '$cond': [
-                                        {
-                                            '$arrayElemAt': [
-                                                '$identified.num', 0
-                                            ]
-                                        }, {
-                                            '$arrayElemAt': [
-                                                '$identified.num', 0
-                                            ]
-                                        }, 0
-                                    ]
-                                }, {
-                                    '$cond': [
-                                        {
-                                            '$arrayElemAt': [
-                                                '$refuses.num', 0
-                                            ]
-                                        }, {
-                                            '$arrayElemAt': [
-                                                '$refuses.num', 0
-                                            ]
-                                        }, 0
-                                    ]
-                                }, {
-                                    '$cond': [
-                                        {
-                                            '$arrayElemAt': [
-                                                '$nonResponses.num', 0
-                                            ]
-                                        }, {
-                                            '$arrayElemAt': [
-                                                '$nonResponses.num', 0
-                                            ]
-                                        }, 0
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                }
-            ];
-            var reportsCords3 = await People.aggregate(agg3);
-
-            await blockGroupRecord.push({blockGroup: reportsCords2[i].properties.geoid, identified: reportsCords3[0].identified, refuses: reportsCords3[0].refuses, impressions: reportsCords3[0].impressions, nonResponses: reportsCords3[0].nonResponses, total: reportsCords3[0].total})
-        }
-    }
-
-    var blockGroupRecordPet = []
 
     const aggPet = [
         {
@@ -1963,7 +1615,10 @@ const getBlockGroupOverallSummaryReport = async(details) =>{
         }, {
             '$match': {
                 'petitionContactHistory.campaignID': details.campaignID,
-                'petitionContactHistory.orgID': details.orgID
+                'petitionContactHistory.orgID': details.orgID,
+                'address.blockgroupID': {
+                    '$exists': true
+                }
             }
         }, {
             '$unwind': {
@@ -1972,121 +1627,133 @@ const getBlockGroupOverallSummaryReport = async(details) =>{
             }
         }, {
             '$group': {
-                '_id': null,
-                'records': {
-                    '$push': '$address.location.coordinates'
+                '_id': '$address.blockgroupID',
+                'blockgroups': {
+                    '$push': {
+                        '$arrayElemAt': [
+                            '$$ROOT.petitionContactHistory.idHistory.idResponses', 0
+                        ]
+                    }
+                }
+            }
+        }, {
+            '$unwind': {
+                'path': '$blockgroups'
+            }
+        }, {
+            '$project': {
+                'blockgroups': 1,
+                'identified': {
+                    '$cond': {
+                        'if': {
+                            '$or': [
+                                {
+                                    '$eq': [
+                                        '$blockgroups.idType', 'POSITIVE'
+                                    ]
+                                }, {
+                                    '$eq': [
+                                        '$blockgroups.idType', 'NEUTRAL'
+                                    ]
+                                }, {
+                                    '$eq': [
+                                        '$blockgroups.idType', 'NEGATIVE'
+                                    ]
+                                }
+                            ]
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                },
+                'refuses': {
+                    '$cond': {
+                        'if': {
+                            '$eq': [
+                                '$blockgroups.idType', 'REFUSED'
+                            ]
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                },
+                'impressions': {
+                    '$cond': {
+                        'if': {
+                            '$regexFind': {
+                                'input': "$blockgroups.responses",
+                                'regex': '(?i)lit|imp|con|spanish|und'
+                            }
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                },
+                'nonResponses': {
+                    '$cond': {
+                        'if': {
+                            '$eq': [
+                                '$blockgroups.idType', 'NONRESPONSE'
+                            ]
+                        },
+                        'then': 1,
+                        'else': 0
+                    }
+                }
+            }
+        }, {
+            '$group': {
+                '_id': '$_id',
+                'identified': {
+                    '$sum': {
+                        '$add': [
+                            '$identified'
+                        ]
+                    }
+                },
+                'refuses': {
+                    '$sum': {
+                        '$add': [
+                            '$refuses'
+                        ]
+                    }
+                },
+                'impressions': {
+                    '$sum': {
+                        '$add': [
+                            '$impressions', '$identified'
+                        ]
+                    }
+                },
+                'nonResponses': {
+                    '$sum': {
+                        '$add': [
+                            '$nonResponses'
+                        ]
+                    }
+                },
+                'total': {
+                    '$sum': {
+                        '$add': [
+                            '$identified', '$refuses', '$nonResponses'
+                        ]
+                    }
                 }
             }
         }, {
             '$project': {
-                'records': {
-                    '$filter': {
-                        'input': '$records',
-                        'as': 'item',
-                        'cond': {
-                            '$arrayElemAt': [
-                                '$$item', 0
-                            ]
-                        }
-                    }
-                }
+                'blockGroup': '$_id',
+                'identified': 1,
+                'refuses': 1,
+                'impressions': 1,
+                'nonResponses': 1,
+                'total': 1
             }
         }
     ];
-    var reportsCordsPet = await People.aggregate(aggPet);
+    var blockGroupRecordPet = await People.aggregate(aggPet);
 
-    if (reportsCordsPet.length) {
-        const aggPet2 = [
-            {
-                '$match': {
-                    'geometry': {
-                        '$geoIntersects': {
-                            '$geometry': {
-                                'type': 'MultiPoint',
-                                'coordinates': reportsCordsPet[0].records
-                            }
-                        }
-                    }
-                }
-            }
-        ];
-        var reportsCordsPet2 = await CensusTract.aggregate(aggPet2);
-
-        for(var j = 0; j < reportsCordsPet2.length; j++){
-            const aggPet3 = [
-                {
-                    '$unwind': {
-                        'path': '$petitionContactHistory',
-                        'preserveNullAndEmptyArrays': false
-                    }
-                }, {
-                    '$match': {
-                        'petitionContactHistory.campaignID': details.campaignID,
-                        'petitionContactHistory.orgID': details.orgID
-                    }
-                }, {
-                    '$unwind': {
-                        'path': '$petitionContactHistory.idHistory',
-                        'preserveNullAndEmptyArrays': false
-                    }
-                }, {
-                    '$match': {
-                        'address.location': {
-                            '$geoIntersects': {
-                                '$geometry': {
-                                    'type': 'Polygon',
-                                    'coordinates': reportsCordsPet2[j].geometry.coordinates[0]
-                                }
-                            }
-                        }
-                    }
-                }, {
-                    '$facet': {
-                        'identified': [
-                            {
-                                '$group': {
-                                    '_id': null,
-                                    'num': {
-                                        '$sum': 1
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                }, {
-                    '$project': {
-                        'identified': {
-                            '$cond': [
-                                {
-                                    '$arrayElemAt': [
-                                        '$identified.num', 0
-                                    ]
-                                }, {
-                                    '$arrayElemAt': [
-                                        '$identified.num', 0
-                                    ]
-                                }, 0
-                            ]
-                        }
-                    }
-                }
-            ];
-            var reportsCordsPet3 = await People.aggregate(aggPet3);
-
-            await blockGroupRecordPet.push({blockGroup: reportsCordsPet2[j].properties.geoid, identified: reportsCordsPet3[0].identified})
-        }
-    }
-
-    if(blockGroupRecord.length && blockGroupRecordPet.length) {
-        for (let k in blockGroupRecord) {
-            for (let l in blockGroupRecordPet) {
-                if (blockGroupRecord[k].blockGroup === blockGroupRecordPet[l].blockGroup) {
-                    blockGroupRecord[k].identified += await blockGroupRecordPet[l].identified;
-                    break
-                }
-            }
-        }
-    }
+    await blockGroupRecord.push(...blockGroupRecordPet);
 
     return blockGroupRecord;
 
