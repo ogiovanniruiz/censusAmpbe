@@ -50,6 +50,7 @@ const updateReport = async(org) => {
 
     console.log('start')
 
+
     const agg = [
         {
             '$match': {
@@ -59,6 +60,7 @@ const updateReport = async(org) => {
             }
         }
     ];
+
     var Census = await CensusTract.aggregate(agg);
 
     for(var i = 0; i < Census.length; i++){
