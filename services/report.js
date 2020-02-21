@@ -100,73 +100,9 @@ const updateReport = async(org) => {
     }
     console.log('done')
     return {}
-
-    /*var people =  await People.find({"canvassContactHistory.orgID": org._id})
-    var latestReport = await Report.findOne({}, {}, { sort: { 'reportDate' : -1 } });
-    if(!latestReport) latestReport = {reportDate: 0}
-    //var latestReport = {reportDate: 0}
-    var count = 0
-
-    for(var i = 0; i < people.length; i++){        
-        for(var j = 0; j < people[i].canvassContactHistory.length; j++){
-            if(people[i].canvassContactHistory[j].orgID === org._id){
-                for(var k = 0; k < people[i].canvassContactHistory[j].idHistory.length; k++){
-                    if(latestReport.reportDate < people[i].canvassContactHistory[j].idHistory[k].date){                    
-                        var report = new Report({campaignID: people[i].canvassContactHistory[j].campaignID,
-                                                 orgID: people[i].canvassContactHistory[j].orgID,
-                                                 userID: people[i].canvassContactHistory[j].idHistory[k].idBy,
-                                                 idResponses: people[i].canvassContactHistory[j].idHistory[k].idResponses,
-                                                 personID: people[i]._id,
-                                                 idDate: people[i].canvassContactHistory[j].idHistory[k].date,
-                                                 activityType: "CANVASS",
-                                                 location: people[i].address.location,
-                                                 activityID: people[i].canvassContactHistory[j].activityID,
-                                                }
-                                                );
-                        report.save()
-                        count = count + 1
-                        console.log('Canvass', org.name,": ",count)
-                    }
-                }                
-            }
-        }
-
-        var people =  await People.find({"petitionContactHistory.orgID": org._id})
-        var count = 0
-
-        for(var i = 0; i < people.length; i++){
-            for(var j = 0; j < people[i].petitionContactHistory.length; j++){
-                if(people[i].petitionContactHistory[j].orgID === org._id){
-                    for(var k = 0; k < people[i].petitionContactHistory[j].idHistory.length; k++){
-                        if(latestReport.reportDate < people[i].petitionContactHistory[j].idHistory[k].date){
-                            var report = new Report({campaignID: people[i].petitionContactHistory[j].campaignID,
-                                                     orgID: people[i].petitionContactHistory[j].orgID,
-                                                     userID: people[i].petitionContactHistory[j].idHistory[k].idBy,
-                                                     idResponses: people[i].petitionContactHistory[j].idHistory[k].idResponses,
-                                                     personID: people[i]._id,
-                                                     idDate: people[i].petitionContactHistory[j].idHistory[k].date,
-                                                     activityType: "PETITION",
-                                                     location: people[i].address.location,
-                                                     activityID: people[i].petitionContactHistory[j].activityID,
-                                                    }
-                                                    );
-                            report.save()
-                            count = count + 1
-                            console.log('Petition',org.name, ": ",count)
-                        }
-                    }
-                }
-            }
-        }
-
-        return {orgName: org.name}
-    }
-
-    return {orgName: org.name}*/
 }
 
 const getCanvassSummaryReport = async(details) =>{
-
     const agg = [
         {
             '$match': {
@@ -429,50 +365,9 @@ const getCanvassSummaryReport = async(details) =>{
 
     await knocksPerOrg.push({org: details.orgName, identified: reports[0].identified, refuses: reports[0].refuses, impressions: reports[0].impressions, nonResponses: reports[0].nonResponses, uniquePeople: reports[0].uniquePeople, total: reports[0].total})
     return knocksPerOrg
-
-    /*var reports = await Report.find({campaignID: details.campaignID, orgID: details.orgID, activityType: 'CANVASS'})
-
-    var knocksPerOrg = []
-
-    var identifiedCount  = 0;
-    var refusedCount = 0;
-    var nonResponseCount = 0;
-    var impressionsCount = 0;
-    var impressions = 0;
-
-    for(var i = 0; i < reports.length; i++){
-        if (reports[i].idResponses[0]) {
-            if (reports[i].idResponses[0].idType === 'POSITIVE' ||
-                reports[i].idResponses[0].idType === 'NEUTRAL' ||
-                reports[i].idResponses[0].idType === 'NEGATIVE'
-            ) {
-                identifiedCount = identifiedCount + 1
-            }
-            if (reports[i].idResponses[0].idType === 'REFUSED') {
-                refusedCount = refusedCount + 1
-            }
-            if (reports[i].idResponses[0].responses.toLowerCase().includes('lit') ||
-                reports[i].idResponses[0].responses.toLowerCase().includes('imp') ||
-                reports[i].idResponses[0].responses.toLowerCase().includes('con') ||
-                reports[i].idResponses[0].responses.toLowerCase().includes('spanish') ||
-                reports[i].idResponses[0].responses.toLowerCase().includes('und')) {
-                impressions = impressions + 1
-            }
-            if (reports[i].idResponses[0].idType === 'NONRESPONSE') {
-                nonResponseCount = nonResponseCount + 1
-            }
-        }
-    }
-
-    impressionsCount = impressions + parseInt(identifiedCount)
-    var total = await parseInt(identifiedCount) + parseInt(refusedCount) + parseInt(nonResponseCount)
-
-    await knocksPerOrg.push({org: details.orgName, identified: identifiedCount, refuses: refusedCount, impressions: impressionsCount, nonResponses: nonResponseCount, total: total})
-    return knocksPerOrg*/
 }
 
 const getPetitionSummaryReport = async(details) =>{
-
     const agg = [
         {
             '$unwind': {
@@ -527,16 +422,9 @@ const getPetitionSummaryReport = async(details) =>{
 
     await petitionsPerOrg.push({org: details.orgName, identified: reports[0].identified})
     return petitionsPerOrg
-
-    /*var petitionCount = await Report.find({campaignID: details.campaignID, orgID: details.orgID, activityType: 'PETITION'}).count()
-
-    var petitionsPerOrg = []
-    await petitionsPerOrg.push({org: details.orgName, identified: petitionCount})
-    return petitionsPerOrg*/
 }
 
 const getOverallSummaryReport = async(details) =>{
-
     var recordsPerOrg = []
 
     const agg = [
@@ -846,49 +734,10 @@ const getOverallSummaryReport = async(details) =>{
     var reports2 = await People.aggregate(agg2)
 
     var identifiedTotal = await parseInt(reports[0].identified) + parseInt(reports2[0].identified)
+    var total = await parseInt(reports[0].total) + parseInt(reports2[0].identified)
 
-    await recordsPerOrg.push({org: details.orgName, identified: identifiedTotal, refuses: reports[0].refuses, impressions: reports[0].impressions, nonResponses: reports[0].nonResponses, uniquePeople: reports[0].uniquePeople, total: reports[0].total})
+    await recordsPerOrg.push({org: details.orgName, identified: identifiedTotal, refuses: reports[0].refuses, impressions: reports[0].impressions, nonResponses: reports[0].nonResponses, uniquePeople: reports[0].uniquePeople, total: total})
     return recordsPerOrg
-
-    /*var reports = await Report.find({campaignID: details.campaignID, orgID: details.orgID, $or:[{activityType:'CANVASS'}, {activityType:'PETITION'}]})
-
-    var recordsPerOrg = []
-
-    var identifiedCount  = 0;
-    var refusedCount = 0;
-    var nonResponseCount = 0;
-    var impressionsCount = 0;
-    var impressions = 0;
-
-    for(var i = 0; i < reports.length; i++){
-        if (reports[i].idResponses[0]) {
-            if (reports[i].idResponses[0].idType === 'POSITIVE' ||
-                reports[i].idResponses[0].idType === 'NEUTRAL' ||
-                reports[i].idResponses[0].idType === 'NEGATIVE'
-            ) {
-                identifiedCount = identifiedCount + 1
-            }
-            if (reports[i].idResponses[0].responses.toLowerCase().includes('lit') ||
-                reports[i].idResponses[0].responses.toLowerCase().includes('imp') ||
-                reports[i].idResponses[0].responses.toLowerCase().includes('con') ||
-                reports[i].idResponses[0].responses.toLowerCase().includes('spanish') ||
-                reports[i].idResponses[0].responses.toLowerCase().includes('und')) {
-                impressions = impressions + 1
-            }
-            if (reports[i].idResponses[0].idType === 'REFUSED') {
-                refusedCount = refusedCount + 1
-            }
-            if (reports[i].idResponses[0].idType === 'NONRESPONSE') {
-                nonResponseCount = nonResponseCount + 1
-            }
-        }
-    }
-
-    impressionsCount = impressions + parseInt(identifiedCount)
-    var total = await parseInt(identifiedCount) + parseInt(refusedCount) + parseInt(nonResponseCount)
-
-    await recordsPerOrg.push({org: details.orgName, identified: identifiedCount, refuses: refusedCount, impressions: impressionsCount, nonResponses: nonResponseCount, total: total})
-    return recordsPerOrg*/
 }
 
 const getEventsSummaryReport = async(details) =>{
@@ -1137,326 +986,6 @@ const getBlockGroupCanvassSummaryReport = async(details) =>{
     var blockGroupRecord = await People.aggregate(agg);
 
     return blockGroupRecord;
-
-    /*******************/
-
-    /*var reports = await Report.find({campaignID: details.campaignID, orgID: details.orgID, activityType: 'CANVASS'})
-
-    var blockGroupCoordinates = []
-
-    for(var i = 0; i < reports.length; i++){
-        if (reports[i].location.coordinates.length) {
-            await blockGroupCoordinates.push(reports[i].location.coordinates)
-        }
-    }
-
-    if(blockGroupCoordinates.length) {
-        var blockGroups = await CensusTract.find({
-            "geometry": {
-                $geoIntersects: {
-                    $geometry: {
-                        type: "MultiPoint",
-                        coordinates: blockGroupCoordinates
-                    }
-                }
-            }
-        });
-    }
-
-    return blockGroups;*/
-}
-
-const getBlockGroupCanvassSummaryReport2 = async(details) =>{
-    var blockGroupRecord = []
-    var blockGroupReports = []
-
-    var blockGroupReports = await Report.find({
-        campaignID: details.campaignID,
-        orgID: details.orgID,
-        activityType: 'CANVASS',
-        "location": {
-            $geoIntersects: {
-                $geometry: {
-                    type: "Polygon",
-                    coordinates: details.blockGroup.geometry.coordinates[0]
-                }
-            }
-        }
-    });
-
-    var identifiedCount  = 0;
-    var refusedCount = 0;
-    var nonResponseCount = 0;
-    var impressionsCount = 0;
-    var impressions = 0;
-
-    for(var i = 0; i < blockGroupReports.length; i++){
-        if (blockGroupReports[i].idResponses[0]) {
-            if (blockGroupReports[i].idResponses[0].idType === 'POSITIVE' ||
-                blockGroupReports[i].idResponses[0].idType === 'NEUTRAL' ||
-                blockGroupReports[i].idResponses[0].idType === 'NEGATIVE'
-            ) {
-                identifiedCount = identifiedCount + 1
-            }
-            if (blockGroupReports[i].idResponses[0].idType === 'REFUSED') {
-                refusedCount = refusedCount + 1
-            }
-            if (blockGroupReports[i].idResponses[0].responses.toLowerCase().includes('lit') ||
-                blockGroupReports[i].idResponses[0].responses.toLowerCase().includes('imp') ||
-                blockGroupReports[i].idResponses[0].responses.toLowerCase().includes('con') ||
-                blockGroupReports[i].idResponses[0].responses.toLowerCase().includes('spanish') ||
-                blockGroupReports[i].idResponses[0].responses.toLowerCase().includes('und')) {
-                impressions = impressions + 1
-            }
-            if (blockGroupReports[i].idResponses[0].idType === 'NONRESPONSE') {
-                nonResponseCount = nonResponseCount + 1
-            }
-        }
-        if(i === 0){
-            console.log(details.blockGroup.properties.geoid)
-            console.log(blockGroupReports[i]._id)
-            console.log(blockGroupReports[i].location.coordinates)
-        }
-    }
-
-    impressionsCount = impressions + parseInt(identifiedCount)
-    var total = await parseInt(identifiedCount) + parseInt(refusedCount) + parseInt(nonResponseCount)
-
-    await blockGroupRecord.push({blockGroup: details.blockGroup.properties.geoid, identified: identifiedCount, refuses: refusedCount, impressions: impressionsCount, nonResponses: nonResponseCount, total: total})
-
-    return blockGroupRecord;
-}
-
-const getBlockGroupOrgSummaryReport = async(details) =>{
-    const agg = [
-        {
-            '$unwind': {
-                'path': '$canvassContactHistory',
-                'preserveNullAndEmptyArrays': false
-            }
-        }, {
-            '$match': {
-                'canvassContactHistory.campaignID': details.campaignID,
-                'canvassContactHistory.orgID': details.orgID,
-                'address.blockgroupID': {
-                    '$exists': true
-                }
-            }
-        }, {
-            '$unwind': {
-                'path': '$canvassContactHistory.idHistory',
-                'preserveNullAndEmptyArrays': false
-            }
-        }, {
-            '$group': {
-                '_id': '$address.blockgroupID',
-                'blockgroups': {
-                    '$push': {
-                        '$arrayElemAt': [
-                            '$$ROOT.canvassContactHistory.idHistory.idResponses', 0
-                        ]
-                    }
-                }
-            }
-        }, {
-            '$unwind': {
-                'path': '$blockgroups'
-            }
-        }, {
-            '$project': {
-                'blockgroups': 1,
-                'identified': {
-                    '$cond': {
-                        'if': {
-                            '$or': [
-                                {
-                                    '$eq': [
-                                        '$blockgroups.idType', 'POSITIVE'
-                                    ]
-                                }, {
-                                    '$eq': [
-                                        '$blockgroups.idType', 'NEUTRAL'
-                                    ]
-                                }, {
-                                    '$eq': [
-                                        '$blockgroups.idType', 'NEGATIVE'
-                                    ]
-                                }
-                            ]
-                        },
-                        'then': 1,
-                        'else': 0
-                    }
-                },
-                'refuses': {
-                    '$cond': {
-                        'if': {
-                            '$eq': [
-                                '$blockgroups.idType', 'REFUSED'
-                            ]
-                        },
-                        'then': 1,
-                        'else': 0
-                    }
-                },
-                'impressions': {
-                    '$cond': {
-                        'if': {
-                            '$regexFind': {
-                                'input': "$blockgroups.responses",
-                                'regex': '(?i)lit|imp|con|spanish|und'
-                            }
-                        },
-                        'then': 1,
-                        'else': 0
-                    }
-                },
-                'nonResponses': {
-                    '$cond': {
-                        'if': {
-                            '$eq': [
-                                '$blockgroups.idType', 'NONRESPONSE'
-                            ]
-                        },
-                        'then': 1,
-                        'else': 0
-                    }
-                }
-            }
-        }, {
-            '$group': {
-                '_id': '$_id',
-                'identified': {
-                    '$sum': {
-                        '$add': [
-                            '$identified'
-                        ]
-                    }
-                },
-                'refuses': {
-                    '$sum': {
-                        '$add': [
-                            '$refuses'
-                        ]
-                    }
-                },
-                'impressions': {
-                    '$sum': {
-                        '$add': [
-                            '$impressions', '$identified'
-                        ]
-                    }
-                },
-                'nonResponses': {
-                    '$sum': {
-                        '$add': [
-                            '$nonResponses'
-                        ]
-                    }
-                },
-                'total': {
-                    '$sum': {
-                        '$add': [
-                            '$identified', '$refuses', '$nonResponses'
-                        ]
-                    }
-                }
-            }
-        }, {
-            '$project': {
-                'blockGroup': '$_id',
-                'identified': 1,
-                'refuses': 1,
-                'impressions': 1,
-                'nonResponses': 1,
-                'total': 1
-            }
-        }
-    ];
-    var blockGroupRecord = await People.aggregate(agg);
-
-    return blockGroupRecord;
-
-    /*******************/
-
-    /*var blockGroupCoordinates = []
-
-    for(var i = 0; i < reports.length; i++){
-        if (reports[i].location.coordinates.length) {
-            await blockGroupCoordinates.push(reports[i].location.coordinates)
-        }
-    }
-
-    if(blockGroupCoordinates.length) {
-        var blockGroups = await CensusTract.find({
-            "geometry": {
-                $geoIntersects: {
-                    $geometry: {
-                        type: "MultiPoint",
-                        coordinates: blockGroupCoordinates
-                    }
-                }
-            }
-        });
-    }
-
-    return blockGroups;*/
-}
-
-const getBlockGroupOrgSummaryReport2 = async(details) =>{
-    var blockGroupRecord = []
-    var blockGroupReports = []
-
-    var blockGroupReports = await Report.find({
-        campaignID: details.campaignID,
-        orgID: details.orgID,
-        activityType: 'CANVASS',
-        "location": {
-            $geoIntersects: {
-                $geometry: {
-                    type: "Polygon",
-                    coordinates: details.blockGroup.geometry.coordinates[0]
-                }
-            }
-        }
-    });
-
-    var identifiedCount  = 0;
-    var refusedCount = 0;
-    var nonResponseCount = 0;
-    var impressionsCount = 0;
-    var impressions = 0;
-
-    for(var i = 0; i < blockGroupReports.length; i++){
-        if (blockGroupReports[i].idResponses[0]) {
-            if (blockGroupReports[i].idResponses[0].idType === 'POSITIVE' ||
-                blockGroupReports[i].idResponses[0].idType === 'NEUTRAL' ||
-                blockGroupReports[i].idResponses[0].idType === 'NEGATIVE'
-            ) {
-                identifiedCount = identifiedCount + 1
-            }
-            if (blockGroupReports[i].idResponses[0].idType === 'REFUSED') {
-                refusedCount = refusedCount + 1
-            }
-            if (blockGroupReports[i].idResponses[0].responses.toLowerCase().includes('lit') ||
-                blockGroupReports[i].idResponses[0].responses.toLowerCase().includes('imp') ||
-                blockGroupReports[i].idResponses[0].responses.toLowerCase().includes('con') ||
-                blockGroupReports[i].idResponses[0].responses.toLowerCase().includes('spanish') ||
-                blockGroupReports[i].idResponses[0].responses.toLowerCase().includes('und')) {
-                impressions = impressions + 1
-            }
-            if (blockGroupReports[i].idResponses[0].idType === 'NONRESPONSE') {
-                nonResponseCount = nonResponseCount + 1
-            }
-        }
-    }
-
-    impressionsCount = impressions + parseInt(identifiedCount)
-    var total = await parseInt(identifiedCount) + parseInt(refusedCount) + parseInt(nonResponseCount)
-
-    await blockGroupRecord.push({blockGroup: details.blockGroup.properties.geoid, identified: identifiedCount, refuses: refusedCount, impressions: impressionsCount, nonResponses: nonResponseCount, total: total})
-
-    return blockGroupRecord;
 }
 
 const getBlockGroupOverallSummaryReport = async(details) =>{
@@ -1609,7 +1138,6 @@ const getBlockGroupOverallSummaryReport = async(details) =>{
     ];
     var blockGroupRecord = await People.aggregate(agg);
 
-
     const aggPet = [
         {
             '$unwind': {
@@ -1760,89 +1288,6 @@ const getBlockGroupOverallSummaryReport = async(details) =>{
     await blockGroupRecord.push(...blockGroupRecordPet);
 
     return blockGroupRecord;
-
-    /*******************/
-
-    /*var reports = await Report.find({campaignID: details.campaignID, orgID: details.orgID, $or:[{activityType:'CANVASS'}, {activityType:'PETITION'}]})
-
-    var blockGroupCoordinates = []
-
-    for(var i = 0; i < reports.length; i++){
-        if (reports[i].location.coordinates.length) {
-            await blockGroupCoordinates.push(reports[i].location.coordinates)
-        }
-    }
-
-    if(blockGroupCoordinates.length) {
-        var blockGroups = await CensusTract.find({
-            "geometry": {
-                $geoIntersects: {
-                    $geometry: {
-                        type: "MultiPoint",
-                        coordinates: blockGroupCoordinates
-                    }
-                }
-            }
-        });
-    }
-
-    return blockGroups;*/
-}
-
-const getBlockGroupOverallSummaryReport2 = async(details) =>{
-    var blockGroupRecord = []
-    var blockGroupReports = []
-
-    var blockGroupReports = await Report.find({
-        campaignID: details.campaignID,
-        orgID: details.orgID,
-        $or:[{activityType:'CANVASS'}, {activityType:'PETITION'}],
-        "location": {
-            $geoIntersects: {
-                $geometry: {
-                    type: "Polygon",
-                    coordinates: details.blockGroup.geometry.coordinates[0]
-                }
-            }
-        }
-    });
-
-    var identifiedCount  = 0;
-    var refusedCount = 0;
-    var nonResponseCount = 0;
-    var impressionsCount = 0;
-    var impressions = 0;
-
-    for(var i = 0; i < blockGroupReports.length; i++){
-        if (blockGroupReports[i].idResponses[0]) {
-            if (blockGroupReports[i].idResponses[0].idType === 'POSITIVE' ||
-                blockGroupReports[i].idResponses[0].idType === 'NEUTRAL' ||
-                blockGroupReports[i].idResponses[0].idType === 'NEGATIVE'
-            ) {
-                identifiedCount = identifiedCount + 1
-            }
-            if (blockGroupReports[i].idResponses[0].idType === 'REFUSED') {
-                refusedCount = refusedCount + 1
-            }
-            if (blockGroupReports[i].idResponses[0].responses.toLowerCase().includes('lit') ||
-                blockGroupReports[i].idResponses[0].responses.toLowerCase().includes('imp') ||
-                blockGroupReports[i].idResponses[0].responses.toLowerCase().includes('con') ||
-                blockGroupReports[i].idResponses[0].responses.toLowerCase().includes('spanish') ||
-                blockGroupReports[i].idResponses[0].responses.toLowerCase().includes('und')) {
-                impressions = impressions + 1
-            }
-            if (blockGroupReports[i].idResponses[0].idType === 'NONRESPONSE') {
-                nonResponseCount = nonResponseCount + 1
-            }
-        }
-    }
-
-    impressionsCount = impressions + parseInt(identifiedCount)
-    var total = await parseInt(identifiedCount) + parseInt(refusedCount) + parseInt(nonResponseCount)
-
-    await blockGroupRecord.push({blockGroup: details.blockGroup.properties.geoid, identified: identifiedCount, refuses: refusedCount, impressions: impressionsCount, nonResponses: nonResponseCount, total: total})
-
-    return blockGroupRecord;
 }
 
 module.exports = {updateReport,
@@ -1852,8 +1297,4 @@ module.exports = {updateReport,
                   getEventsSummaryReport,
                   getActivitiesSummaryReport,
                   getBlockGroupCanvassSummaryReport,
-                  getBlockGroupCanvassSummaryReport2,
-                  getBlockGroupOrgSummaryReport,
-                  getBlockGroupOrgSummaryReport2,
-                  getBlockGroupOverallSummaryReport,
-                  getBlockGroupOverallSummaryReport2}
+                  getBlockGroupOverallSummaryReport}
