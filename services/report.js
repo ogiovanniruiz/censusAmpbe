@@ -816,22 +816,23 @@ const getActivitiesSummaryReport = async(details) =>{
         var totalRefused = await People.find({"canvassContactHistory.activityID": canvassActivities[i]._id, "canvassContactHistory.identified": false, "canvassContactHistory.refused": true }).count()
         var totalNonResponse = await People.find({"canvassContactHistory.activityID": canvassActivities[i]._id, "canvassContactHistory.identified": false, "canvassContactHistory.refused": false, "canvassContactHistory.nonResponse": true}).count()
 
-        var impressions = [];
-        var impressionsCount = 0;
+        //var impressions = [];
+        //var impressionsCount = 0;
 
-        for(var b = 0; b < canvassActivities[i].activityMetaData.nonResponses.length; b++){
-            if (canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('lit') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('imp') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('con') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('spanish') ||
-                canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('und')) {
-                impressions.push(canvassActivities[i].activityMetaData.nonResponses[b])
-            }
-        }
-        var impressionsCount = impressions.length;
+        //for(var b = 0; b < canvassActivities[i].activityMetaData.nonResponses.length; b++){
+           // if (canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('lit') ||
+          //      canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('imp') ||
+           //     canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('con') ||
+           //     canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('spanish') ||
+            //    canvassActivities[i].activityMetaData.nonResponses[b].toLowerCase().includes('und')) {
+            //    impressions.push(canvassActivities[i].activityMetaData.nonResponses[b])
+            //}
+        //}
+       // var impressionsCount = impressions.length;
 
         var total = await parseInt(totalIdentified) + parseInt(totalRefused) + parseInt(totalNonResponse)
-        await knocks.push({identified: totalIdentified, impressions: impressionsCount, total: total})
+        //await knocks.push({identified: totalIdentified, impressions: impressionsCount, total: total})
+        await knocks.push({identified: totalIdentified, total: total})
     }
 
     return {knocks: knocks}

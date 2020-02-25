@@ -303,7 +303,7 @@ const createTwilioSubAccount = async(orgID) =>{
             const subClient = require('twilio')(existingAccount.sid, existingAccount.authToken);
 
             var voice_url = process.env.be + '/phonebank/call'
-            var app = await subClient.applications.create({voiceMethod: 'POST', voiceUrl: voice_url,friendlyName: 'voice_api'})
+            var app = await subClient.applications.create({voiceMethod: 'POST', voiceUrl: voice_url, friendlyName: 'voice_api'})
                                         .then(application => {
                                             
                                             console.log(application.sid)

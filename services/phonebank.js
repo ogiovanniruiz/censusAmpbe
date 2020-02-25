@@ -13,7 +13,7 @@ const getHouseHold = async(detail) => {
     //var searchParameters = {"phonebankContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, identified: true}}}}
     //var searchParameters = {"phonebankContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, houseHoldComplete: true}}}}
 
-    var searchParameters = {"phones": {$not: {$size: 0}},
+    var searchParameters = {"phones": {$not: {$size: 0}}, "creationInfo.regType": "VOTERFILE",
     /*
                 $or:[{"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, reserved: detail.userID}},},
                      {"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, reserved: {$exists: false}}}}],
@@ -57,8 +57,6 @@ const getHouseHold = async(detail) => {
         }
     }
 
-    console.log(searchParameters)
-
     var people = await Person.aggregate([ 
         {$match: searchParameters},
         
@@ -100,8 +98,6 @@ const getHouseHold = async(detail) => {
     }*/
 
 
-
-    
     try { return people[0] 
     } catch(e){
         throw new Error(e.message)
@@ -283,7 +279,18 @@ const allocatePhoneNumber = async(detail) =>{
     }
 }
 
-module.exports = {getHouseHold, 
+const getNumCompleted = async(detail) =>{
+    console.log(detail)
+
+    var completed = await Person.count({"phonebankContactHistory.activityID": detail.activityID, "phonebankContactHistory.idHistory.idBy": detail.userID})
+
+    return { completed: completed}
+
+    
+
+}
+
+module.exports = {getNumCompleted, getHouseHold, 
                   call, 
                   getTwilioToken, 
                   editPerson, 

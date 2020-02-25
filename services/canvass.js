@@ -63,12 +63,11 @@ const getCanvassParcels = async(detail) =>{
 
 
 const getCanvassResidents = async(detail) =>{ 
-    
     try{
         var targets = await Target.find({"_id": detail.targetIDs})
         var targetCoordinates = []
 
-        var personSearchQuery = {}
+        var personSearchQuery = {"address.location.locationAccuracy": {$ne: "range_interpolation"}} 
         var hasQueries = false;
 
         var people = []
