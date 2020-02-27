@@ -358,7 +358,6 @@ const checkTwilioSubAccount = async(detail) =>{
 }
 
 const buyPhoneNumber = async(detail) =>{
-    console.log(detail)
     var org = await Organization.findOne({"_id": detail.orgID})
 
     if(org.twilioAccount.sid && org.twilioAccount.authToken){

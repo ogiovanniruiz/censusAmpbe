@@ -88,13 +88,6 @@ const getCanvassResidents = async(detail) =>{
                     if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
                         personSearchQuery['membership.orgID'] = targets[i].properties.queries[j].param
                     }
-                    if(targets[i].properties.queries[j].queryType === "SCRIPT"){
-
-                    }
-    
-                    if(targets[i].properties.queries[j].queryType === "TAGS"){
-   
-                    }
                 }                                                             
             }
 

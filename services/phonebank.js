@@ -8,23 +8,15 @@ var VoiceResponse = twilio.twiml.VoiceResponse;
 var ClientCapability = require('twilio').jwt.ClientCapability;
 
 const getHouseHold = async(detail) => {
-
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
-    //var searchParameters = {"phonebankContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, identified: true}}}}
-    //var searchParameters = {"phonebankContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, houseHoldComplete: true}}}}
+    var searchParameters = {"phones": {$not: {$size: 0}}, 
 
-    var searchParameters = {"phones": {$not: {$size: 0}}, "creationInfo.regType": "VOTERFILE",
-    /*
-                $or:[{"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, reserved: detail.userID}},},
-                     {"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, reserved: {$exists: false}}}}],
-    */
             $or:[{"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, houseHoldComplete: false}}},
                  {"phonebankContactHistory": {$exists: false}},
                  {"phonebankContactHistory": {$size: 0}}
                 ]}
 
    var targetCoordinates = []
-
    var hasQueries = false;
 
     for(var i = 0; i < targets.length; i++){
@@ -38,8 +30,14 @@ const getHouseHold = async(detail) => {
     }
 
     if(hasQueries){
+        var hasParties = false
+        var parties = []
         for(var i = 0; i < targets.length; i++){                                   
             for(var j = 0; j < targets[i].properties.queries.length; j++){
+                if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
+                    searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
+                }
+
                 if(targets[i].properties.queries[j].queryType === "PAV"){
                     searchParameters['voterInfo.pav'] = targets[i].properties.queries[j].param
                 }
@@ -51,15 +49,25 @@ const getHouseHold = async(detail) => {
                 if(targets[i].properties.queries[j].queryType === "PROPENSITY"){
                     var low = targets[i].properties.queries[j].subParam
                     var hi = targets[i].properties.queries[j].param
-                    searchParameters['voterInfo.propensity'] = { $gt :  low/100, $lt : hi/100}
+                    searchParameters['voterInfo.propensity'] = { $gte :  low/100, $lte : hi/100}
+                }
+
+                if(targets[i].properties.queries[j].queryType === "PARTY"){
+                    hasParties = true;
+                    parties.push(targets[i].properties.queries[j].param)
                 }
             }                                                             
         }
+
+        if(hasParties){
+            searchParameters['voterInfo.party'] = {$in: parties}
+        }
+    }else{
+        searchParameters['creationInfo.regType'] = "VOTERFILE"
     }
 
     var people = await Person.aggregate([ 
         {$match: searchParameters},
-        
         {$group : { _id : {streetNum: "$address.streetNum",
                            suffix: "$address.suffix",
                            prefix:  "$address.prefix",
@@ -79,24 +87,6 @@ const getHouseHold = async(detail) => {
                                       voterInfo: '$voterInfo',
                                       _id: "$_id"}}}},{$sample: { size: 10 } }
         ]).allowDiskUse(true).limit(1)
-
-    /*
-    if(people[0]){
-        if(people[0].people){
-            for(var i = 0; i < people[0].people.length; i++){
-                var person = await Person.findOne({"_id": people[0].people[i]._id})
-                for(var j = 0; j < person.phonebankContactHistory.length; j++){
-                    if(person.phonebankContactHistory[j].campaignID === detail.campaignID){
-                        person.phonebankContactHistory[j].reserved = detail.userID;
-                        person.save()
-                        break
-    
-                    }
-                }
-            }
-        }
-    }*/
-
 
     try { return people[0] 
     } catch(e){
@@ -280,14 +270,8 @@ const allocatePhoneNumber = async(detail) =>{
 }
 
 const getNumCompleted = async(detail) =>{
-    console.log(detail)
-
-    var completed = await Person.count({"phonebankContactHistory.activityID": detail.activityID, "phonebankContactHistory.idHistory.idBy": detail.userID})
-
-    return { completed: completed}
-
-    
-
+    var completed = await Person.count({"phonebankContactHistory.idHistory.idBy": detail.userID})
+    return {completed: completed}
 }
 
 module.exports = {getNumCompleted, getHouseHold, 
