@@ -24,33 +24,16 @@ const resetTextBank = async(detail) =>{
 const lockNewPeople = async(detail) =>{
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
 
-    console.log(targets)
     var searchParameters = {$or: [{"textContactHistory": {$size: 0}}, 
                                   {"textContactHistory": {$not: {$elemMatch: {activityID : detail.activityID}}}}
                                  ],
+                                 "preferredMethodContact": {$not: {$elemMatch: {method: "PHONE"}}},
+                                 "preferredMethodContact": {$not: {$elemMatch: {method: "EMAIL"}}},
                             "phones": { $exists: true, $not: {$size: 0}}
                             }
 
     
-/*
-    for(var i = 0; i < targets.length; i++){
-        if(targets[i].properties.params.targetType === "ORGMEMBERS"){
-            searchParameters['membership.orgID'] = targets[i].properties.params.id
-        
-        }else if (targets[i].properties.params.targetType === "SCRIPT"){
-
-            searchParameters['$or'] = [{'phonebankContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
-                                                                                                            idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}, 
-                                       {'canvassContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
-                                                                                                          idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}},
-                                       {'textContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
-                                                                                                       idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}]
-                                                                                                    
-                                                                                                    }
-    }
-*/
     var targetCoordinates = []
-
     var hasQueries = false;
  
      for(var i = 0; i < targets.length; i++){
@@ -69,18 +52,9 @@ const lockNewPeople = async(detail) =>{
                  if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
                      searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
                  }
-                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
- 
-                 }
- 
-                 if(targets[i].properties.queries[j].queryType === "TAGS"){
- 
-                 }
              }                                                             
          }
      }
-
-    console.log(searchParameters)
 
     var people = await Person.find(searchParameters).limit(5); 
     
@@ -284,8 +258,6 @@ const sendText = async(detail) =>{
 
 const receiveTexts = async(incoming) =>{
 
-    console.log(incoming)
-
     var phoneNumber = incoming.From.substring(2);
     var message = incoming.Body;
     var outgoingPhoneNum = incoming.To;
@@ -390,7 +362,6 @@ const nonResponse = async(detail)=>{
         refused = true;
     }
 
-
     var idHistory = {scriptID: detail.script._id,
         idBy: detail.userID,
         idResponses: detail.idResponses,
@@ -407,45 +378,39 @@ const nonResponse = async(detail)=>{
                                         identified: false,
                                         complete: true,
                                         idHistory: idHistory
-                                    }
+                                }
 
         person.textContactHistory.push(textContactHistory)
         return person.save()
     
     }else{
-
-        console.log("HERE")
-    
         for (var i = 0; i < person.textContactHistory.length; i++){
             if(person.textContactHistory[i].activityID === detail.activityID){
-                console.log("THIS ONE")
                 person.textContactHistory[i].idHistory.push(idHistory)
                 person.textContactHistory[i].identified = false;
                 person.textContactHistory[i].complete = true;
                 person.textContactHistory[i].nonResponse = true;
                 person.textContactHistory[i].refused = refused;
-                console.log(person.textContactHistory[i])
+
                 return person.save()
             }
         }
 
         var textContactHistory = {
-                                        campaignID: detail.campaignID,
-                                        activityID: detail.activityID,
-                                        orgID: detail.orgID,
-                                        refused: refused,
-                                        complete: true,
-                                        nonResponse: true,
-                                        identified: false,
-                                        idHistory: idHistory
-                                    }
+                                    campaignID: detail.campaignID,
+                                    activityID: detail.activityID,
+                                    orgID: detail.orgID,
+                                    refused: refused,
+                                    complete: true,
+                                    nonResponse: true,
+                                    identified: false,
+                                    idHistory: idHistory
+                                }
     
         person.textContactHistory.push(textContactHistory)
         return person.save()
     }
 }
-
-
 
 module.exports = {loadLockedPeople, 
                   getRespondedPeople, 

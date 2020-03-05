@@ -20,7 +20,6 @@ var canvassRouter = require('./routes/canvass')
 var petitionRouter = require('./routes/petition')
 var reportRouter = require('./routes/reports')
 
-
 var app = express();
 var mongoose = require('mongoose');
 
@@ -30,7 +29,7 @@ var corsOptions = { methods: 'GET,POST,PATCH,DELETE,OPTIONS',
                     origin: ""
                   }
 
-process.env.version = "0.6.4"
+process.env.version = "0.6.8"
 
 if(app.get('env') === 'census'){
   process.env.app_sid =  'APcfa84370fade47d9de6493f08e73b6fa'

@@ -23,4 +23,6 @@ router.post('/editeUser', userController.editUser);
 router.post('/checkVersion', userController.checkVersion);
 
 router.post('/submitAgreement', userController.submitAgreement);
+
+router.post('/updateDataManager', userController.updateDataManager);
 module.exports = router;

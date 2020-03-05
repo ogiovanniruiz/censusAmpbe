@@ -107,8 +107,8 @@ const getOrganization = async(orgDetail) =>{
 
 const getOrgMembers = async(orgDetail) =>{
 
-    var members = await Person.find({'user._id': {$in: orgDetail.userIDs}})
-    var requests = await Person.find({'user._id': {$in: orgDetail.requests}})
+    var members = await Person.find({'user': {$exists: true}, 'user._id': {$in: orgDetail.userIDs}})
+    var requests = await Person.find({'user': {$exists: true},'user._id': {$in: orgDetail.requests}})
 
     var memberList = {members: members, requests: requests}
 
@@ -266,8 +266,9 @@ const createTwilioSubAccount = async(orgID) =>{
         const superClient = require('twilio')("ACa75c4991d267cf482e49798a667157e1", "f4fbc33e1d6b0fba8d8b0bedd909238a");
         var accountExists = false;
         var existingAccount = {}
+        var orgName = org.name.substring(0, 63);
         
-        await superClient.api.accounts.list({friendlyName: org.name, status: "active", limit: 20})
+        await superClient.api.accounts.list({friendlyName: orgName, status: "active", limit: 20})
                            .then(accounts => accounts.forEach(a => 
                             {
                                 accountExists = true
@@ -276,7 +277,7 @@ const createTwilioSubAccount = async(orgID) =>{
                            ));
 
         if(!accountExists){             
-            var account = await superClient.api.accounts.create({friendlyName: org.name}).then(account => {
+            var account = await superClient.api.accounts.create({friendlyName: orgName}).then(account => {
                 return account;
             });
 
@@ -340,8 +341,10 @@ const checkTwilioSubAccount = async(detail) =>{
     var org = await Organization.findOne({"_id": detail.orgID})
     const superClient = require('twilio')("ACa75c4991d267cf482e49798a667157e1", "f4fbc33e1d6b0fba8d8b0bedd909238a");
     var accountExists = false;
+
+    var orgName = org.name.substring(0, 63);
     
-    await superClient.api.accounts.list({friendlyName: org.name, status: "active", limit: 20})
+    await superClient.api.accounts.list({friendlyName: orgName, status: "active", limit: 20})
                        .then(accounts => accounts.forEach(a => 
                         {
                             accountExists = true

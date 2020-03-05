@@ -139,6 +139,17 @@ const submitAgreement = async(req,res,next)=>{
     }
 }
 
+
+const updateDataManager = async(req,res,next)=>{
+
+    try {
+        res.send(await userService.updateDataManager(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 module.exports = {checkVersion,
                   loginUser,
                   registerUser,
@@ -152,4 +163,4 @@ module.exports = {checkVersion,
                   updateAssetMapLvl, 
                   getUserProfile, 
                   submitAgreement,
-                  deleteUser, editUser};
+                  deleteUser, editUser, updateDataManager};

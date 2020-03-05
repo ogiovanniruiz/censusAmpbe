@@ -10,10 +10,13 @@ var ClientCapability = require('twilio').jwt.ClientCapability;
 const getHouseHold = async(detail) => {
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
     var searchParameters = {"phones": {$not: {$size: 0}}, 
+                            "preferredMethodContact": {$not: {$elemMatch: {method: "TEXT"}}},
+                            "preferredMethodContact": {$not: {$elemMatch: {method: "EMAIL"}}},
 
             $or:[{"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, houseHoldComplete: false}}},
                  {"phonebankContactHistory": {$exists: false}},
                  {"phonebankContactHistory": {$size: 0}}
+
                 ]}
 
    var targetCoordinates = []
@@ -21,7 +24,7 @@ const getHouseHold = async(detail) => {
 
     for(var i = 0; i < targets.length; i++){
         if(targets[i]['geometry']){ targetCoordinates.push(targets[i]['geometry']['coordinates'][0])}
-        if(targets[i].properties.queries.length > 0){hasQueries  = true;}
+        if(targets[i].properties.queries.length > 0){hasQueries = true;}
     }
 
     if(targetCoordinates.length > 0){
@@ -66,6 +69,8 @@ const getHouseHold = async(detail) => {
         searchParameters['creationInfo.regType'] = "VOTERFILE"
     }
 
+    var total = await Person.count(searchParameters)
+
     var people = await Person.aggregate([ 
         {$match: searchParameters},
         {$group : { _id : {streetNum: "$address.streetNum",
@@ -88,7 +93,7 @@ const getHouseHold = async(detail) => {
                                       _id: "$_id"}}}},{$sample: { size: 10 } }
         ]).allowDiskUse(true).limit(1)
 
-    try { return people[0] 
+    try { return {houseHold: people[0], total: total} 
     } catch(e){
         throw new Error(e.message)
     } 
@@ -192,11 +197,12 @@ const nonResponse = async(detail)=>{
         refused = true;
     }
 
+    /*
     var idHistory = {scriptID: detail.script._id,
-        idBy: detail.userID,
-        idResponses: detail.idResponses,
-        locationIdentified: detail.location}
-
+                    idBy: detail.userID,
+                    idResponses: detail.idResponses,
+                    locationIdentified: detail.location}
+*/
     if(person.phonebankContactHistory.length === 0){
 
         var phonebankContactHistory = {
@@ -206,7 +212,7 @@ const nonResponse = async(detail)=>{
                                         refused: refused,
                                         nonResponse: true,
                                         identified: false,
-                                        idHistory: idHistory
+                                        idHistory: detail.idHistory
                                     }
 
         person.phonebankContactHistory.push(phonebankContactHistory)
@@ -216,7 +222,7 @@ const nonResponse = async(detail)=>{
     
         for (var i = 0; i < person.phonebankContactHistory.length; i++){
             if(person.phonebankContactHistory[i].activityID === detail.activityID){
-                person.phonebankContactHistory[i].idHistory.push(idHistory)
+                person.phonebankContactHistory[i].idHistory.concat(detail.idHistory)
                 person.phonebankContactHistory[i].identified = false;
                 person.phonebankContactHistory[i].nonResponse = true;
                 person.phonebankContactHistory[i].refused = refused;
@@ -231,7 +237,7 @@ const nonResponse = async(detail)=>{
                                         refused: refused,
                                         nonResponse: true,
                                         identified: false,
-                                        idHistory: idHistory
+                                        idHistory: detail.idHistory
                                     }
     
         person.phonebankContactHistory.push(phonebankContactHistory)
