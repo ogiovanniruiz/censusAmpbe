@@ -452,7 +452,23 @@ const getOverallSummaryReport = async(details) =>{
                                 'petitionContactHistory.orgID': details.orgID,
                             }
                         ]
-                    }
+                    }, {
+                        $and: [
+                            {
+                                'phonebankContactHistory.campaignID': details.campaignID,
+                            }, {
+                                'phonebankContactHistory.orgID': details.orgID,
+                            }
+                        ]
+                    }, /*{
+                        $and: [
+                            {
+                                'textContactHistory.campaignID': details.campaignID,
+                            }, {
+                                'textContactHistory.orgID': details.orgID,
+                            }
+                        ]
+                    }*/
                 ]
             }
         }, {
@@ -668,29 +684,341 @@ const getOverallSummaryReport = async(details) =>{
                             }
                         }
                     }
-                ]
+                ],
+                'phonebank': [
+                    {
+                        '$match': {
+                            'phonebankContactHistory.campaignID': details.campaignID,
+                            'phonebankContactHistory.orgID': details.orgID,
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$phonebankContactHistory',
+                            'preserveNullAndEmptyArrays': false
+                        }
+                    }, {
+                        '$match': {
+                            'phonebankContactHistory.campaignID': details.campaignID,
+                            'phonebankContactHistory.orgID': details.orgID,
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$phonebankContactHistory.idHistory',
+                            'preserveNullAndEmptyArrays': false
+                        }
+                    }, {
+                        '$group': {
+                            '_id': null,
+                            'phonebankGroups': {
+                                '$push': {
+                                    '$arrayElemAt': [
+                                        '$$ROOT.phonebankContactHistory.idHistory.idResponses', 0
+                                    ]
+                                }
+                            }
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$phonebankGroups'
+                        }
+                    }, {
+                        '$project': {
+                            'identified': {
+                                '$cond': {
+                                    'if': {
+                                        '$or': [
+                                            {
+                                                '$eq': [
+                                                    '$phonebankGroups.idType', 'POSITIVE'
+                                                ]
+                                            }, {
+                                                '$eq': [
+                                                    '$phonebankGroups.idType', 'NEUTRAL'
+                                                ]
+                                            }, {
+                                                '$eq': [
+                                                    '$phonebankGroups.idType', 'NEGATIVE'
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            },
+                            'refuses': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$phonebankGroups.idType', 'REFUSED'
+                                        ]
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            },
+                            'impressions': {
+                                '$cond': {
+                                    'if': {
+                                        '$regexFind': {
+                                            'input': "$phonebankGroups.responses",
+                                            'regex': '(?i)left message'
+                                        }
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            },
+                            'nonResponses': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$phonebankGroups.idType', 'NONRESPONSE'
+                                        ]
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            }
+                        }
+                    }, {
+                        '$group': {
+                            '_id': '$_id',
+                            'identified': {
+                                '$sum': {
+                                    '$add': [
+                                        '$identified'
+                                    ]
+                                }
+                            },
+                            'refuses': {
+                                '$sum': {
+                                    '$add': [
+                                        '$refuses'
+                                    ]
+                                }
+                            },
+                            'impressions': {
+                                '$sum': {
+                                    '$add': [
+                                        '$impressions', '$identified'
+                                    ]
+                                }
+                            },
+                            'nonResponses': {
+                                '$sum': {
+                                    '$add': [
+                                        '$nonResponses'
+                                    ]
+                                }
+                            },
+                            'total': {
+                                '$sum': {
+                                    '$add': [
+                                        '$identified', '$refuses', '$nonResponses'
+                                    ]
+                                }
+                            }
+                        }
+                    }, {
+                        '$project': {
+                            'identified': 1,
+                            'refuses': 1,
+                            'impressions': 1,
+                            'nonResponses': 1,
+                            'total': 1
+                        }
+                    }
+                ],
+                /*'text': [
+                    {
+                        '$match': {
+                            'textContactHistory.campaignID': details.campaignID,
+                            'textContactHistory.orgID': details.orgID,
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$textContactHistory',
+                            'preserveNullAndEmptyArrays': false
+                        }
+                    }, {
+                        '$match': {
+                            'textContactHistory.campaignID': details.campaignID,
+                            'textContactHistory.orgID': details.orgID,
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$textContactHistory.idHistory',
+                            'preserveNullAndEmptyArrays': false
+                        }
+                    }, {
+                        '$group': {
+                            '_id': null,
+                            'textGroups': {
+                                '$push': {
+                                    '$arrayElemAt': [
+                                        '$$ROOT.textContactHistory.idHistory.idResponses', 0
+                                    ]
+                                }
+                            }
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$textGroups'
+                        }
+                    }, {
+                        '$project': {
+                            'identified': {
+                                '$cond': {
+                                    'if': {
+                                        '$or': [
+                                            {
+                                                '$eq': [
+                                                    '$textGroups.idType', 'POSITIVE'
+                                                ]
+                                            }, {
+                                                '$eq': [
+                                                    '$textGroups.idType', 'NEUTRAL'
+                                                ]
+                                            }, {
+                                                '$eq': [
+                                                    '$textGroups.idType', 'NEGATIVE'
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            },
+                            'refuses': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$textGroups.idType', 'REFUSED'
+                                        ]
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            },
+                            'impressions': {
+                                '$cond': {
+                                    'if': {
+                                        '$regexFind': {
+                                            'input': "$textGroups.responses",
+                                            'regex': '(?i)left message'
+                                        }
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            },
+                            'nonResponses': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$textGroups.idType', 'NONRESPONSE'
+                                        ]
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            }
+                        }
+                    }, {
+                        '$group': {
+                            '_id': '$_id',
+                            'identified': {
+                                '$sum': {
+                                    '$add': [
+                                        '$identified'
+                                    ]
+                                }
+                            },
+                            'refuses': {
+                                '$sum': {
+                                    '$add': [
+                                        '$refuses'
+                                    ]
+                                }
+                            },
+                            'impressions': {
+                                '$sum': {
+                                    '$add': [
+                                        '$impressions', '$identified'
+                                    ]
+                                }
+                            },
+                            'nonResponses': {
+                                '$sum': {
+                                    '$add': [
+                                        '$nonResponses'
+                                    ]
+                                }
+                            },
+                            'total': {
+                                '$sum': {
+                                    '$add': [
+                                        '$identified', '$refuses', '$nonResponses'
+                                    ]
+                                }
+                            }
+                        }
+                    }, {
+                        '$project': {
+                            'identified': 1,
+                            'refuses': 1,
+                            'impressions': 1,
+                            'nonResponses': 1,
+                            'total': 1
+                        }
+                    }
+                ]*/
             }
         }
     ];
     var reports = await People.aggregate(agg)
 
-    if(!reports[0].canvass.length && !reports[0].petitions.length){
-        await recordsPerOrg.push({org: details.orgName, identified: 0, refuses: 0, impressions: 0, nonResponses: 0, total: 0})
-        return recordsPerOrg
-    }
+    const report = [{
+        'identified': 0,
+        'refuses': 0,
+        'impressions': 0,
+        'nonResponses': 0,
+        'total': 0,
+    }];
 
-    if(reports[0].petitions.length && !reports[0].canvass.length) {
-        await recordsPerOrg.push({org: details.orgName, identified: reports[0].petitions[0].identified, refuses: reports[0].petitions[0].refuses, impressions: reports[0].petitions[0].impressions, nonResponses: reports[0].petitions[0].nonResponses, total: reports[0].petitions[0].total})
-        return recordsPerOrg
+    if(reports[0].canvass.length) {
+        report.identified += await reports[0].canvass[0].identified
+        report.refuses += await reports[0].canvass[0].refuses
+        report.impressions += await reports[0].canvass[0].impressions
+        report.nonResponses += await reports[0].canvass[0].nonResponses
+        report.total += await reports[0].canvass[0].total
     }
 
     if(reports[0].petitions.length) {
-        reports[0].canvass[0].identified += await reports[0].petitions[0].identified
-        reports[0].canvass[0].impressions += await reports[0].petitions[0].identified
-        reports[0].canvass[0].total += await reports[0].petitions[0].identified
+        report.identified += await reports[0].petitions[0].identified
+        report.impressions += await reports[0].petitions[0].identified
+        report.total += await reports[0].petitions[0].identified
     }
 
-    await recordsPerOrg.push({org: details.orgName, identified: reports[0].canvass[0].identified, refuses: reports[0].canvass[0].refuses, impressions: reports[0].canvass[0].impressions, nonResponses: reports[0].canvass[0].nonResponses, total: reports[0].canvass[0].total})
+    if(reports[0].phonebank.length) {
+        report.identified += await reports[0].phonebank[0].identified
+        report.refuses += await reports[0].phonebank[0].refuses
+        report.impressions += await reports[0].phonebank[0].impressions
+        report.nonResponses += await reports[0].phonebank[0].nonResponses
+        report.total += await reports[0].phonebank[0].total
+    }
+
+    if(reports[0].text.length) {
+        report.identified += await reports[0].text[0].identified
+        report.refuses += await reports[0].text[0].refuses
+        report.impressions += await reports[0].text[0].impressions
+        report.nonResponses += await reports[0].text[0].nonResponses
+        report.total += await reports[0].text[0].total
+    }
+
+    await recordsPerOrg.push({org: details.orgName, identified: report.identified, refuses: report.refuses, impressions: report.impressions, nonResponses: report.nonResponses, total: report.total})
     return recordsPerOrg
 }
 
@@ -1114,7 +1442,31 @@ const getBlockGroupOverallSummaryReport = async(details) =>{
                                 }
                             }
                         ]
-                    }
+                    }, {
+                        $and: [
+                            {
+                                'phonebankContactHistory.campaignID': details.campaignID,
+                            }, {
+                                'phonebankContactHistory.orgID': details.orgID,
+                            }, {
+                                'address.blockgroupID': {
+                                    '$exists': true
+                                }
+                            }
+                        ]
+                    }, /*{
+                        $and: [
+                            {
+                                'textContactHistory.campaignID': details.campaignID,
+                            }, {
+                                'textContactHistory.orgID': details.orgID,
+                            }, {
+                                'address.blockgroupID': {
+                                    '$exists': true
+                                }
+                            }
+                        ]
+                    }*/
                 ]
             }
         }, {
@@ -1348,13 +1700,319 @@ const getBlockGroupOverallSummaryReport = async(details) =>{
                             }
                         }
                     }
-                ]
+                ],
+                'phonebank': [
+                    {
+                        '$match': {
+                            'phonebankContactHistory.campaignID': details.campaignID,
+                            'phonebankContactHistory.orgID': details.orgID,
+                            'address.blockgroupID': {
+                                '$exists': true
+                            }
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$phonebankContactHistory',
+                            'preserveNullAndEmptyArrays': false
+                        }
+                    }, {
+                        '$match': {
+                            'phonebankContactHistory.campaignID': details.campaignID,
+                            'phonebankContactHistory.orgID': details.orgID,
+                            'address.blockgroupID': {
+                                '$exists': true
+                            }
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$phonebankContactHistory.idHistory',
+                            'preserveNullAndEmptyArrays': false
+                        }
+                    }, {
+                        '$group': {
+                            '_id': '$address.blockgroupID',
+                            'blockgroups': {
+                                '$push': {
+                                    '$arrayElemAt': [
+                                        '$$ROOT.phonebankContactHistory.idHistory.idResponses', 0
+                                    ]
+                                }
+                            }
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$blockgroups'
+                        }
+                    }, {
+                        '$project': {
+                            'blockgroups': 1,
+                            'identified': {
+                                '$cond': {
+                                    'if': {
+                                        '$or': [
+                                            {
+                                                '$eq': [
+                                                    '$blockgroups.idType', 'POSITIVE'
+                                                ]
+                                            }, {
+                                                '$eq': [
+                                                    '$blockgroups.idType', 'NEUTRAL'
+                                                ]
+                                            }, {
+                                                '$eq': [
+                                                    '$blockgroups.idType', 'NEGATIVE'
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            },
+                            'refuses': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$blockgroups.idType', 'REFUSED'
+                                        ]
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            },
+                            'impressions': {
+                                '$cond': {
+                                    'if': {
+                                        '$regexFind': {
+                                            'input': "$blockgroups.responses",
+                                            'regex': '(?i)left message'
+                                        }
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            },
+                            'nonResponses': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$blockgroups.idType', 'NONRESPONSE'
+                                        ]
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            }
+                        }
+                    }, {
+                        '$group': {
+                            '_id': '$_id',
+                            'identified': {
+                                '$sum': {
+                                    '$add': [
+                                        '$identified'
+                                    ]
+                                }
+                            },
+                            'refuses': {
+                                '$sum': {
+                                    '$add': [
+                                        '$refuses'
+                                    ]
+                                }
+                            },
+                            'impressions': {
+                                '$sum': {
+                                    '$add': [
+                                        '$impressions', '$identified'
+                                    ]
+                                }
+                            },
+                            'nonResponses': {
+                                '$sum': {
+                                    '$add': [
+                                        '$nonResponses'
+                                    ]
+                                }
+                            },
+                            'total': {
+                                '$sum': {
+                                    '$add': [
+                                        '$identified', '$refuses', '$nonResponses'
+                                    ]
+                                }
+                            }
+                        }
+                    }, {
+                        '$project': {
+                            'blockGroup': '$_id',
+                            'identified': 1,
+                            'refuses': 1,
+                            'impressions': 1,
+                            'nonResponses': 1,
+                            'total': 1
+                        }
+                    }
+                ],
+                /*'text': [
+                    {
+                        '$match': {
+                            'textContactHistory.campaignID': details.campaignID,
+                            'textContactHistory.orgID': details.orgID,
+                            'address.blockgroupID': {
+                                '$exists': true
+                            }
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$textContactHistory',
+                            'preserveNullAndEmptyArrays': false
+                        }
+                    }, {
+                        '$match': {
+                            'textContactHistory.campaignID': details.campaignID,
+                            'textContactHistory.orgID': details.orgID,
+                            'address.blockgroupID': {
+                                '$exists': true
+                            }
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$textContactHistory.idHistory',
+                            'preserveNullAndEmptyArrays': false
+                        }
+                    }, {
+                        '$group': {
+                            '_id': '$address.blockgroupID',
+                            'blockgroups': {
+                                '$push': {
+                                    '$arrayElemAt': [
+                                        '$$ROOT.textContactHistory.idHistory.idResponses', 0
+                                    ]
+                                }
+                            }
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$blockgroups'
+                        }
+                    }, {
+                        '$project': {
+                            'blockgroups': 1,
+                            'identified': {
+                                '$cond': {
+                                    'if': {
+                                        '$or': [
+                                            {
+                                                '$eq': [
+                                                    '$blockgroups.idType', 'POSITIVE'
+                                                ]
+                                            }, {
+                                                '$eq': [
+                                                    '$blockgroups.idType', 'NEUTRAL'
+                                                ]
+                                            }, {
+                                                '$eq': [
+                                                    '$blockgroups.idType', 'NEGATIVE'
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            },
+                            'refuses': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$blockgroups.idType', 'REFUSED'
+                                        ]
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            },
+                            'impressions': {
+                                '$cond': {
+                                    'if': {
+                                        '$regexFind': {
+                                            'input': "$blockgroups.responses",
+                                            'regex': '(?i)left message'
+                                        }
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            },
+                            'nonResponses': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$blockgroups.idType', 'NONRESPONSE'
+                                        ]
+                                    },
+                                    'then': 1,
+                                    'else': 0
+                                }
+                            }
+                        }
+                    }, {
+                        '$group': {
+                            '_id': '$_id',
+                            'identified': {
+                                '$sum': {
+                                    '$add': [
+                                        '$identified'
+                                    ]
+                                }
+                            },
+                            'refuses': {
+                                '$sum': {
+                                    '$add': [
+                                        '$refuses'
+                                    ]
+                                }
+                            },
+                            'impressions': {
+                                '$sum': {
+                                    '$add': [
+                                        '$impressions', '$identified'
+                                    ]
+                                }
+                            },
+                            'nonResponses': {
+                                '$sum': {
+                                    '$add': [
+                                        '$nonResponses'
+                                    ]
+                                }
+                            },
+                            'total': {
+                                '$sum': {
+                                    '$add': [
+                                        '$identified', '$refuses', '$nonResponses'
+                                    ]
+                                }
+                            }
+                        }
+                    }, {
+                        '$project': {
+                            'blockGroup': '$_id',
+                            'identified': 1,
+                            'refuses': 1,
+                            'impressions': 1,
+                            'nonResponses': 1,
+                            'total': 1
+                        }
+                    }
+                ]*/
             }
         }, {
             '$project': {
                 'blockGroupRecord': {
                     '$setUnion': [
-                        '$canvass', '$petitions'
+                        '$canvass', '$petitions', '$phonebank', //'$text'
                     ]
                 }
             }
@@ -1450,7 +2108,7 @@ const getPhonebankingSummaryReport = async(details) =>{
                     {
                         '$match': {
                             'records.phonebankContactHistory.idHistory.idResponses.0.responses': {
-                                '$regex': '(?i)lit|imp|con|spanish|und'
+                                '$regex': '(?i)left message'
                             }
                         }
                     }, {
@@ -1630,6 +2288,271 @@ const getPhonebankingSummaryReport = async(details) =>{
     return knocksPerOrg
 }
 
+const getTextingSummaryReport = async(details) =>{
+    const agg = [
+        {
+            '$match': {
+                'textContactHistory.campaignID': details.campaignID,
+                'textContactHistory.orgID': details.orgID
+            }
+        }, {
+            '$facet': {
+                'uniquePeople': [
+                    {
+                        '$group': {
+                            '_id': null,
+                            'num': {
+                                '$sum': 1
+                            }
+                        }
+                    }
+                ],
+                'records': [
+                    {
+                        '$project': {
+                            'textContactHistory': 1
+                        }
+                    }
+                ]
+            }
+        }, {
+            '$unwind': {
+                'path': '$records',
+                'preserveNullAndEmptyArrays': false
+            }
+        }, {
+            '$unwind': {
+                'path': '$records.textContactHistory',
+                'preserveNullAndEmptyArrays': false
+            }
+        }, {
+            '$match': {
+                'records.textContactHistory.campaignID': details.campaignID,
+                'records.textContactHistory.orgID': details.orgID
+            }
+        }, {
+            '$unwind': {
+                'path': '$records.textContactHistory.idHistory',
+                'preserveNullAndEmptyArrays': false
+            }
+        }, {
+            '$facet': {
+                'identified': [
+                    {
+                        '$match': {
+                            'records.textContactHistory.idHistory.idResponses.0.idType': {
+                                '$in': [
+                                    'POSITIVE', 'NEUTRAL', 'NEGATIVE'
+                                ]
+                            }
+                        }
+                    }, {
+                        '$group': {
+                            '_id': null,
+                            'num': {
+                                '$sum': 1
+                            }
+                        }
+                    }
+                ],
+                'refuses': [
+                    {
+                        '$match': {
+                            'records.textContactHistory.idHistory.idResponses.0.idType': 'REFUSED'
+                        }
+                    }, {
+                        '$group': {
+                            '_id': null,
+                            'num': {
+                                '$sum': 1
+                            }
+                        }
+                    }
+                ],
+                'impressions': [
+                    {
+                        '$match': {
+                            'records.textContactHistory.idHistory.idResponses.0.responses': {
+                                '$regex': '(?i)left message'
+                            }
+                        }
+                    }, {
+                        '$group': {
+                            '_id': null,
+                            'num': {
+                                '$sum': 1
+                            }
+                        }
+                    }
+                ],
+                'nonResponses': [
+                    {
+                        '$match': {
+                            'records.textContactHistory.idHistory.idResponses.0.idType': 'NONRESPONSE'
+                        }
+                    }, {
+                        '$group': {
+                            '_id': null,
+                            'num': {
+                                '$sum': 1
+                            }
+                        }
+                    }
+                ],
+                'uniquePeople': [
+                    {
+                        '$group': {
+                            '_id': null,
+                            'people': {
+                                '$first': {
+                                    '$arrayElemAt': [
+                                        '$uniquePeople', 0
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                ],
+                'total': [
+                    {
+                        '$group': {
+                            '_id': null
+                        }
+                    }
+                ]
+            }
+        }, {
+            '$project': {
+                'identified': {
+                    '$cond': [
+                        {
+                            '$arrayElemAt': [
+                                '$identified.num', 0
+                            ]
+                        }, {
+                            '$arrayElemAt': [
+                                '$identified.num', 0
+                            ]
+                        }, 0
+                    ]
+                },
+                'refuses': {
+                    '$cond': [
+                        {
+                            '$arrayElemAt': [
+                                '$refuses.num', 0
+                            ]
+                        }, {
+                            '$arrayElemAt': [
+                                '$refuses.num', 0
+                            ]
+                        }, 0
+                    ]
+                },
+                'impressions': {
+                    '$add': [
+                        {
+                            '$cond': [
+                                {
+                                    '$arrayElemAt': [
+                                        '$identified.num', 0
+                                    ]
+                                }, {
+                                    '$arrayElemAt': [
+                                        '$identified.num', 0
+                                    ]
+                                }, 0
+                            ]
+                        }, {
+                            '$cond': [
+                                {
+                                    '$arrayElemAt': [
+                                        '$impressions.num', 0
+                                    ]
+                                }, {
+                                    '$arrayElemAt': [
+                                        '$impressions.num', 0
+                                    ]
+                                }, 0
+                            ]
+                        }
+                    ]
+                },
+                'nonResponses': {
+                    '$cond': [
+                        {
+                            '$size': '$nonResponses'
+                        }, {
+                            '$arrayElemAt': [
+                                '$nonResponses.num', 0
+                            ]
+                        }, 0
+                    ]
+                },
+                'uniquePeople': {
+                    '$cond': [
+                        {
+                            '$size': '$uniquePeople'
+                        }, {
+                            '$arrayElemAt': [
+                                '$uniquePeople.people.num', 0
+                            ]
+                        }, 0
+                    ]
+                },
+                'total': {
+                    '$add': [
+                        {
+                            '$cond': [
+                                {
+                                    '$arrayElemAt': [
+                                        '$identified.num', 0
+                                    ]
+                                }, {
+                                    '$arrayElemAt': [
+                                        '$identified.num', 0
+                                    ]
+                                }, 0
+                            ]
+                        }, {
+                            '$cond': [
+                                {
+                                    '$arrayElemAt': [
+                                        '$refuses.num', 0
+                                    ]
+                                }, {
+                                    '$arrayElemAt': [
+                                        '$refuses.num', 0
+                                    ]
+                                }, 0
+                            ]
+                        }, {
+                            '$cond': [
+                                {
+                                    '$arrayElemAt': [
+                                        '$nonResponses.num', 0
+                                    ]
+                                }, {
+                                    '$arrayElemAt': [
+                                        '$nonResponses.num', 0
+                                    ]
+                                }, 0
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    ];
+
+    var knocksPerOrg = []
+
+    var reports = await People.aggregate(agg)
+
+    await knocksPerOrg.push({org: details.orgName, identified: reports[0].identified, refuses: reports[0].refuses, impressions: reports[0].impressions, nonResponses: reports[0].nonResponses, uniquePeople: reports[0].uniquePeople, total: reports[0].total})
+    return knocksPerOrg
+}
+
 module.exports = {updateReport,
                   getCanvassSummaryReport,
                   getPetitionSummaryReport,
@@ -1638,4 +2561,5 @@ module.exports = {updateReport,
                   getActivitiesSummaryReport,
                   getBlockGroupCanvassSummaryReport,
                   getBlockGroupOverallSummaryReport,
-                  getPhonebankingSummaryReport}
+                  getPhonebankingSummaryReport,
+                  getTextingSummaryReport}
