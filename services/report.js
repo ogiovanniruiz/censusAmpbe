@@ -980,13 +980,13 @@ const getOverallSummaryReport = async(details) =>{
     ];
     var reports = await People.aggregate(agg)
 
-    const report = [{
+    const report = {
         'identified': 0,
         'refuses': 0,
         'impressions': 0,
         'nonResponses': 0,
         'total': 0,
-    }];
+    };
 
     if(reports[0].canvass.length) {
         report.identified += await reports[0].canvass[0].identified
@@ -1010,13 +1010,13 @@ const getOverallSummaryReport = async(details) =>{
         report.total += await reports[0].phonebank[0].total
     }
 
-    if(reports[0].text.length) {
+    /*if(reports[0].text.length) {
         report.identified += await reports[0].text[0].identified
         report.refuses += await reports[0].text[0].refuses
         report.impressions += await reports[0].text[0].impressions
         report.nonResponses += await reports[0].text[0].nonResponses
         report.total += await reports[0].text[0].total
-    }
+    }*/
 
     await recordsPerOrg.push({org: details.orgName, identified: report.identified, refuses: report.refuses, impressions: report.impressions, nonResponses: report.nonResponses, total: report.total})
     return recordsPerOrg
@@ -1412,8 +1412,6 @@ const getBlockGroupCanvassSummaryReport = async(details) =>{
 }
 
 const getBlockGroupOverallSummaryReport = async(details) =>{
-    var blockGroupRecord = []
-
     const agg = [
         {
             '$match': {
