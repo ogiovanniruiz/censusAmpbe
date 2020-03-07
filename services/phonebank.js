@@ -8,7 +8,9 @@ var VoiceResponse = twilio.twiml.VoiceResponse;
 var ClientCapability = require('twilio').jwt.ClientCapability;
 
 const getHouseHold = async(detail) => {
+
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
+
     var searchParameters = {"phones": {$not: {$size: 0}}, 
                             "preferredMethodContact": {$not: {$elemMatch: {method: "TEXT"}}},
                             "preferredMethodContact": {$not: {$elemMatch: {method: "EMAIL"}}},
@@ -59,6 +61,12 @@ const getHouseHold = async(detail) => {
                     hasParties = true;
                     parties.push(targets[i].properties.queries[j].param)
                 }
+
+                if(targets[i].properties.queries[j].queryType === "SCRIPT"){
+                    console.log(targets[i].properties.orgID)
+                    //searchParameters['canvassContactHistory'] = {$elemMatch: {orgID: targets[i].properties.orgID}}
+                    //searchParameters['canvassContactHistory.idHistory.idResponses'] = {$elemMatch: {idType: detail.}}
+                }
             }                                                             
         }
 
@@ -68,6 +76,8 @@ const getHouseHold = async(detail) => {
     }else{
         searchParameters['creationInfo.regType'] = "VOTERFILE"
     }
+
+    console.log(searchParameters)
 
     var total = await Person.count(searchParameters)
 
@@ -93,7 +103,17 @@ const getHouseHold = async(detail) => {
                                       _id: "$_id"}}}},{$sample: { size: 10 } }
         ]).allowDiskUse(true).limit(1)
 
-    try { return {houseHold: people[0], total: total} 
+    console.log(people)
+
+
+    try { 
+
+    if( people.length > 0){
+        return {houseHold: people[0], total: total} 
+    }else{
+        return {houseHold: [], total: total} 
+
+    }
     } catch(e){
         throw new Error(e.message)
     } 

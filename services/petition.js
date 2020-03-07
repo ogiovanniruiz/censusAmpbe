@@ -66,6 +66,7 @@ const createPerson = async(detail) =>{
         foundPeople = await Person.find(preExistCheckQuery)
     }
 
+
     if(foundPeople.length === 0){
 
         var person = new Person(detail.person);
@@ -265,7 +266,6 @@ const uploadPetitions = async(data) =>{
                 }
             } else if(headers[k] === "date"){
                 if(currentLine[k] != "date" && currentLine[k] != ""){
-                    console.log(currentLine[k])
                     isoDate = new Date(currentLine[k]+"T00:00:00.000Z").toISOString()
                 }
             }
@@ -348,7 +348,7 @@ const checkExisting = async(people) =>{
     
         if(existingPerson){
             //if(existingPerson.phones.length > 0){existingPeople.push(existingPerson)
-           // }else{newPeople.push(people[i])}
+            //}else{newPeople.push(people[i])}
            existingPeople.push(existingPerson)
         }else{
             newPeople.push(people[i])

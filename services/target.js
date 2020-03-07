@@ -32,10 +32,6 @@ const createTarget = async(detail) => {
         newTarget.properties.params.targetType = detail.targetType;
         newTarget.properties.queries = []
 
-        if(detail.targetType === "ORGMEMBERS"){
-            
-        }
-
         if(detail.precinct != ''){
             newTarget.properties.queries.push({queryType: "PRECINCT", param: detail.precinct})
         }
@@ -47,7 +43,6 @@ const createTarget = async(detail) => {
         if(detail.parties.length > 0){
             for(var i = 0; i < detail.parties.length; i++){
                 newTarget.properties.queries.push({queryType: "PARTY", param: detail.parties[i]})
-
             }
         }
 
@@ -56,11 +51,11 @@ const createTarget = async(detail) => {
         }
         if(detail.members){
             newTarget.properties.queries.push({queryType: "ORGMEMBERS", param: detail.orgID})
-
         }
 
-        
-
+        if(detail.scriptID != ""){
+            newTarget.properties.queries.push({queryType: "SCRIPT", param: detail.scriptID, subParam: detail.scriptResponse})
+        }
 
     } else if(detail.type === "POLYGON"){
     
@@ -76,14 +71,11 @@ const createTarget = async(detail) => {
             newTarget.properties.queries.push({queryType: detail.targetType, param: detail.scriptID, subParam: detail.scriptResponseType})
             newTarget.properties.queries.push({queryType: detail.targetType, param: detail.scriptID, subParam: detail.scriptResponseType })
         } else if (detail.targetType === "TAG"){
-
             newTarget.properties.queries.push({queryType: detail.targetType, param: detail.tag })
-        
         }
-    
     }
 
-    console.log(newTarget.properties.queries)
+
 
     var target = new Target(newTarget);
 
