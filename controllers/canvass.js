@@ -90,5 +90,7 @@ const updateMarkerLocation  = async (req, res, next) => {
     }
 }
 
+
+
 module.exports = {getCanvassPolygon, getCanvassResidents, idPerson, createPerson, reverseGeocode, getCanvassParcels, editPerson, addUnit, nonResponse, updateMarkerLocation};
 

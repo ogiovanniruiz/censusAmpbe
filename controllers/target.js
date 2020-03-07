@@ -74,6 +74,17 @@ const getOrgTargets = async (req, res, next) =>{
     }
 }
 
+const getParties = async (req, res, next) =>{
+
+    try{
+        res.send(await targetService.getParties(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+
 module.exports = { getAllTargetProperties, 
                    lockTarget, 
                    removeTarget, 
@@ -81,5 +92,6 @@ module.exports = { getAllTargetProperties,
                    editTarget,
                    getAllTargets,
                    unlockTarget,
-                   getOrgTargets
+                   getOrgTargets,
+                    getParties
                 };

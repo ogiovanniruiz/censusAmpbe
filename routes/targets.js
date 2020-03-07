@@ -10,5 +10,5 @@ router.post('/lockTarget', targetController.lockTarget)
 router.post('/createTarget', targetController.createTarget)
 router.post('/editTarget', targetController.editTarget)
 router.post('/unlockTarget', targetController.unlockTarget)
-
+router.post('/getParties', targetController.getParties)
 module.exports = router;

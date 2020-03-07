@@ -1,5 +1,6 @@
 var Target = require('../models/targets/target');
 var CensusTract = require('../models/censustracts/censustract'); 
+var Person = require('../models/people/person')
 
 const createTarget = async(detail) => {
 
@@ -31,10 +32,6 @@ const createTarget = async(detail) => {
         newTarget.properties.params.targetType = detail.targetType;
         newTarget.properties.queries = []
 
-        if(detail.targetType === "ORGMEMBERS"){
-            newTarget.properties.queries.push({queryType: detail.targetType, param: detail.orgID})
-        }
-
         if(detail.precinct != ''){
             newTarget.properties.queries.push({queryType: "PRECINCT", param: detail.precinct})
         }
@@ -43,8 +40,22 @@ const createTarget = async(detail) => {
             newTarget.properties.queries.push({queryType: "PAV", param: detail.pav})
         }
 
-        newTarget.properties.queries.push({queryType: "PROPENSITY", param: detail.hiPropensity, subParam: detail.lowPropensity})
+        if(detail.parties.length > 0){
+            for(var i = 0; i < detail.parties.length; i++){
+                newTarget.properties.queries.push({queryType: "PARTY", param: detail.parties[i]})
+            }
+        }
 
+        if(detail.hiPropensity != 100 && detail.lowPropensity != 0){
+            newTarget.properties.queries.push({queryType: "PROPENSITY", param: detail.hiPropensity, subParam: detail.lowPropensity})
+        }
+        if(detail.members){
+            newTarget.properties.queries.push({queryType: "ORGMEMBERS", param: detail.orgID})
+        }
+
+        if(detail.scriptID != ""){
+            newTarget.properties.queries.push({queryType: "SCRIPT", param: detail.scriptID, subParam: detail.scriptResponse})
+        }
 
     } else if(detail.type === "POLYGON"){
     
@@ -55,26 +66,21 @@ const createTarget = async(detail) => {
         newTarget.properties.queries = []
 
         if(detail.targetType === "ORGMEMBERS"){
-
             newTarget.properties.queries.push({queryType: detail.targetType, param: detail.orgID})
         } else if (detail.targetType === "SCRIPT"){
             newTarget.properties.queries.push({queryType: detail.targetType, param: detail.scriptID, subParam: detail.scriptResponseType})
             newTarget.properties.queries.push({queryType: detail.targetType, param: detail.scriptID, subParam: detail.scriptResponseType })
         } else if (detail.targetType === "TAG"){
-
             newTarget.properties.queries.push({queryType: detail.targetType, param: detail.tag })
-        
         }
-    
     }
 
-    console.log(newTarget.properties.queries)
+
 
     var target = new Target(newTarget);
 
-   
     try{
-        return target.save()
+       return target.save()
     }catch(e){
         throw new Error(e.message)
     }
@@ -157,7 +163,12 @@ const editTarget = async (detail) => {
     console.log(detail)
 }
 
-module.exports = { 
+const getParties = async() =>{
+    var parties = await Person.distinct("voterInfo.party")
+    return {parties: parties}
+}
+
+module.exports = { getParties,
                     getAllTargetProperties, 
                     removeTarget, 
                     lockTarget, 

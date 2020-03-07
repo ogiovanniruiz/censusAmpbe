@@ -13,5 +13,6 @@ router.post('/editPerson', phonebankController.editPerson);
 router.post('/nonResponse', phonebankController.nonResponse);
 router.post('/allocatePhoneNumber', phonebankController.allocatePhoneNumber);
 router.post('/completeHouseHold', phonebankController.completeHouseHold);
+router.post('/getNumCompleted', phonebankController.getNumCompleted);
 
 module.exports = router;

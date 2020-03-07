@@ -10,26 +10,23 @@ var ClientCapability = require('twilio').jwt.ClientCapability;
 const getHouseHold = async(detail) => {
 
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
-    //var searchParameters = {"phonebankContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, identified: true}}}}
-    //var searchParameters = {"phonebankContactHistory": {$not:{ $elemMatch: {activityID: detail.activityID, houseHoldComplete: true}}}}
 
-    var searchParameters = {"phones": {$not: {$size: 0}},
-    /*
-                $or:[{"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, reserved: detail.userID}},},
-                     {"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, reserved: {$exists: false}}}}],
-    */
+    var searchParameters = {"phones": {$not: {$size: 0}}, 
+                            "preferredMethodContact": {$not: {$elemMatch: {method: "TEXT"}}},
+                            "preferredMethodContact": {$not: {$elemMatch: {method: "EMAIL"}}},
+
             $or:[{"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, houseHoldComplete: false}}},
                  {"phonebankContactHistory": {$exists: false}},
                  {"phonebankContactHistory": {$size: 0}}
+
                 ]}
 
    var targetCoordinates = []
-
    var hasQueries = false;
 
     for(var i = 0; i < targets.length; i++){
         if(targets[i]['geometry']){ targetCoordinates.push(targets[i]['geometry']['coordinates'][0])}
-        if(targets[i].properties.queries.length > 0){hasQueries  = true;}
+        if(targets[i].properties.queries.length > 0){hasQueries = true;}
     }
 
     if(targetCoordinates.length > 0){
@@ -38,8 +35,14 @@ const getHouseHold = async(detail) => {
     }
 
     if(hasQueries){
+        var hasParties = false
+        var parties = []
         for(var i = 0; i < targets.length; i++){                                   
             for(var j = 0; j < targets[i].properties.queries.length; j++){
+                if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
+                    searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
+                }
+
                 if(targets[i].properties.queries[j].queryType === "PAV"){
                     searchParameters['voterInfo.pav'] = targets[i].properties.queries[j].param
                 }
@@ -51,17 +54,35 @@ const getHouseHold = async(detail) => {
                 if(targets[i].properties.queries[j].queryType === "PROPENSITY"){
                     var low = targets[i].properties.queries[j].subParam
                     var hi = targets[i].properties.queries[j].param
-                    searchParameters['voterInfo.propensity'] = { $gt :  low/100, $lt : hi/100}
+                    searchParameters['voterInfo.propensity'] = { $gte :  low/100, $lte : hi/100}
+                }
+
+                if(targets[i].properties.queries[j].queryType === "PARTY"){
+                    hasParties = true;
+                    parties.push(targets[i].properties.queries[j].param)
+                }
+
+                if(targets[i].properties.queries[j].queryType === "SCRIPT"){
+                    console.log(targets[i].properties.orgID)
+                    //searchParameters['canvassContactHistory'] = {$elemMatch: {orgID: targets[i].properties.orgID}}
+                    //searchParameters['canvassContactHistory.idHistory.idResponses'] = {$elemMatch: {idType: detail.}}
                 }
             }                                                             
         }
+
+        if(hasParties){
+            searchParameters['voterInfo.party'] = {$in: parties}
+        }
+    }else{
+        searchParameters['creationInfo.regType'] = "VOTERFILE"
     }
 
     console.log(searchParameters)
 
+    var total = await Person.count(searchParameters)
+
     var people = await Person.aggregate([ 
         {$match: searchParameters},
-        
         {$group : { _id : {streetNum: "$address.streetNum",
                            suffix: "$address.suffix",
                            prefix:  "$address.prefix",
@@ -82,27 +103,17 @@ const getHouseHold = async(detail) => {
                                       _id: "$_id"}}}},{$sample: { size: 10 } }
         ]).allowDiskUse(true).limit(1)
 
-    /*
-    if(people[0]){
-        if(people[0].people){
-            for(var i = 0; i < people[0].people.length; i++){
-                var person = await Person.findOne({"_id": people[0].people[i]._id})
-                for(var j = 0; j < person.phonebankContactHistory.length; j++){
-                    if(person.phonebankContactHistory[j].campaignID === detail.campaignID){
-                        person.phonebankContactHistory[j].reserved = detail.userID;
-                        person.save()
-                        break
-    
-                    }
-                }
-            }
-        }
-    }*/
+    console.log(people)
 
 
+    try { 
 
-    
-    try { return people[0] 
+    if( people.length > 0){
+        return {houseHold: people[0], total: total} 
+    }else{
+        return {houseHold: [], total: total} 
+
+    }
     } catch(e){
         throw new Error(e.message)
     } 
@@ -206,11 +217,12 @@ const nonResponse = async(detail)=>{
         refused = true;
     }
 
+    /*
     var idHistory = {scriptID: detail.script._id,
-        idBy: detail.userID,
-        idResponses: detail.idResponses,
-        locationIdentified: detail.location}
-
+                    idBy: detail.userID,
+                    idResponses: detail.idResponses,
+                    locationIdentified: detail.location}
+*/
     if(person.phonebankContactHistory.length === 0){
 
         var phonebankContactHistory = {
@@ -220,7 +232,7 @@ const nonResponse = async(detail)=>{
                                         refused: refused,
                                         nonResponse: true,
                                         identified: false,
-                                        idHistory: idHistory
+                                        idHistory: detail.idHistory
                                     }
 
         person.phonebankContactHistory.push(phonebankContactHistory)
@@ -230,7 +242,7 @@ const nonResponse = async(detail)=>{
     
         for (var i = 0; i < person.phonebankContactHistory.length; i++){
             if(person.phonebankContactHistory[i].activityID === detail.activityID){
-                person.phonebankContactHistory[i].idHistory.push(idHistory)
+                person.phonebankContactHistory[i].idHistory.concat(detail.idHistory)
                 person.phonebankContactHistory[i].identified = false;
                 person.phonebankContactHistory[i].nonResponse = true;
                 person.phonebankContactHistory[i].refused = refused;
@@ -245,7 +257,7 @@ const nonResponse = async(detail)=>{
                                         refused: refused,
                                         nonResponse: true,
                                         identified: false,
-                                        idHistory: idHistory
+                                        idHistory: detail.idHistory
                                     }
     
         person.phonebankContactHistory.push(phonebankContactHistory)
@@ -283,7 +295,12 @@ const allocatePhoneNumber = async(detail) =>{
     }
 }
 
-module.exports = {getHouseHold, 
+const getNumCompleted = async(detail) =>{
+    var completed = await Person.count({"phonebankContactHistory.idHistory.idBy": detail.userID})
+    return {completed: completed}
+}
+
+module.exports = {getNumCompleted, getHouseHold, 
                   call, 
                   getTwilioToken, 
                   editPerson, 

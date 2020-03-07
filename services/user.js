@@ -221,8 +221,27 @@ const submitAgreement = async(data) =>{
     return {success: true}    
 }
 
+const updateDataManager = async(data) =>{
+    
+    var person = await Person.findOne({"user": {$exists: true}, '_id': data.member._id});
 
-module.exports = {
+    if(person.user.dataManager.includes(data.campaignID)){
+        console.log("EXISTS")
+        for(var i = 0; i < person.user.dataManager.length; i++){
+            if(person.user.dataManager[i] === data.campaignID){
+                person.user.dataManager.splice(i, 1)
+                return person.save()
+            }
+        }
+        
+    }else{
+        console.log("DOES NOT")
+        person.user.dataManager.push(data.campaignID)
+        return person.save()
+    }
+}
+
+module.exports = {updateDataManager,
                   submitAgreement,
                   checkVersion,
                   loginUser, 

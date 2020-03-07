@@ -162,14 +162,16 @@ const uploadMembers = async(detail) =>{
     for(var j = 0; j < checkResults.newPeople.length; j++){
         var person = new Person(checkResults.newPeople[j])
         person.save()
-        console.log(j)
         checkResults.newPeople[j]._id = person._id
+    }
+
+    for(var j = 0; j < checkResults.existingPeople.length; j++){
+        checkResults.existingPeople[j].membership.push({orgID: detail.body.orgID})
+        checkResults.existingPeople[j].save()
     }
 
     var fail = 0
     var success = 0
-
-    /*
 
     async.eachSeries(checkResults.newPeople, function(newPerson, next){
 
@@ -183,12 +185,7 @@ const uploadMembers = async(detail) =>{
         if(newPerson.address.city) addressString = addressString + newPerson.address.city + " "
         if(newPerson.address.zip) addressString = addressString + newPerson.address.zip
 
-        console.log("GOOGLE GEOCODE DISABLED...CONTINUING..")
-        success ++
-        
 
-
-        
         geocoder.geocode(addressString, async function(err, res) {
             
             if(err) {
@@ -210,14 +207,9 @@ const uploadMembers = async(detail) =>{
             console.log("SUCCESS: ", success, "FAILED: ", fail)
             next();
         });
-        
-
     })
-    */
-
+    
     return {msg: "PROCESSING",  existingPeople: checkResults.existingPeople}
-
-
 }
 
 const checkExisting = async(people) =>{
@@ -342,7 +334,6 @@ const constructUploadPeopleObjArray = function(data){
 
 
 const idPerson = async(detail) =>{
-    console.log(detail)
     
     var person = await Person.findOne({"_id": detail.person._id});
 

@@ -5,7 +5,9 @@ var jwt = require('jsonwebtoken');
 var Campaign = require('../models/campaigns/campaign') 
 var Rdr  = require('../models/activities/rdr')
 var async = require('async');
-var CensusTract = require('../models/censustracts/censustract');
+
+const Geocodio = require('geocodio-library-node');
+const geocodio = new Geocodio('a6212ea62222f065a52228c6e5fc56ec8e5685f');
 
 var options = {
     provider: 'google',
@@ -64,6 +66,7 @@ const createPerson = async(detail) =>{
         foundPeople = await Person.find(preExistCheckQuery)
     }
 
+
     if(foundPeople.length === 0){
 
         var person = new Person(detail.person);
@@ -76,8 +79,6 @@ const createPerson = async(detail) =>{
         if(detail.address != "" && detail.city != "" && detail.zip != ""){
 
             var fullAddress = detail.address
-
-            //if(detail.unit) fullAddress = fullAddress + " " + detail.unit
             if(detail.city) fullAddress = fullAddress + " " + detail.city + " CA"
             if(detail.zip) fullAddress = fullAddress + " " + detail.zip
 
@@ -94,7 +95,20 @@ const createPerson = async(detail) =>{
             if(detail.unit) addressToGeocode = addressToGeocode + " " + detail.unit
             if(detail.city) addressToGeocode = addressToGeocode + " " + detail.city + " CA"
             if(detail.zip) addressToGeocode = addressToGeocode + " " + detail.zip
-            
+
+            /*
+            await geocodio.geocode(addressToGeocode).then(response => {
+                console.log(response.results[0].location.lat);
+                console.log(response.results[0].accuracy_type)
+                console.log(response.results[0].location.lng);
+                person.address.location = {coordinates: [response.results[0].location.lng, response.results[0].location.lat], type: "Point"}
+                person.address.locationAccuracy = response.results[0].accuracy_type
+            }).catch(err => {
+                console.log("THIS IS A TERRIBLE ERROR")
+                console.error(err);
+            });
+            */
+       
             await geocoder.geocode(addressToGeocode, function(err, res) {
                 if(err) {console.log(err)}
                 if(res) {
@@ -105,8 +119,7 @@ const createPerson = async(detail) =>{
                 }
             });
 
-            return {status: "NEWPERSON", person: person};
-
+           return {status: "NEWPERSON", person: person};
         }
         
         person.save()
@@ -253,7 +266,6 @@ const uploadPetitions = async(data) =>{
                 }
             } else if(headers[k] === "date"){
                 if(currentLine[k] != "date" && currentLine[k] != ""){
-                    console.log(currentLine[k])
                     isoDate = new Date(currentLine[k]+"T00:00:00.000Z").toISOString()
                 }
             }
@@ -336,7 +348,7 @@ const checkExisting = async(people) =>{
     
         if(existingPerson){
             //if(existingPerson.phones.length > 0){existingPeople.push(existingPerson)
-           // }else{newPeople.push(people[i])}
+            //}else{newPeople.push(people[i])}
            existingPeople.push(existingPerson)
         }else{
             newPeople.push(people[i])

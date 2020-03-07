@@ -8,7 +8,7 @@ var VoterInfoSchema = new Schema(
     voterID: {type: String},
     party: {type: String},
     regHistory: [{date: String, party: String}],
-    propensity: {type: Number},
+    propensity: {},
     voterHistory:  [VoterHistory.schema],
   }
 );
