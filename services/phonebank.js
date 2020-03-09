@@ -10,28 +10,39 @@ var ClientCapability = require('twilio').jwt.ClientCapability;
 const getHouseHold = async(detail) => {
 
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
-
-    var searchParameters = {"phones": {$not: {$size: 0}}, 
+    var searchParameters = {"phones.0": {$exists: true}, 
                             "preferredMethodContact": {$not: {$elemMatch: {method: "TEXT"}}},
                             "preferredMethodContact": {$not: {$elemMatch: {method: "EMAIL"}}},
 
-            $or:[{"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, houseHoldComplete: false}}},
-                 {"phonebankContactHistory": {$exists: false}},
-                 {"phonebankContactHistory": {$size: 0}}
+             $or:[{"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, houseHoldComplete: false}}},
+                  {"phonebankContactHistory": {$exists: false}},
+                  {"phonebankContactHistory.1": {$exists: false}},
+                  {"phonebankContactHistory": {$size: 0}}]
+                
+                
+                            }
 
-                ]}
-
-   var targetCoordinates = []
+   var targetCoordinates = [];
    var hasQueries = false;
 
     for(var i = 0; i < targets.length; i++){
-        if(targets[i]['geometry']){ targetCoordinates.push(targets[i]['geometry']['coordinates'][0])}
+        if(targets[i]['geometry']){ 
+            if(targets[i]['properties']['params']['targetType'] === "CENSUSTRACT"){
+                targetCoordinates.push(targets[i]['properties']['params']['id'])
+            }else{
+                targetCoordinates.push(targets[i]['geometry']['coordinates'][0])
+            }        
+        }
         if(targets[i].properties.queries.length > 0){hasQueries = true;}
     }
 
     if(targetCoordinates.length > 0){
-        searchParameters['address.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" , 
-                                                                            coordinates: targetCoordinates}}}
+        if(targets[0]['properties']['params']['targetType'] === "CENSUSTRACT"){
+            searchParameters['address.blockgroupID'] = {$in: targetCoordinates}
+        }else{
+            searchParameters['address.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" , 
+                                                                                 coordinates: targetCoordinates}}}
+        }
     }
 
     if(hasQueries){
@@ -63,9 +74,9 @@ const getHouseHold = async(detail) => {
                 }
 
                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
-                    console.log(targets[i].properties.orgID)
-                    //searchParameters['canvassContactHistory'] = {$elemMatch: {orgID: targets[i].properties.orgID}}
-                    //searchParameters['canvassContactHistory.idHistory.idResponses'] = {$elemMatch: {idType: detail.}}
+                    searchParameters['canvassContactHistory'] = {$elemMatch: {orgID: targets[i].properties.orgID}}
+                    searchParameters['canvassContactHistory.idHistory.idResponses'] = {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}
+                    //searchParameters['canvassContactHistory.idHistory.idResponses'] = {$elemMatch: {idType: "NEGATIVE"}}
                 }
             }                                                             
         }
@@ -78,10 +89,7 @@ const getHouseHold = async(detail) => {
     }
 
     console.log(searchParameters)
-
-    var total = await Person.count(searchParameters)
-
-    var people = await Person.aggregate([ 
+    var houseHold = await Person.aggregate([ 
         {$match: searchParameters},
         {$group : { _id : {streetNum: "$address.streetNum",
                            suffix: "$address.suffix",
@@ -103,17 +111,16 @@ const getHouseHold = async(detail) => {
                                       _id: "$_id"}}}},{$sample: { size: 10 } }
         ]).allowDiskUse(true).limit(1)
 
-    console.log(people)
-
 
     try { 
+        if( houseHold.length > 0){
+            return {houseHold: houseHold[0], total: 0} 
+        }else{
+        
+            return {houseHold: [], total: 0} 
 
-    if( people.length > 0){
-        return {houseHold: people[0], total: total} 
-    }else{
-        return {houseHold: [], total: total} 
+        }
 
-    }
     } catch(e){
         throw new Error(e.message)
     } 
@@ -296,8 +303,8 @@ const allocatePhoneNumber = async(detail) =>{
 }
 
 const getNumCompleted = async(detail) =>{
-    var completed = await Person.count({"phonebankContactHistory.idHistory.idBy": detail.userID})
-    return {completed: completed}
+    //var completed = await Person.count({"phonebankContactHistory.idHistory.idBy": detail.userID})
+    return {completed: 0}
 }
 
 module.exports = {getNumCompleted, getHouseHold, 
@@ -309,14 +316,3 @@ module.exports = {getNumCompleted, getHouseHold,
                   nonResponse, 
                   allocatePhoneNumber, 
                   completeHouseHold}
-
-
-                                  /*
-                if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
-                    searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
-                }
-                if(targets[i].properties.queries[j].queryType === "SCRIPT"){
-                }
-
-                if(targets[i].properties.queries[j].queryType === "TAGS"){
-                }*/
