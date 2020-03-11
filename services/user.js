@@ -9,7 +9,12 @@ const loginUser = async(userDetail) => {
     var person = await Person.findOne({'user.loginEmail': userDetail.email, 'user.password': sha256(userDetail.password)});
     var token = jwt.sign({ version: process.env.version, exp: Math.floor(Date.now() / 1000) + 21600 }, 'amplify');
     
-    try { return {person: person, jwt: token} 
+    try { 
+        
+        
+        return {person: person, jwt: token} 
+    
+
     } catch(e){
         throw new Error(e.message)
     }

@@ -211,6 +211,7 @@ const editActivity = async(detail) =>{
                 campaign.phonebankActivities[i].activityMetaData.description = detail.newActivityDetail.description
                 campaign.phonebankActivities[i].activityMetaData.nonResponses = detail.newActivityDetail.nonResponses
                 campaign.phonebankActivities[i].phoneNums.concat(phoneNumberObjs)
+                campaign.phonebankActivities[i].activityMetaData.activityScriptIDs = detail.newActivityDetail.activityScriptIDs
             
                 for(var j = 0; j < detail.newActivityDetail.selectedNumbers.length;  j++){
                     campaign.phonebankActivities[i].phoneNums.push({number: detail.newActivityDetail.selectedNumbers[j]})
@@ -218,11 +219,6 @@ const editActivity = async(detail) =>{
                 break
             }
         }
-
-
-
-
-
 
     }else if(detail.activityType === "Petition"){
         for(var i = 0; i < campaign.petitionActivities.length; i++){
@@ -232,9 +228,7 @@ const editActivity = async(detail) =>{
             }
         }
     }
-
-
-
+        
     return campaign.save()
 }
 

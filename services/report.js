@@ -50,7 +50,6 @@ const updateReport = async(org) => {
 
     console.log('start')
 
-
     const agg = [
         {
             '$match': {
