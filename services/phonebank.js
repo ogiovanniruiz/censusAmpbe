@@ -10,16 +10,10 @@ var ClientCapability = require('twilio').jwt.ClientCapability;
 const getHouseHold = async(detail) => {
 
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
-    var searchParameters = {"phones.0": {$exists: true}, 
-                            "preferredMethodContact": {$not: {$elemMatch: {method: "TEXT"}}},
-                            "preferredMethodContact": {$not: {$elemMatch: {method: "EMAIL"}}},
-
-             $or:[{"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, houseHoldComplete: false}}},
-                  {"phonebankContactHistory": {$exists: false}},
-                  {"phonebankContactHistory.1": {$exists: false}},
-                  {"phonebankContactHistory": {$size: 0}}]
-                
-                
+    var searchParameters = {
+                            "phones.0": {$exists: true, $ne: ""},
+                            "preferredMethodContact": {$not: {$elemMatch: {method: "TEXT"}}, $not: {$elemMatch: {method: "EMAIL"}}},
+                            "phonebankContactHistory" : {$not: {$elemMatch: {campaignID: detail.campaignID}}}
                             }
 
    var targetCoordinates = [];
@@ -74,9 +68,12 @@ const getHouseHold = async(detail) => {
                 }
 
                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
-                    searchParameters['canvassContactHistory'] = {$elemMatch: {orgID: targets[i].properties.orgID}}
-                    searchParameters['canvassContactHistory.idHistory.idResponses'] = {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}
-                    //searchParameters['canvassContactHistory.idHistory.idResponses'] = {$elemMatch: {idType: "NEGATIVE"}}
+
+                    searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                                        {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}}]},
+                                               {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                                       {"petitionContactHistory.identified": true}]}
+                                               ]
                 }
             }                                                             
         }
@@ -88,7 +85,10 @@ const getHouseHold = async(detail) => {
         searchParameters['creationInfo.regType'] = "VOTERFILE"
     }
 
+
     console.log(searchParameters)
+
+
     var houseHold = await Person.aggregate([ 
         {$match: searchParameters},
         {$group : { _id : {streetNum: "$address.streetNum",
@@ -107,6 +107,8 @@ const getHouseHold = async(detail) => {
                                       emails: '$emails',
                                       address: '$address',
                                       phonebankContactHistory: '$phonebankContactHistory',
+                                      canvassContactHistory: '$canvassContactHistory',
+                                      petitionContactHistory: '$petitionContactHistory',
                                       voterInfo: '$voterInfo',
                                       _id: "$_id"}}}},{$sample: { size: 10 } }
         ]).allowDiskUse(true).limit(1)
@@ -316,3 +318,8 @@ module.exports = {getNumCompleted, getHouseHold,
                   nonResponse, 
                   allocatePhoneNumber, 
                   completeHouseHold}
+
+
+                               //$or:[{"phonebankContactHistory": {$elemMatch: {campaignID: detail.campaignID, houseHoldComplete: false}}},
+               //   {"phonebankContactHistory": {$exists: false}},
+                 // {"phonebankContactHistory.0": {$exists: false}}]
