@@ -3,6 +3,7 @@ var People = require ('../models/people/person');
 var Organization = require('../models/organizations/organization');
 var CensusTract = require('../models/censustracts/censustract');
 var Campaign = require('../models/campaigns/campaign');
+var mongoose = require('mongoose');
 
 var languages = ["arabic",
     "armenian",
@@ -2554,204 +2555,6 @@ const getPhonebankingUserSummaryReport = async(details) =>{
     const agg = (() => {
         if (details.date) {
             return [
-            {
-                '$match': {
-                    'phonebankContactHistory.campaignID': details.campaignID,
-                    'phonebankContactHistory.orgID': details.orgID
-                }
-            }, {
-                '$unwind': {
-                    'path': '$phonebankContactHistory',
-                    'preserveNullAndEmptyArrays': false
-                }
-            }, {
-                '$match': {
-                    'phonebankContactHistory.campaignID': details.campaignID,
-                    'phonebankContactHistory.orgID': details.orgID
-                }
-            }, {
-                '$unwind': {
-                    'path': '$phonebankContactHistory.idHistory',
-                    'preserveNullAndEmptyArrays': false
-                }
-            }, {
-                '$project': {
-                    '_id': 1,
-                    'user': {
-                        '$concat': [
-                            {
-                                '$substrCP': [
-                                    '$firstName', 0, 1
-                                ]
-                            }, {
-                                '$toLower': {
-                                    '$substrCP': [
-                                        '$firstName', 1, 50
-                                    ]
-                                }
-                            }, ' ', {
-                                '$substrCP': [
-                                    '$lastName', 0, 1
-                                ]
-                            }, {
-                                '$toLower': {
-                                    '$substrCP': [
-                                        '$lastName', 1, 50
-                                    ]
-                                }
-                            }
-                        ]
-                    },
-                    'date': {
-                        '$substr': [
-                            '$phonebankContactHistory.idHistory.date', 0, 10
-                        ]
-                    },
-                    'identified': {
-                        '$cond': {
-                            'if': {
-                                '$or': [
-                                    {
-                                        '$eq': [
-                                            {
-                                                '$arrayElemAt': [
-                                                    '$phonebankContactHistory.idHistory.idResponses.idType', 0
-                                                ]
-                                            }, 'POSITIVE'
-                                        ]
-                                    }, {
-                                        '$eq': [
-                                            {
-                                                '$arrayElemAt': [
-                                                    '$phonebankContactHistory.idHistory.idResponses.idType', 0
-                                                ]
-                                            }, 'NEUTRAL'
-                                        ]
-                                    }, {
-                                        '$eq': [
-                                            {
-                                                '$arrayElemAt': [
-                                                    '$phonebankContactHistory.idHistory.idResponses.idType', 0
-                                                ]
-                                            }, 'NEGATIVE'
-                                        ]
-                                    }
-                                ]
-                            },
-                            'then': 1,
-                            'else': 0
-                        }
-                    },
-                    'refuses': {
-                        '$cond': {
-                            'if': {
-                                '$eq': [
-                                    {
-                                        '$arrayElemAt': [
-                                            '$phonebankContactHistory.idHistory.idResponses.idType', 0
-                                        ]
-                                    }, 'REFUSED'
-                                ]
-                            },
-                            'then': 1,
-                            'else': 0
-                        }
-                    },
-                    'impressions': {
-                        '$cond': {
-                            'if': {
-                                '$regexFind': {
-                                    'input': {
-                                        '$arrayElemAt': [
-                                            '$phonebankContactHistory.idHistory.idResponses.responses', 0
-                                        ]
-                                    },
-                                    'regex': '(?i)left message'
-                                }
-                            },
-                            'then': 1,
-                            'else': 0
-                        }
-                    },
-                    'nonResponses': {
-                        '$cond': {
-                            'if': {
-                                '$eq': [
-                                    {
-                                        '$arrayElemAt': [
-                                            '$phonebankContactHistory.idHistory.idResponses.idType', 0
-                                        ]
-                                    }, 'NONRESPONSE'
-                                ]
-                            },
-                            'then': 1,
-                            'else': 0
-                        }
-                    }
-                }
-            }, {
-                '$match': {
-                    'date': details.date
-                }
-            }, {
-                '$group': {
-                    '_id': '$_id',
-                    'user': {
-                        '$addToSet': '$user'
-                    },
-                    'identified': {
-                        '$sum': {
-                            '$add': [
-                                '$identified'
-                            ]
-                        }
-                    },
-                    'refuses': {
-                        '$sum': {
-                            '$add': [
-                                '$refuses'
-                            ]
-                        }
-                    },
-                    'impressions': {
-                        '$sum': {
-                            '$add': [
-                                '$impressions', '$identified'
-                            ]
-                        }
-                    },
-                    'nonResponses': {
-                        '$sum': {
-                            '$add': [
-                                '$nonResponses'
-                            ]
-                        }
-                    },
-                    'total': {
-                        '$sum': {
-                            '$add': [
-                                '$identified', '$refuses', '$nonResponses'
-                            ]
-                        }
-                    }
-                }
-            }, {
-                '$project': {
-                    'user': {
-                        '$arrayElemAt': [
-                            '$user', 0
-                        ]
-                    },
-                    'identified': 1,
-                    'refuses': 1,
-                    'impressions': 1,
-                    'nonResponses': 1,
-                    'total': 1
-                }
-            }
-        ];
-        } else {
-            return [
                 {
                     '$match': {
                         'phonebankContactHistory.campaignID': details.campaignID,
@@ -2773,31 +2576,17 @@ const getPhonebankingUserSummaryReport = async(details) =>{
                         'preserveNullAndEmptyArrays': false
                     }
                 }, {
+                    '$match': {
+                        'phonebankContactHistory.idHistory.idBy': {
+                            '$in': details.users
+                        }
+                    }
+                }, {
                     '$project': {
-                        '_id': 1,
-                        'user': {
-                            '$concat': [
-                                {
-                                    '$substrCP': [
-                                        '$firstName', 0, 1
-                                    ]
-                                }, {
-                                    '$toLower': {
-                                        '$substrCP': [
-                                            '$firstName', 1, 50
-                                        ]
-                                    }
-                                }, ' ', {
-                                    '$substrCP': [
-                                        '$lastName', 0, 1
-                                    ]
-                                }, {
-                                    '$toLower': {
-                                        '$substrCP': [
-                                            '$lastName', 1, 50
-                                        ]
-                                    }
-                                }
+                        '_id': '$phonebankContactHistory.idHistory.idBy',
+                        'date': {
+                            '$substr': [
+                                '$phonebankContactHistory.idHistory.date', 0, 10
                             ]
                         },
                         'identified': {
@@ -2883,11 +2672,12 @@ const getPhonebankingUserSummaryReport = async(details) =>{
                         }
                     }
                 }, {
+                    '$match': {
+                        'date': details.date
+                    }
+                }, {
                     '$group': {
                         '_id': '$_id',
-                        'user': {
-                            '$addToSet': '$user'
-                        },
                         'identified': {
                             '$sum': {
                                 '$add': [
@@ -2924,24 +2714,182 @@ const getPhonebankingUserSummaryReport = async(details) =>{
                             }
                         }
                     }
+                }
+            ];
+        } else {
+            return [
+                {
+                    '$match': {
+                        'phonebankContactHistory.campaignID': details.campaignID,
+                        'phonebankContactHistory.orgID': details.orgID
+                    }
+                }, {
+                    '$unwind': {
+                        'path': '$phonebankContactHistory',
+                        'preserveNullAndEmptyArrays': false
+                    }
+                }, {
+                    '$match': {
+                        'phonebankContactHistory.campaignID': details.campaignID,
+                        'phonebankContactHistory.orgID': details.orgID
+                    }
+                }, {
+                    '$unwind': {
+                        'path': '$phonebankContactHistory.idHistory',
+                        'preserveNullAndEmptyArrays': false
+                    }
+                }, {
+                    '$match': {
+                        'phonebankContactHistory.idHistory.idBy': {
+                            '$in': details.users
+                        }
+                    }
                 }, {
                     '$project': {
-                        'user': {
-                            '$arrayElemAt': [
-                                '$user', 0
-                            ]
+                        '_id': '$phonebankContactHistory.idHistory.idBy',
+                        'identified': {
+                            '$cond': {
+                                'if': {
+                                    '$or': [
+                                        {
+                                            '$eq': [
+                                                {
+                                                    '$arrayElemAt': [
+                                                        '$phonebankContactHistory.idHistory.idResponses.idType', 0
+                                                    ]
+                                                }, 'POSITIVE'
+                                            ]
+                                        }, {
+                                            '$eq': [
+                                                {
+                                                    '$arrayElemAt': [
+                                                        '$phonebankContactHistory.idHistory.idResponses.idType', 0
+                                                    ]
+                                                }, 'NEUTRAL'
+                                            ]
+                                        }, {
+                                            '$eq': [
+                                                {
+                                                    '$arrayElemAt': [
+                                                        '$phonebankContactHistory.idHistory.idResponses.idType', 0
+                                                    ]
+                                                }, 'NEGATIVE'
+                                            ]
+                                        }
+                                    ]
+                                },
+                                'then': 1,
+                                'else': 0
+                            }
                         },
-                        'identified': 1,
-                        'refuses': 1,
-                        'impressions': 1,
-                        'nonResponses': 1,
-                        'total': 1
+                        'refuses': {
+                            '$cond': {
+                                'if': {
+                                    '$eq': [
+                                        {
+                                            '$arrayElemAt': [
+                                                '$phonebankContactHistory.idHistory.idResponses.idType', 0
+                                            ]
+                                        }, 'REFUSED'
+                                    ]
+                                },
+                                'then': 1,
+                                'else': 0
+                            }
+                        },
+                        'impressions': {
+                            '$cond': {
+                                'if': {
+                                    '$regexFind': {
+                                        'input': {
+                                            '$arrayElemAt': [
+                                                '$phonebankContactHistory.idHistory.idResponses.responses', 0
+                                            ]
+                                        },
+                                        'regex': '(?i)left message'
+                                    }
+                                },
+                                'then': 1,
+                                'else': 0
+                            }
+                        },
+                        'nonResponses': {
+                            '$cond': {
+                                'if': {
+                                    '$eq': [
+                                        {
+                                            '$arrayElemAt': [
+                                                '$phonebankContactHistory.idHistory.idResponses.idType', 0
+                                            ]
+                                        }, 'NONRESPONSE'
+                                    ]
+                                },
+                                'then': 1,
+                                'else': 0
+                            }
+                        }
+                    }
+                }, {
+                    '$group': {
+                        '_id': '$_id',
+                        'identified': {
+                            '$sum': {
+                                '$add': [
+                                    '$identified'
+                                ]
+                            }
+                        },
+                        'refuses': {
+                            '$sum': {
+                                '$add': [
+                                    '$refuses'
+                                ]
+                            }
+                        },
+                        'impressions': {
+                            '$sum': {
+                                '$add': [
+                                    '$impressions', '$identified'
+                                ]
+                            }
+                        },
+                        'nonResponses': {
+                            '$sum': {
+                                '$add': [
+                                    '$nonResponses'
+                                ]
+                            }
+                        },
+                        'total': {
+                            '$sum': {
+                                '$add': [
+                                    '$identified', '$refuses', '$nonResponses'
+                                ]
+                            }
+                        }
                     }
                 }
             ];
         }
     })();
     var reports = await People.aggregate(agg)
+
+    const agg2 = [
+        {
+            '$match': {
+                'user._id': {
+                    '$in': details.users.map(x => mongoose.Types.ObjectId(x))
+                }
+            }
+        }
+    ];
+
+    var reports2 = await People.aggregate(agg2)
+
+    for(var i = 0; i < reports.length; i++){
+        var num = await reports2.findIndex(x => x.user._id.toString() === reports[i]._id.toString())
+        reports[i]['user'] = reports2[num].firstName + " " + reports2[num].lastName
+    }
 
     return reports
 }
