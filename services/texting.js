@@ -250,8 +250,8 @@ const loadLockedPeople = async(detail) =>{
 
 const getRespondedPeople = async(detail) =>{
 
-    var completePeople = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: false }}}).limit(5);   
-    var inCompletePeople = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: true }}});
+    //var completePeople = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: false }}}).limit(5);   
+    var people = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: false }}});
     var peopleNames = people.map(x => {return {_id: x._id, firstName: x.firstName, lastName: x.lastName, textContactHistory: x.textContactHistory, phones: x.phones}})
     return peopleNames
 }
@@ -262,9 +262,10 @@ const getConversation = async(detail) =>{
 }
 
 const getIdentifiedPeople = async(detail) =>{
-
+    var people = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, textReceived: true, complete: true }}});
+    var peopleNames = people.map(x => {return {_id: x._id, firstName: x.firstName, lastName: x.lastName, textContactHistory: x.textContactHistory, phones: x.phones}})
     //var identified = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, identified: true }}})   
-    return identified
+    return peopleNames
 }
 
 const sendText = async(detail) =>{
