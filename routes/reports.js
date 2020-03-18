@@ -12,5 +12,6 @@ router.post('/getBlockGroupCanvassSummaryReport', reportController.getBlockGroup
 router.post('/getBlockGroupOverallSummaryReport', reportController.getBlockGroupOverallSummaryReport);
 router.post('/getPhonebankingSummaryReport', reportController.getPhonebankingSummaryReport);
 router.post('/getTextingSummaryReport', reportController.getTextingSummaryReport);
+router.post('/getPhonebankingUserSummaryReport', reportController.getPhonebankingUserSummaryReport);
 
 module.exports = router;
