@@ -90,6 +90,15 @@ const getTextingSummaryReport = async (req,res,next) =>{
     }
 }
 
+const getPhonebankingUserSummaryReport = async (req,res,next) =>{
+    try{
+        res.send(await ReportService.getPhonebankingUserSummaryReport(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 module.exports = {updateReport,
                   getCanvassSummaryReport,
                   getPetitionSummaryReport,
@@ -99,4 +108,5 @@ module.exports = {updateReport,
                   getBlockGroupCanvassSummaryReport,
                   getBlockGroupOverallSummaryReport,
                   getPhonebankingSummaryReport,
-                  getTextingSummaryReport};
+                  getTextingSummaryReport,
+                  getPhonebankingUserSummaryReport};
