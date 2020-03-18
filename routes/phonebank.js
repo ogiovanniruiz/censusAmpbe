@@ -14,5 +14,5 @@ router.post('/nonResponse', phonebankController.nonResponse);
 router.post('/allocatePhoneNumber', phonebankController.allocatePhoneNumber);
 router.post('/completeHouseHold', phonebankController.completeHouseHold);
 router.post('/getNumCompleted', phonebankController.getNumCompleted);
-
+router.post('/getLockedHouseHold', phonebankController.getLockedHouseHold);
 module.exports = router;

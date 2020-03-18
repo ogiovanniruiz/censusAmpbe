@@ -166,6 +166,15 @@ const buyPhoneNumber = async (req, res, next) => {
     }
 }
 
+const enableTexting = async (req, res, next) => {
+    try {
+        res.send(await organizationService.enableTexting(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 
 module.exports = {checkTwilioSubAccount,
                 buyPhoneNumber,
@@ -179,5 +188,6 @@ module.exports = {checkTwilioSubAccount,
                   updateOrgLevel, 
                   getCampaignOrgs,
                   dbPatch,
-                  editOrganization,                    
+                  editOrganization,  
+                  enableTexting,                  
                   getOrgPhoneNumbers, createTag, getOrgTags, uploadLogo, getOrgLogo};

@@ -27,9 +27,10 @@ const lockNewPeople = async(detail) =>{
     var searchParameters = {$or: [{"textContactHistory": {$size: 0}}, 
                                   {"textContactHistory": {$not: {$elemMatch: {activityID : detail.activityID}}}}
                                  ],
-                                 "preferredMethodContact": {$not: {$elemMatch: {method: "PHONE"}}},
-                                 "preferredMethodContact": {$not: {$elemMatch: {method: "EMAIL"}}},
-                            "phones": { $exists: true, $not: {$size: 0}}
+                                 
+                                 "preferredMethodContact": {$not: {$elemMatch: {method: "PHONE"}}, $not: {$elemMatch: {method: "EMAIL"}}},
+                                 "phones.0": {$exists: true, $ne: ""},
+                                 
                             }
 
     
@@ -37,24 +38,77 @@ const lockNewPeople = async(detail) =>{
     var hasQueries = false;
  
      for(var i = 0; i < targets.length; i++){
-         if(targets[i]['geometry']){ targetCoordinates.push(targets[i]['geometry']['coordinates'][0])}
-         if(targets[i].properties.queries.length > 0){hasQueries  = true;}
+         //if(targets[i]['geometry']){ targetCoordinates.push(targets[i]['geometry']['coordinates'][0])}
+        // if(targets[i].properties.queries.length > 0){hasQueries  = true;}
+
+        if(targets[i]['geometry']){ 
+            if(targets[i]['properties']['params']['targetType'] === "CENSUSTRACT"){
+                targetCoordinates.push(targets[i]['properties']['params']['id'])
+            }else{
+                targetCoordinates.push(targets[i]['geometry']['coordinates'][0])
+            }        
+        }
+        if(targets[i].properties.queries.length > 0){hasQueries = true;}
      }
  
      if(targetCoordinates.length > 0){
-         searchParameters['address.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" , 
-         coordinates: targetCoordinates}}}
+         //searchParameters['address.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" , 
+         //coordinates: targetCoordinates}}}
+         if(targets[0]['properties']['params']['targetType'] === "CENSUSTRACT"){
+            searchParameters['address.blockgroupID'] = {$in: targetCoordinates}
+        }else{
+            searchParameters['address.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" , 
+                                                                                 coordinates: targetCoordinates}}}
+        }
      }
  
      if(hasQueries){
-         for(var i = 0; i < targets.length; i++){                                   
-             for(var j = 0; j < targets[i].properties.queries.length; j++){
-                 if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
-                     searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
-                 }
-             }                                                             
-         }
-     }
+        var hasParties = false
+        var parties = []
+        for(var i = 0; i < targets.length; i++){                                   
+            for(var j = 0; j < targets[i].properties.queries.length; j++){
+                if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
+                    searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
+                }
+
+                if(targets[i].properties.queries[j].queryType === "PAV"){
+                    searchParameters['voterInfo.pav'] = targets[i].properties.queries[j].param
+                }
+
+                if(targets[i].properties.queries[j].queryType === "PRECINCT"){
+                    searchParameters['voterInfo.precinct'] = {$regex: targets[i].properties.queries[j].param}
+                }
+
+                if(targets[i].properties.queries[j].queryType === "PROPENSITY"){
+                    var low = targets[i].properties.queries[j].subParam
+                    var hi = targets[i].properties.queries[j].param
+                    searchParameters['voterInfo.propensity'] = { $gte :  low/100, $lte : hi/100}
+                }
+
+                if(targets[i].properties.queries[j].queryType === "PARTY"){
+                    hasParties = true;
+                    parties.push(targets[i].properties.queries[j].param)
+                }
+
+                if(targets[i].properties.queries[j].queryType === "SCRIPT"){
+
+                    searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                                        {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}}]},
+                                               {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                                       {"petitionContactHistory.identified": true}]}
+                                               ]
+                }
+            }                                                             
+        }
+
+        if(hasParties){
+            searchParameters['voterInfo.party'] = {$in: parties}
+        }
+     }else{
+        searchParameters['creationInfo.regType'] = "VOTERFILE"
+    }
+
+    console.log(searchParameters)
 
     var people = await Person.find(searchParameters).limit(5); 
     
@@ -187,6 +241,7 @@ const getTextMetaData = async(detail) =>{
 
 }
 
+
 const loadLockedPeople = async(detail) =>{
 
     var people = await Person.find({"textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textSent: false }}}).limit(10); 
@@ -195,13 +250,20 @@ const loadLockedPeople = async(detail) =>{
 
 const getRespondedPeople = async(detail) =>{
 
-    var people = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: false }}}).limit(5);   
-    return people
+    var completePeople = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: false }}}).limit(5);   
+    var inCompletePeople = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: true }}});
+    var peopleNames = people.map(x => {return {_id: x._id, firstName: x.firstName, lastName: x.lastName, textContactHistory: x.textContactHistory, phones: x.phones}})
+    return peopleNames
+}
+
+const getConversation = async(detail) =>{
+    var person = await Person.findOne({_id: detail._id})
+    return person
 }
 
 const getIdentifiedPeople = async(detail) =>{
 
-    var identified = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, identified: true }}})   
+    //var identified = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, identified: true }}})   
     return identified
 }
 
@@ -219,8 +281,6 @@ const sendText = async(detail) =>{
 
     try {
         var person = await Person.findOne({_id: detail.person._id})
-        
-
         client.messages.create({
                 body: script, 
                 from: detail.phoneNum,
@@ -423,5 +483,6 @@ module.exports = {loadLockedPeople,
                   getTextMetaData,
                   getIdentifiedPeople, 
                   allocatePhoneNumber,
-                  resetTextBank
+                  resetTextBank,
+                  getConversation
                 }

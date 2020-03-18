@@ -32,6 +32,9 @@ const createTarget = async(detail) => {
         newTarget.properties.params.targetType = detail.targetType;
         newTarget.properties.queries = []
 
+
+        /*
+
         if(detail.precinct != ''){
             newTarget.properties.queries.push({queryType: "PRECINCT", param: detail.precinct})
         }
@@ -52,6 +55,8 @@ const createTarget = async(detail) => {
         if(detail.members){
             newTarget.properties.queries.push({queryType: "ORGMEMBERS", param: detail.orgID})
         }
+
+        */
 
         if(detail.scriptID != ""){
             newTarget.properties.queries.push({queryType: "SCRIPT", param: detail.scriptID, subParam: detail.scriptResponse})

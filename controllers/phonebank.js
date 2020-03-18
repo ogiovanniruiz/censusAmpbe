@@ -90,8 +90,18 @@ const getNumCompleted  = async (req, res, next) => {
     }
 }
 
+const getLockedHouseHold  = async (req, res, next) => {
+    try {
+        res.send(await phonebankService.getLockedHouseHold(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 module.exports = {
                 getNumCompleted,
+                getLockedHouseHold,
                 getHouseHold, 
                  getTwilioToken, 
                  call, 

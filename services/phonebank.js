@@ -13,7 +13,6 @@ const getHouseHold = async(detail) => {
     var searchParameters = {
                             "phones.0": {$exists: true, $ne: ""},
                             "preferredMethodContact": {$not: {$elemMatch: {method: "TEXT"}}, $not: {$elemMatch: {method: "EMAIL"}}},
-                            "phonebankContactHistory" : {$not: {$elemMatch: {campaignID: detail.campaignID}}}
                             }
 
    var targetCoordinates = [];
@@ -70,10 +69,32 @@ const getHouseHold = async(detail) => {
                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
 
                     searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                                        {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}}]},
+                                                       {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                       {"canvassContactHistory.refused": {$ne: true}}
+                                                    
+                                                    ]},
+                                                       
                                                {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                                       {"petitionContactHistory.identified": true}]}
+                                                       {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                       {"petitionContactHistory.refused": {$ne: true}}
+                                                    
+                                                    ]},
+                                                {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                                    {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                    {"phonebankContactHistory.refused": {$ne: true}}
+                                                 
+                                                 ]}
                                                ]
+
+                    if(targets[i].properties.queries[j].subParam != "NONRESPONSE"){
+                        searchParameters["phonebankContactHistory"] = {$not: {$elemMatch: {campaignID: detail.campaignID}}}
+
+                    }else{
+                        searchParameters["phonebankContactHistory.identified"] = {$ne: true}
+                        searchParameters["petitionContactHistory.identified"] = {$ne: true}
+                        searchParameters["canvassContactHistory.identified"] = {$ne: true}
+                    }
+                
                 }
             }                                                             
         }
@@ -82,12 +103,11 @@ const getHouseHold = async(detail) => {
             searchParameters['voterInfo.party'] = {$in: parties}
         }
     }else{
+        searchParameters["phonebankContactHistory"] = {$not: {$elemMatch: {campaignID: detail.campaignID}}}
         searchParameters['creationInfo.regType'] = "VOTERFILE"
     }
 
-
     console.log(searchParameters)
-
 
     var houseHold = await Person.aggregate([ 
         {$match: searchParameters},
@@ -126,6 +146,50 @@ const getHouseHold = async(detail) => {
     } catch(e){
         throw new Error(e.message)
     } 
+}
+
+
+const getLockedHouseHold = async(detail)=>{
+    console.log(detail)
+    searchParameters = {"phonebankContactHistory" : {$elemMatch: {reserved: detail.userID}}}
+
+    var houseHold = await Person.aggregate([ 
+        {$match: searchParameters},
+        {$group : { _id : {streetNum: "$address.streetNum",
+                           suffix: "$address.suffix",
+                           prefix:  "$address.prefix",
+                           city: "$address.city",
+                           state: "$address.state",
+                           county: "$address.county",
+                           zip: "$address.zip",
+                           unit: "$address.unit",
+                           street: "$address.street"}, 
+                    people: { $push: {firstName: '$firstName',
+                                      middleName: '$middleName',
+                                      lastName: '$lastName', 
+                                      phones: '$phones',
+                                      emails: '$emails',
+                                      address: '$address',
+                                      phonebankContactHistory: '$phonebankContactHistory',
+                                      canvassContactHistory: '$canvassContactHistory',
+                                      petitionContactHistory: '$petitionContactHistory',
+                                      voterInfo: '$voterInfo',
+                                      _id: "$_id"}}}},{$sample: { size: 10 } }
+        ]).allowDiskUse(true).limit(1)
+
+        try { 
+            if( houseHold.length > 0){
+                return {houseHold: houseHold[0], total: 0} 
+            }else{
+            
+                return {houseHold: [], total: 0} 
+    
+            }
+    
+        } catch(e){
+            throw new Error(e.message)
+        } 
+
 }
 
 
@@ -309,7 +373,7 @@ const getNumCompleted = async(detail) =>{
     return {completed: 0}
 }
 
-module.exports = {getNumCompleted, getHouseHold, 
+module.exports = {getNumCompleted, getHouseHold, getLockedHouseHold,
                   call, 
                   getTwilioToken, 
                   editPerson, 
