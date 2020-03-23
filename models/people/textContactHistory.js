@@ -17,6 +17,7 @@ var TextContactHistorySchema = new Schema(
         complete: {type: Boolean, default: false},
         textReceived: {type: Boolean, default: false},
         textConv: [{origin: {type: String, enum: ['VOLUNTEER', 'VOTER']}, msg: {type: String}, error: {type: String, default:"NONE"}}],
+        impression: {type: Boolean, default: false},    
         idHistory: [idHistory.schema],
     }
 );

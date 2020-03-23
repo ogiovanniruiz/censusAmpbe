@@ -45,6 +45,7 @@ const getHouseHold = async(detail) => {
             for(var j = 0; j < targets[i].properties.queries.length; j++){
                 if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
                     searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
+                    searchParameters["phonebankContactHistory"] = {$not: {$elemMatch: {campaignID: detail.campaignID}}}
                 }
 
                 if(targets[i].properties.queries[j].queryType === "PAV"){
@@ -90,9 +91,9 @@ const getHouseHold = async(detail) => {
                         searchParameters["phonebankContactHistory"] = {$not: {$elemMatch: {campaignID: detail.campaignID}}}
 
                     }else{
-                        searchParameters["phonebankContactHistory.identified"] = {$ne: true}
-                        searchParameters["petitionContactHistory.identified"] = {$ne: true}
-                        searchParameters["canvassContactHistory.identified"] = {$ne: true}
+                        searchParameters["phonebankContactHistory"] = {$not: {$elemMatch: {identified: true}}}
+                        searchParameters["canvassContactHistory"] = {$not: {$elemMatch: {identified: true}}}
+                        searchParameters["petitionContactHistory"] = {$not: {$elemMatch: {identified: true}}}
                     }
                 
                 }
@@ -259,11 +260,13 @@ const idPerson = async(detail)=>{
 
     }else{
         for (var i = 0; i < person.phonebankContactHistory.length; i++){
+            console.log(detail.activityID, person.phonebankContactHistory[i].activityID )
             if(person.phonebankContactHistory[i].activityID === detail.activityID){
                 person.phonebankContactHistory[i].idHistory.push(idHistory)
                 person.phonebankContactHistory[i].identified = true;
                 person.phonebankContactHistory[i].nonResponse = false;
                 person.phonebankContactHistory[i].refused = false;
+                console.log("THIS HAPPENED")
                 return person.save()
             }
         }

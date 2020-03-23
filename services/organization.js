@@ -330,7 +330,9 @@ const getOrgPhoneNumbers = async(detail) =>{
 
         var numbers = await client.incomingPhoneNumbers
         .list({limit: 20})
-        .then(incomingPhoneNumbers => {return incomingPhoneNumbers.map(i => i.phoneNumber)});
+        .then(incomingPhoneNumbers => {return incomingPhoneNumbers//.map(i => i.phoneNumber)
+        
+        });
         return numbers
     }
 

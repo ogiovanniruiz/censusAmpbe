@@ -9,6 +9,7 @@ const resetTextBank = async(detail) =>{
     var count = 0;
     
     for(var i = 0; i <  people.length; i++){
+        people[i].textable = '?'
 
         for(var j = 0; j < people[i].textContactHistory.length; j++){
             if(people[i].textContactHistory[j].activityID === detail.activityID){
@@ -30,6 +31,7 @@ const lockNewPeople = async(detail) =>{
                                  
                                  "preferredMethodContact": {$not: {$elemMatch: {method: "PHONE"}}, $not: {$elemMatch: {method: "EMAIL"}}},
                                  "phones.0": {$exists: true, $ne: ""},
+                                 "textable": {$ne: "?", $ne: "FALSE"}
                                  
                             }
 
@@ -143,6 +145,7 @@ const allocatePhoneNumber = async(detail) =>{
     }
 }
 
+/*
 const getTextMetaData = async(detail) =>{
 
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
@@ -162,7 +165,7 @@ const getTextMetaData = async(detail) =>{
                                                                                                             idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}]
         }
     }
-*/
+
     var targetCoordinates = []
 
     var hasQueries = false;
@@ -240,7 +243,7 @@ const getTextMetaData = async(detail) =>{
             refused: refused}
 
 }
-
+*/
 
 const loadLockedPeople = async(detail) =>{
 
@@ -282,36 +285,66 @@ const sendText = async(detail) =>{
 
     try {
         var person = await Person.findOne({_id: detail.person._id})
-        client.messages.create({
-                body: script, 
-                from: detail.phoneNum,
-                to: '+1' + number,
-            }).then(message => {
-                console.log(message)
 
-            }).catch(e => { 
-                console.error('Got an error:', e.code, e.message);    
-                
+        if(person.textable === '?'){
+            var data = await client.lookups.phoneNumbers('+1' + number)
+            .fetch({type: ['carrier']})
+            .then(phone_number => {return (phone_number.carrier)});
+      
+            if(data.type != 'mobile'){
+                person.textable = 'FALSE'
+
                 for (var i = 0; i < person.textContactHistory.length; i++) {
                     if(person.textContactHistory[i].activityID === detail.activityID){
-                        person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: e.message, error: e.message})
+                        person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: "FAILED", error: "NOTMOBILE"})
+                        person.textContactHistory[i].textSent = true
                     }
                 }
-
-                person.save()
-
-            }).done();
-
-        for(var i = 0; i < person.textContactHistory.length; i++){
-            if(person.textContactHistory[i].activityID === detail.activityID){
-                person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: detail.initTextMsg})
-                person.textContactHistory[i].outgoingPhoneNum = detail.phoneNum
-                person.textContactHistory[i].textSent = true
+                return person.save()
             }
+
+            person.textable = 'TRUE'
+
+         
+
+        }else if (person.textable === 'FALSE'){
+            for (var i = 0; i < person.textContactHistory.length; i++) {
+                if(person.textContactHistory[i].activityID === detail.activityID){
+                    person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: "FAILED", error: "NOTMOBILE"})
+                    person.textContactHistory[i].textSent = true
+                }
+            }
+            return person.save()
         }
 
-        return person.save()
-   
+        var returnedData = await client.messages.create({
+            body: script, 
+            from: detail.phoneNum,
+            to: '+1' + number,
+        }).then(message => {
+            console.log("Success", message)
+            
+            for(var i = 0; i < person.textContactHistory.length; i++){
+                if(person.textContactHistory[i].activityID === detail.activityID){
+                    person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: detail.initTextMsg})
+                    person.textContactHistory[i].outgoingPhoneNum = detail.phoneNum
+                    person.textContactHistory[i].textSent = true
+                    person.textContactHistory[i].impression = true
+                }
+            }
+    
+            return person.save()
+        }).catch(e => { 
+            for (var i = 0; i < person.textContactHistory.length; i++) {
+                if(person.textContactHistory[i].activityID === detail.activityID){
+                    person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: e.message, error: e.message})
+                    person.textContactHistory[i].textSent = true
+                }
+            }
+            return person.save()
+        });
+        return returnedData
+
     } catch (error){
         console.log(error)
     }
@@ -329,7 +362,6 @@ const receiveTexts = async(incoming) =>{
 
         var campaigns = await Campaign.find()
 
-        
         for(var k = 0; k < campaigns.length; k++){
             for(var i = 0; i < campaigns[k].textActivities.length; i++){
                 for(var j = 0; j < campaigns[k].textActivities[i].phoneNums.length; j++){
@@ -423,11 +455,13 @@ const nonResponse = async(detail)=>{
         refused = true;
     }
 
+    /*
+
     var idHistory = {scriptID: detail.script._id,
         idBy: detail.userID,
         idResponses: detail.idResponses,
         locationIdentified: detail.location}
-
+*/
     if(person.textContactHistory.length === 0){
 
         var textContactHistory = {
@@ -438,7 +472,7 @@ const nonResponse = async(detail)=>{
                                         nonResponse: true,
                                         identified: false,
                                         complete: true,
-                                        idHistory: idHistory
+                                        idHistory: detail.idHistory
                                 }
 
         person.textContactHistory.push(textContactHistory)
@@ -447,7 +481,7 @@ const nonResponse = async(detail)=>{
     }else{
         for (var i = 0; i < person.textContactHistory.length; i++){
             if(person.textContactHistory[i].activityID === detail.activityID){
-                person.textContactHistory[i].idHistory.push(idHistory)
+                person.textContactHistory[i].idHistory.concat(detail.idHistory)
                 person.textContactHistory[i].identified = false;
                 person.textContactHistory[i].complete = true;
                 person.textContactHistory[i].nonResponse = true;
@@ -465,7 +499,7 @@ const nonResponse = async(detail)=>{
                                     complete: true,
                                     nonResponse: true,
                                     identified: false,
-                                    idHistory: idHistory
+                                    idHistory: detail.idHistory
                                 }
     
         person.textContactHistory.push(textContactHistory)
@@ -481,7 +515,7 @@ module.exports = {loadLockedPeople,
                   updateConversation, 
                   idPerson,
                   nonResponse,
-                  getTextMetaData,
+                  //getTextMetaData,
                   getIdentifiedPeople, 
                   allocatePhoneNumber,
                   resetTextBank,
