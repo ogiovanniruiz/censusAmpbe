@@ -9,6 +9,7 @@ const resetTextBank = async(detail) =>{
     var count = 0;
     
     for(var i = 0; i <  people.length; i++){
+        people[i].textable = '?'
 
         for(var j = 0; j < people[i].textContactHistory.length; j++){
             if(people[i].textContactHistory[j].activityID === detail.activityID){
@@ -27,9 +28,11 @@ const lockNewPeople = async(detail) =>{
     var searchParameters = {$or: [{"textContactHistory": {$size: 0}}, 
                                   {"textContactHistory": {$not: {$elemMatch: {activityID : detail.activityID}}}}
                                  ],
-                                 "preferredMethodContact": {$not: {$elemMatch: {method: "PHONE"}}},
-                                 "preferredMethodContact": {$not: {$elemMatch: {method: "EMAIL"}}},
-                            "phones": { $exists: true, $not: {$size: 0}}
+                                 
+                                 "preferredMethodContact": {$not: {$elemMatch: {method: "PHONE"}}, $not: {$elemMatch: {method: "EMAIL"}}},
+                                 "phones.0": {$exists: true, $ne: ""},
+                                 "textable": {$ne: "?", $ne: "FALSE"}
+                                 
                             }
 
     
@@ -37,24 +40,77 @@ const lockNewPeople = async(detail) =>{
     var hasQueries = false;
  
      for(var i = 0; i < targets.length; i++){
-         if(targets[i]['geometry']){ targetCoordinates.push(targets[i]['geometry']['coordinates'][0])}
-         if(targets[i].properties.queries.length > 0){hasQueries  = true;}
+         //if(targets[i]['geometry']){ targetCoordinates.push(targets[i]['geometry']['coordinates'][0])}
+        // if(targets[i].properties.queries.length > 0){hasQueries  = true;}
+
+        if(targets[i]['geometry']){ 
+            if(targets[i]['properties']['params']['targetType'] === "CENSUSTRACT"){
+                targetCoordinates.push(targets[i]['properties']['params']['id'])
+            }else{
+                targetCoordinates.push(targets[i]['geometry']['coordinates'][0])
+            }        
+        }
+        if(targets[i].properties.queries.length > 0){hasQueries = true;}
      }
  
      if(targetCoordinates.length > 0){
-         searchParameters['address.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" , 
-         coordinates: targetCoordinates}}}
+         //searchParameters['address.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" , 
+         //coordinates: targetCoordinates}}}
+         if(targets[0]['properties']['params']['targetType'] === "CENSUSTRACT"){
+            searchParameters['address.blockgroupID'] = {$in: targetCoordinates}
+        }else{
+            searchParameters['address.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" , 
+                                                                                 coordinates: targetCoordinates}}}
+        }
      }
  
      if(hasQueries){
-         for(var i = 0; i < targets.length; i++){                                   
-             for(var j = 0; j < targets[i].properties.queries.length; j++){
-                 if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
-                     searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
-                 }
-             }                                                             
-         }
-     }
+        var hasParties = false
+        var parties = []
+        for(var i = 0; i < targets.length; i++){                                   
+            for(var j = 0; j < targets[i].properties.queries.length; j++){
+                if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
+                    searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
+                }
+
+                if(targets[i].properties.queries[j].queryType === "PAV"){
+                    searchParameters['voterInfo.pav'] = targets[i].properties.queries[j].param
+                }
+
+                if(targets[i].properties.queries[j].queryType === "PRECINCT"){
+                    searchParameters['voterInfo.precinct'] = {$regex: targets[i].properties.queries[j].param}
+                }
+
+                if(targets[i].properties.queries[j].queryType === "PROPENSITY"){
+                    var low = targets[i].properties.queries[j].subParam
+                    var hi = targets[i].properties.queries[j].param
+                    searchParameters['voterInfo.propensity'] = { $gte :  low/100, $lte : hi/100}
+                }
+
+                if(targets[i].properties.queries[j].queryType === "PARTY"){
+                    hasParties = true;
+                    parties.push(targets[i].properties.queries[j].param)
+                }
+
+                if(targets[i].properties.queries[j].queryType === "SCRIPT"){
+
+                    searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                                        {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}}]},
+                                               {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                                       {"petitionContactHistory.identified": true}]}
+                                               ]
+                }
+            }                                                             
+        }
+
+        if(hasParties){
+            searchParameters['voterInfo.party'] = {$in: parties}
+        }
+     }else{
+        searchParameters['creationInfo.regType'] = "VOTERFILE"
+    }
+
+    console.log(searchParameters)
 
     var people = await Person.find(searchParameters).limit(5); 
     
@@ -89,6 +145,7 @@ const allocatePhoneNumber = async(detail) =>{
     }
 }
 
+/*
 const getTextMetaData = async(detail) =>{
 
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
@@ -108,7 +165,7 @@ const getTextMetaData = async(detail) =>{
                                                                                                             idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}]
         }
     }
-*/
+
     var targetCoordinates = []
 
     var hasQueries = false;
@@ -186,6 +243,7 @@ const getTextMetaData = async(detail) =>{
             refused: refused}
 
 }
+*/
 
 const loadLockedPeople = async(detail) =>{
 
@@ -195,14 +253,22 @@ const loadLockedPeople = async(detail) =>{
 
 const getRespondedPeople = async(detail) =>{
 
-    var people = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: false }}}).limit(5);   
-    return people
+    //var completePeople = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: false }}}).limit(5);   
+    var people = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: false }}});
+    var peopleNames = people.map(x => {return {_id: x._id, firstName: x.firstName, lastName: x.lastName, textContactHistory: x.textContactHistory, phones: x.phones}})
+    return peopleNames
+}
+
+const getConversation = async(detail) =>{
+    var person = await Person.findOne({_id: detail._id})
+    return person
 }
 
 const getIdentifiedPeople = async(detail) =>{
-
-    var identified = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, identified: true }}})   
-    return identified
+    var people = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, textReceived: true, complete: true }}});
+    var peopleNames = people.map(x => {return {_id: x._id, firstName: x.firstName, lastName: x.lastName, textContactHistory: x.textContactHistory, phones: x.phones}})
+    //var identified = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, identified: true }}})   
+    return peopleNames
 }
 
 const sendText = async(detail) =>{
@@ -219,38 +285,66 @@ const sendText = async(detail) =>{
 
     try {
         var person = await Person.findOne({_id: detail.person._id})
-        
 
-        client.messages.create({
-                body: script, 
-                from: detail.phoneNum,
-                to: '+1' + number,
-            }).then(message => {
-                console.log(message)
+        if(person.textable === '?'){
+            var data = await client.lookups.phoneNumbers('+1' + number)
+            .fetch({type: ['carrier']})
+            .then(phone_number => {return (phone_number.carrier)});
+      
+            if(data.type != 'mobile'){
+                person.textable = 'FALSE'
 
-            }).catch(e => { 
-                console.error('Got an error:', e.code, e.message);    
-                
                 for (var i = 0; i < person.textContactHistory.length; i++) {
                     if(person.textContactHistory[i].activityID === detail.activityID){
-                        person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: e.message, error: e.message})
+                        person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: "FAILED", error: "NOTMOBILE"})
+                        person.textContactHistory[i].textSent = true
                     }
                 }
-
-                person.save()
-
-            }).done();
-
-        for(var i = 0; i < person.textContactHistory.length; i++){
-            if(person.textContactHistory[i].activityID === detail.activityID){
-                person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: detail.initTextMsg})
-                person.textContactHistory[i].outgoingPhoneNum = detail.phoneNum
-                person.textContactHistory[i].textSent = true
+                return person.save()
             }
+
+            person.textable = 'TRUE'
+
+         
+
+        }else if (person.textable === 'FALSE'){
+            for (var i = 0; i < person.textContactHistory.length; i++) {
+                if(person.textContactHistory[i].activityID === detail.activityID){
+                    person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: "FAILED", error: "NOTMOBILE"})
+                    person.textContactHistory[i].textSent = true
+                }
+            }
+            return person.save()
         }
 
-        return person.save()
-   
+        var returnedData = await client.messages.create({
+            body: script, 
+            from: detail.phoneNum,
+            to: '+1' + number,
+        }).then(message => {
+            console.log("Success", message)
+            
+            for(var i = 0; i < person.textContactHistory.length; i++){
+                if(person.textContactHistory[i].activityID === detail.activityID){
+                    person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: detail.initTextMsg})
+                    person.textContactHistory[i].outgoingPhoneNum = detail.phoneNum
+                    person.textContactHistory[i].textSent = true
+                    person.textContactHistory[i].impression = true
+                }
+            }
+    
+            return person.save()
+        }).catch(e => { 
+            for (var i = 0; i < person.textContactHistory.length; i++) {
+                if(person.textContactHistory[i].activityID === detail.activityID){
+                    person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: e.message, error: e.message})
+                    person.textContactHistory[i].textSent = true
+                }
+            }
+            return person.save()
+        });
+        return returnedData
+
     } catch (error){
         console.log(error)
     }
@@ -268,7 +362,6 @@ const receiveTexts = async(incoming) =>{
 
         var campaigns = await Campaign.find()
 
-        
         for(var k = 0; k < campaigns.length; k++){
             for(var i = 0; i < campaigns[k].textActivities.length; i++){
                 for(var j = 0; j < campaigns[k].textActivities[i].phoneNums.length; j++){
@@ -362,11 +455,13 @@ const nonResponse = async(detail)=>{
         refused = true;
     }
 
+    /*
+
     var idHistory = {scriptID: detail.script._id,
         idBy: detail.userID,
         idResponses: detail.idResponses,
         locationIdentified: detail.location}
-
+*/
     if(person.textContactHistory.length === 0){
 
         var textContactHistory = {
@@ -377,7 +472,7 @@ const nonResponse = async(detail)=>{
                                         nonResponse: true,
                                         identified: false,
                                         complete: true,
-                                        idHistory: idHistory
+                                        idHistory: detail.idHistory
                                 }
 
         person.textContactHistory.push(textContactHistory)
@@ -386,7 +481,7 @@ const nonResponse = async(detail)=>{
     }else{
         for (var i = 0; i < person.textContactHistory.length; i++){
             if(person.textContactHistory[i].activityID === detail.activityID){
-                person.textContactHistory[i].idHistory.push(idHistory)
+                person.textContactHistory[i].idHistory.concat(detail.idHistory)
                 person.textContactHistory[i].identified = false;
                 person.textContactHistory[i].complete = true;
                 person.textContactHistory[i].nonResponse = true;
@@ -404,7 +499,7 @@ const nonResponse = async(detail)=>{
                                     complete: true,
                                     nonResponse: true,
                                     identified: false,
-                                    idHistory: idHistory
+                                    idHistory: detail.idHistory
                                 }
     
         person.textContactHistory.push(textContactHistory)
@@ -420,8 +515,9 @@ module.exports = {loadLockedPeople,
                   updateConversation, 
                   idPerson,
                   nonResponse,
-                  getTextMetaData,
+                  //getTextMetaData,
                   getIdentifiedPeople, 
                   allocatePhoneNumber,
-                  resetTextBank
+                  resetTextBank,
+                  getConversation
                 }

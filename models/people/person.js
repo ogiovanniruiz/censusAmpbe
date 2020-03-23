@@ -30,7 +30,8 @@ var PersonSchema = new Schema(
     petitionContactHistory: [PetitionContactHistory.schema],
     creationInfo: CreationInfo.schema,
     preferredMethodContact: [PreferredMethodContact.schema],
-    clientID: {type: String}
+    clientID: {type: String},
+    textable: {type: String, default: '?', enum: ['?', 'TRUE','FALSE']}
   }//,{ collection : 'voterfile' }
 );
 

@@ -122,6 +122,15 @@ const completePerson = async (req,res,next) =>{
     }
 }
 
+const getConversation = async (req,res,next) =>{
+    try {
+        res.send(await textingService.getConversation(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 module.exports = {loadLockedPeople, 
     sendText, 
     lockNewPeople, 
@@ -131,6 +140,7 @@ module.exports = {loadLockedPeople,
     idPerson, 
     nonResponse,
     completePerson,
+    getConversation,
   
     getTextMetaData,
     getIdentifiedPeople,

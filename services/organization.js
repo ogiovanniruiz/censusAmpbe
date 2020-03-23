@@ -330,7 +330,9 @@ const getOrgPhoneNumbers = async(detail) =>{
 
         var numbers = await client.incomingPhoneNumbers
         .list({limit: 20})
-        .then(incomingPhoneNumbers => {return incomingPhoneNumbers.map(i => i.phoneNumber)});
+        .then(incomingPhoneNumbers => {return incomingPhoneNumbers//.map(i => i.phoneNumber)
+        
+        });
         return numbers
     }
 
@@ -356,7 +358,6 @@ const checkTwilioSubAccount = async(detail) =>{
         return {msg: "Account does not exist", status: false}
     }else{
         return {msg: "Account Exists", status: true}
-      
     }
 }
 
@@ -374,6 +375,36 @@ const buyPhoneNumber = async(detail) =>{
     return { msg: "Success", status: true}
 }
 
+const enableTexting = async(detail) =>{
+    var org = await Organization.findOne({"_id": detail.orgID})
+
+    if(org.twilioAccount.sid && org.twilioAccount.authToken){
+        const client = require('twilio')(org.twilioAccount.sid, org.twilioAccount.authToken);
+
+        var numbers = await client.incomingPhoneNumbers
+        .list({limit: 20})
+        .then(incomingPhoneNumbers => {return incomingPhoneNumbers});
+
+        var updatedNumbers = []
+
+        var sms_url = process.env.be + '/texting/receiveTexts'
+
+        for(var i = 0; i < numbers.length; i++){
+
+            var updatedNumber = await client.incomingPhoneNumbers(numbers[i].sid)
+            .update({
+                smsUrl: sms_url
+                //smsUrl: 'https://dev.outreach.be.censusie.org/texting/receiveTexts',
+            }).then(incoming_phone_number => {return incoming_phone_number});
+
+            updatedNumbers.push(updatedNumber)
+        }
+
+        return updatedNumbers
+    
+    }
+}
+
 module.exports = {createOrganization, 
                   editOrganization,
                   getAllOrganizations, 
@@ -385,4 +416,5 @@ module.exports = {createOrganization,
                   getCampaignOrgs,
                   dbPatch,                  
                   getOrgPhoneNumbers,
+                  enableTexting,
                   createTag, getOrgTags, uploadLogo, getOrgLogo, createTwilioSubAccount, checkTwilioSubAccount, buyPhoneNumber}

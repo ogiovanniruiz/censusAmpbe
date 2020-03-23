@@ -16,5 +16,6 @@ router.post('/resetTextBank', textingController.resetTextBank)
 router.post('/idPerson', textingController.idPerson)
 router.post('/nonResponse', textingController.nonResponse)
 router.post('/completePerson', textingController.completePerson)
+router.post('/getConversation', textingController.getConversation)
 
 module.exports = router;
