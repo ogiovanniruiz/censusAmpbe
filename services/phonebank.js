@@ -108,7 +108,7 @@ const getHouseHold = async(detail) => {
         searchParameters['creationInfo.regType'] = "VOTERFILE"
     }
 
-    console.log(searchParameters)
+    //console.log(searchParameters)
 
     var houseHold = await Person.aggregate([ 
         {$match: searchParameters},

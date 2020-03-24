@@ -31,7 +31,7 @@ const lockNewPeople = async(detail) =>{
                                  
                                  "preferredMethodContact": {$not: {$elemMatch: {method: "PHONE"}}, $not: {$elemMatch: {method: "EMAIL"}}},
                                  "phones.0": {$exists: true, $ne: ""},
-                                 "textable": {$ne: "?", $ne: "FALSE"}
+                                 "textable": {$ne: "FALSE"}
                                  
                             }
 
@@ -447,21 +447,13 @@ const idPerson = async(detail)=>{
 }
 
 const nonResponse = async(detail)=>{
+    console.log(detail)
     var person = await Person.findOne({"_id": detail.person._id});
     var refused = false;
 
 
-    if(detail.idType === 'REFUSED'){
-        refused = true;
-    }
+    if(detail.idType === 'REFUSED'){refused = true;}
 
-    /*
-
-    var idHistory = {scriptID: detail.script._id,
-        idBy: detail.userID,
-        idResponses: detail.idResponses,
-        locationIdentified: detail.location}
-*/
     if(person.textContactHistory.length === 0){
 
         var textContactHistory = {
@@ -481,7 +473,7 @@ const nonResponse = async(detail)=>{
     }else{
         for (var i = 0; i < person.textContactHistory.length; i++){
             if(person.textContactHistory[i].activityID === detail.activityID){
-                person.textContactHistory[i].idHistory.concat(detail.idHistory)
+                person.textContactHistory[i].idHistory = detail.idHistory
                 person.textContactHistory[i].identified = false;
                 person.textContactHistory[i].complete = true;
                 person.textContactHistory[i].nonResponse = true;

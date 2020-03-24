@@ -33,6 +33,7 @@ const createTarget = async(detail) => {
         newTarget.properties.queries = []
 
 
+
         /*
 
         if(detail.precinct != ''){
@@ -134,7 +135,9 @@ const unlockTarget = async(detail) =>{
 
 const getAllTargetProperties = async(targetDetail) =>{
     try {
+     
         var targets = await Target.find({'properties.campaignID': targetDetail.campaignID});
+       
         var targetProperties = targets.map(target=> target.properties)
 
         return targetProperties
@@ -145,7 +148,11 @@ const getAllTargetProperties = async(targetDetail) =>{
 
 const getAllTargets = async(targetDetail) =>{
     try {
+
         var targets = await Target.find({'properties.campaignID': targetDetail.campaignID});
+
+
+        
         
         return targets
     } catch(e){

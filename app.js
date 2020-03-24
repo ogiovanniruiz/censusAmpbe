@@ -69,7 +69,7 @@ if(app.get('env') === 'census'){
   process.env.accountSid = 'ACaa2284052d10b1610817013666b0ca9d'
   process.env.authToken = 'cb57765af76625d6ed79376cc411a2ca'
   process.env.fe = 'http://localhost:4200'
-  process.env.be = 'https://918c375b.ngrok.io'
+  process.env.be = 'https://6d760cbc.ngrok.io'
 
   mongoDB = 'mongodb://127.0.0.1:27017/v2db?authSource=v2db&w=1';
   corsOptions.origin = 'http://localhost:4200'
