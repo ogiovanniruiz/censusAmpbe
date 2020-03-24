@@ -2294,51 +2294,21 @@ const getTextingSummaryReport = async(details) =>{
                 'textContactHistory.orgID': details.orgID
             }
         }, {
-            '$facet': {
-                'uniquePeople': [
-                    {
-                        '$group': {
-                            '_id': null,
-                            'num': {
-                                '$sum': 1
-                            }
-                        }
-                    }
-                ],
-                'records': [
-                    {
-                        '$project': {
-                            'textContactHistory': 1
-                        }
-                    }
-                ]
-            }
-        }, {
             '$unwind': {
-                'path': '$records',
-                'preserveNullAndEmptyArrays': false
-            }
-        }, {
-            '$unwind': {
-                'path': '$records.textContactHistory',
+                'path': '$textContactHistory',
                 'preserveNullAndEmptyArrays': false
             }
         }, {
             '$match': {
-                'records.textContactHistory.campaignID': details.campaignID,
-                'records.textContactHistory.orgID': details.orgID
-            }
-        }, {
-            '$unwind': {
-                'path': '$records.textContactHistory.idHistory',
-                'preserveNullAndEmptyArrays': false
+                'textContactHistory.campaignID': details.campaignID,
+                'textContactHistory.orgID': details.orgID
             }
         }, {
             '$facet': {
                 'identified': [
                     {
                         '$match': {
-                            'records.textContactHistory.idHistory.idResponses.0.idType': {
+                            'textContactHistory.idHistory.idResponses.0.idType': {
                                 '$in': [
                                     'POSITIVE', 'NEUTRAL', 'NEGATIVE'
                                 ]
@@ -2356,7 +2326,7 @@ const getTextingSummaryReport = async(details) =>{
                 'refuses': [
                     {
                         '$match': {
-                            'records.textContactHistory.idHistory.idResponses.0.idType': 'REFUSED'
+                            'textContactHistory.idHistory.idResponses.0.idType': 'REFUSED'
                         }
                     }, {
                         '$group': {
@@ -2370,43 +2340,13 @@ const getTextingSummaryReport = async(details) =>{
                 'impressions': [
                     {
                         '$match': {
-                            'records.textContactHistory.idHistory.idResponses.0.responses': {
-                                '$regex': '(?i)left message'
-                            }
+                            'textContactHistory.impression': true
                         }
                     }, {
                         '$group': {
                             '_id': null,
                             'num': {
                                 '$sum': 1
-                            }
-                        }
-                    }
-                ],
-                'nonResponses': [
-                    {
-                        '$match': {
-                            'records.textContactHistory.idHistory.idResponses.0.idType': 'NONRESPONSE'
-                        }
-                    }, {
-                        '$group': {
-                            '_id': null,
-                            'num': {
-                                '$sum': 1
-                            }
-                        }
-                    }
-                ],
-                'uniquePeople': [
-                    {
-                        '$group': {
-                            '_id': null,
-                            'people': {
-                                '$first': {
-                                    '$arrayElemAt': [
-                                        '$uniquePeople', 0
-                                    ]
-                                }
                             }
                         }
                     }
@@ -2453,18 +2393,6 @@ const getTextingSummaryReport = async(details) =>{
                             '$cond': [
                                 {
                                     '$arrayElemAt': [
-                                        '$identified.num', 0
-                                    ]
-                                }, {
-                                    '$arrayElemAt': [
-                                        '$identified.num', 0
-                                    ]
-                                }, 0
-                            ]
-                        }, {
-                            '$cond': [
-                                {
-                                    '$arrayElemAt': [
                                         '$impressions.num', 0
                                     ]
                                 }, {
@@ -2474,28 +2402,6 @@ const getTextingSummaryReport = async(details) =>{
                                 }, 0
                             ]
                         }
-                    ]
-                },
-                'nonResponses': {
-                    '$cond': [
-                        {
-                            '$size': '$nonResponses'
-                        }, {
-                            '$arrayElemAt': [
-                                '$nonResponses.num', 0
-                            ]
-                        }, 0
-                    ]
-                },
-                'uniquePeople': {
-                    '$cond': [
-                        {
-                            '$size': '$uniquePeople'
-                        }, {
-                            '$arrayElemAt': [
-                                '$uniquePeople.people.num', 0
-                            ]
-                        }, 0
                     ]
                 },
                 'total': {
@@ -2524,30 +2430,17 @@ const getTextingSummaryReport = async(details) =>{
                                     ]
                                 }, 0
                             ]
-                        }, {
-                            '$cond': [
-                                {
-                                    '$arrayElemAt': [
-                                        '$nonResponses.num', 0
-                                    ]
-                                }, {
-                                    '$arrayElemAt': [
-                                        '$nonResponses.num', 0
-                                    ]
-                                }, 0
-                            ]
                         }
                     ]
                 }
             }
         }
     ];
-
     var knocksPerOrg = []
 
     var reports = await People.aggregate(agg)
 
-    await knocksPerOrg.push({org: details.orgName, identified: reports[0].identified, refuses: reports[0].refuses, impressions: reports[0].impressions, nonResponses: reports[0].nonResponses, uniquePeople: reports[0].uniquePeople, total: reports[0].total})
+    await knocksPerOrg.push({org: details.orgName, identified: reports[0].identified, refuses: reports[0].refuses, impressions: reports[0].impressions, total: reports[0].total})
     return knocksPerOrg
 }
 
