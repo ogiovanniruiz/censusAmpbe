@@ -237,9 +237,21 @@ const completeActivity = async(detail) =>{
     var campaign = await Campaign.findOne({campaignID: detail.campaignID})
 
     if(detail.activityType === "Canvass"){
-        for(var i = 0; i < campaign.canvasActivities.length; i++){
+        for(var i = 0; i < campaign.canvassActivities.length; i++){
             if( campaign.canvassActivities[i]._id.toString() === detail.activityID){
                 campaign.canvassActivities[i].activityMetaData.complete = true;
+            }
+        }
+    } else if (detail.activityType === "Phonebank"){
+        for(var i = 0; i < campaign.phonebankActivities.length; i++){
+            if( campaign.phonebankActivities[i]._id.toString() === detail.activityID){
+                campaign.phonebankActivities[i].activityMetaData.complete = true
+            }
+        }
+    }  else if (detail.activityType === "Petition"){
+        for(var i = 0; i < campaign.petitionActivities.length; i++){
+            if( campaign.petitionActivities[i]._id.toString() === detail.activityID){
+                campaign.petitionActivities[i].activityMetaData.complete = true
             }
         }
     } else if (detail.activityType === "Event"){
@@ -259,6 +271,27 @@ const sendSwordOutreach = async(detail) =>{
     var SwordOutreachResults = await axios.post("https://swordoutreachapi.azurewebsites.net/report", detail.report, tokenStr).then(async response => {
 
         var campaign = await Campaign.findOne({campaignID: detail.campaignID})
+        if (detail.activityType === "Canvass"){
+            for(var i = 0; i < campaign.canvassActivities.length; i++){
+                if( campaign.canvassActivities[i]._id.toString() === detail.activityID){
+                    campaign.canvassActivities[i].swordRecordRawId = response.data.record
+                }
+            }
+        }
+        if (detail.activityType === "Phonebank"){
+            for(var i = 0; i < campaign.phonebankActivities.length; i++){
+                if( campaign.phonebankActivities[i]._id.toString() === detail.activityID){
+                    campaign.phonebankActivities[i].swordRecordRawId = response.data.record
+                }
+            }
+        }
+        if (detail.activityType === "Petition"){
+            for(var i = 0; i < campaign.petitionActivities.length; i++){
+                if( campaign.petitionActivities[i]._id.toString() === detail.activityID){
+                    campaign.petitionActivities[i].swordRecordRawId = response.data.record
+                }
+            }
+        }
         if (detail.activityType === "Event"){
             for(var i = 0; i < campaign.eventActivities.length; i++){
                 if( campaign.eventActivities[i]._id.toString() === detail.activityID){
