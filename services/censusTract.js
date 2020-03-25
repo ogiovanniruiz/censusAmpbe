@@ -15,6 +15,7 @@ const getAllCensusTracts= async(parcelDetail) =>{
             var tracts = await CensusTract.find({"properties.location": {$geoWithin: { $geometry: {type: "Polygon" , coordinates: [arrayCoords] }}}})
             return tracts
         } else {
+            console.log("THIS IS WHERE IT HAPPENS")
             //var tracts = await CensusTract.find({"properties.lrs": {$gte: 27.0}})
             var tracts = await CensusTract.find()
             return tracts

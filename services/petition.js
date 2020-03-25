@@ -187,6 +187,7 @@ const uploadPetitions = async(data) =>{
     var strangeFile = data.files[0].buffer.toString('utf8')
     var lines = (strangeFile).split("\n");
     var headers = lines[0].split(",");
+
     var peopleObjs = []
 
     for(var i = 0; i < lines.length; i++ ){
@@ -222,6 +223,7 @@ const uploadPetitions = async(data) =>{
                 var fullAddressString = currentLine[j] + " " + personObj["address"]["city"] + " " + "CA"
                 if(personObj["address"]["zip"]) fullAddressString + " " + personObj["address"]["zip"]
 
+
                 var address = parser.parseLocation(fullAddressString);     
 
                 personObj.address.streetNum = address.number
@@ -234,12 +236,14 @@ const uploadPetitions = async(data) =>{
             }
         }
         
-        for(var j = 0; j < headers.length; j++){       
+        for(var j = 0; j < headers.length; j++){  
+            //console.log(headers[j] === " firstName")     
             if(headers[j] === "county") {
                 personObj["address"]["county"] = currentLine[j].toUpperCase()
             }else if (headers[j] === "phones"){
                 if(currentLine[j]){personObj[headers[j]] = currentLine[j].replace("(", "").replace(")", "").replace("-","").replace("-","")}
             }else if(headers[j] === "firstName"){
+                console.log(currentLine[j])
                 personObj["firstName"] = currentLine[j]
             }else if(headers[j] === "middleName"){
                 personObj["middleName"] = currentLine[j]
@@ -265,6 +269,7 @@ const uploadPetitions = async(data) =>{
                     personObj['preferredMethodContact'].push({orgID: orgID, optInProof: activityID, method: "TEXT"})
                 }
             } else if(headers[k] === "date"){
+                console.log( currentLine[k])
                 if(currentLine[k] != "date" && currentLine[k] != ""){
                     isoDate = new Date(currentLine[k]+"T00:00:00.000Z").toISOString()
                 }
@@ -283,10 +288,13 @@ const uploadPetitions = async(data) =>{
                                                               }]
                                                 }]
 
+        //console.log(personObj)
         if(personObj['firstName'] != "firstName" && personObj["firstName"] != "" && personObj ['firstName'] != undefined){
             peopleObjs.push(personObj)
         }
     }
+
+    console.log(peopleObjs)
 
     var checkResults = await checkExisting(peopleObjs)
 
@@ -299,6 +307,7 @@ const uploadPetitions = async(data) =>{
     var fail = 0
     var success = 0
 
+    
     async.eachSeries(checkResults.newPeople, function(newPerson, next){
 
         let addressString = ""

@@ -24,3 +24,7 @@ var TextContactHistorySchema = new Schema(
 
 //Export model
 module.exports = mongoose.model('TextContactHistory', TextContactHistorySchema);
+
+//Identified
+//Refused
+//Impression
