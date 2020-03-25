@@ -93,12 +93,32 @@ const lockNewPeople = async(detail) =>{
                 }
 
                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
-
+/*
                     searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
                                                         {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}}]},
                                                {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
                                                        {"petitionContactHistory.identified": true}]}
                                                ]
+
+*/
+
+                    searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                               {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                               {"canvassContactHistory.refused": {$ne: true}}
+                                            
+                                            ]},
+                                               
+                                       {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                               {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                               {"petitionContactHistory.refused": {$ne: true}}
+                                            
+                                            ]},
+                                        {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                            {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                            {"phonebankContactHistory.refused": {$ne: true}}
+                                         
+                                         ]}
+                                       ]
                 }
             }                                                             
         }
@@ -253,8 +273,17 @@ const loadLockedPeople = async(detail) =>{
 
 const getRespondedPeople = async(detail) =>{
 
+    if(detail.orgLevel === "ADMINISTRATOR"){
+        var people = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, textReceived: true, complete: false }}});
+
+
+    }else{
+        var people = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: false }}});
+
+    }
+
     //var completePeople = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: false }}}).limit(5);   
-    var people = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: false }}});
+    
     var peopleNames = people.map(x => {return {_id: x._id, firstName: x.firstName, lastName: x.lastName, textContactHistory: x.textContactHistory, phones: x.phones}})
     return peopleNames
 }
@@ -357,6 +386,8 @@ const receiveTexts = async(incoming) =>{
     var outgoingPhoneNum = incoming.To;
 
     try{
+
+        console.log(incoming)
 
         var activeActivityID = ""
 
