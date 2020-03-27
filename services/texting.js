@@ -25,14 +25,12 @@ const resetTextBank = async(detail) =>{
 const lockNewPeople = async(detail) =>{
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
 
-    var searchParameters = {$or: [{"textContactHistory": {$size: 0}}, 
-                                  {"textContactHistory": {$not: {$elemMatch: {activityID : detail.activityID}}}}
-                                 ],
-                                 
-                                 "preferredMethodContact": {$not: {$elemMatch: {method: "PHONE"}}, $not: {$elemMatch: {method: "EMAIL"}}},
-                                 "phones.0": {$exists: true, $ne: ""},
-                                 "textable": {$ne: "FALSE"}
-                                 
+    var searchParameters = {
+                            "textContactHistory": {$not: {$elemMatch: {activityID : detail.activityID}}},     
+                            "preferredMethodContact": {$not: {$elemMatch: {method: "PHONE"}}, $not: {$elemMatch: {method: "EMAIL"}}},
+                            "phones.0": {$exists: true, $ne: ""},
+                            "textable": {$ne: "FALSE"},
+                            "phones": {$not: {$regex: "-"}}     
                             }
 
     
