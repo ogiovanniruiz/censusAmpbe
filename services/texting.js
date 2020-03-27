@@ -25,17 +25,14 @@ const resetTextBank = async(detail) =>{
 const lockNewPeople = async(detail) =>{
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
 
-    var searchParameters = {$or: [{"textContactHistory": {$size: 0}}, 
-                                  {"textContactHistory": {$not: {$elemMatch: {activityID : detail.activityID}}}}
-                                 ],
-                                 
+    var searchParameters = {
+                                 "textContactHistory": {$not: {$elemMatch: {activityID : detail.activityID}}},     
                                  "preferredMethodContact": {$not: {$elemMatch: {method: "PHONE"}}, $not: {$elemMatch: {method: "EMAIL"}}},
                                  "phones.0": {$exists: true, $ne: ""},
-                                 "textable": {$ne: "FALSE"}
-                                 
+                                 "textable": {$ne: "FALSE"},
+                                 "phones": {$not: {$regex: "-"}}
                             }
 
-    
     var targetCoordinates = []
     var hasQueries = false;
  
@@ -93,32 +90,25 @@ const lockNewPeople = async(detail) =>{
                 }
 
                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
-/*
-                    searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                                        {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}}]},
-                                               {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                                       {"petitionContactHistory.identified": true}]}
-                                               ]
 
-*/
 
                     searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                               {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                                               {"canvassContactHistory.refused": {$ne: true}}
-                                            
-                                            ]},
+                                                       {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                       {"canvassContactHistory.refused": {$ne: true}}
+                                                      ]},
                                                
-                                       {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                               {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                                               {"petitionContactHistory.refused": {$ne: true}}
-                                            
-                                            ]},
-                                        {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                            {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                                            {"phonebankContactHistory.refused": {$ne: true}}
-                                         
-                                         ]}
-                                       ]
+                                                {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                                        {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                        {"petitionContactHistory.refused": {$ne: true}}
+                                                       ]},
+
+                                                {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                                        {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                        {"phonebankContactHistory.refused": {$ne: true}}
+                                                        ]}    
+                                            ]
+
+                
                 }
             }                                                             
         }
@@ -267,8 +257,11 @@ const getTextMetaData = async(detail) =>{
 
 const loadLockedPeople = async(detail) =>{
 
-    var people = await Person.find({"textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textSent: false }}}).limit(10); 
-    return people
+    var people = await Person.find({"textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textSent: false }}, "textable": {$ne: "FALSE"}, "phones": {$not: {$regex: "-"}}}).limit(10); 
+    const result = people.filter(person => person.phones[0].length === 10);
+    console.log(result)
+    
+    return result
 }
 
 const getRespondedPeople = async(detail) =>{
@@ -375,6 +368,7 @@ const sendText = async(detail) =>{
         return returnedData
 
     } catch (error){
+        console.log("HAPPENING HERE")
         console.log(error)
     }
 }
