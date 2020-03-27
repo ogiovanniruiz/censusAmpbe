@@ -80,22 +80,10 @@ const getHouseHold = async(detail) => {
                                                        {"petitionContactHistory.refused": {$ne: true}}
                                                     
                                                     ]},
-                                                {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                                    {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                                                    {"phonebankContactHistory.refused": {$ne: true}}
-                                                 
-                                                 ]}
+
                                                ]
 
-                    if(targets[i].properties.queries[j].subParam != "NONRESPONSE"){
-                        searchParameters["phonebankContactHistory"] = {$not: {$elemMatch: {campaignID: detail.campaignID}}}
-
-                    }else{
-                        searchParameters["phonebankContactHistory"] = {$not: {$elemMatch: {identified: true}}}
-                        searchParameters["canvassContactHistory"] = {$not: {$elemMatch: {identified: true}}}
-                        searchParameters["petitionContactHistory"] = {$not: {$elemMatch: {identified: true}}}
-                    }
-                
+                    searchParameters["phonebankContactHistory"] = {$not: {$elemMatch: {campaignID: detail.campaignID}}}
                 }
             }                                                             
         }
@@ -108,10 +96,11 @@ const getHouseHold = async(detail) => {
         searchParameters['creationInfo.regType'] = "VOTERFILE"
     }
 
-    //console.log(searchParameters)
+    console.log(searchParameters)
 
     var houseHold = await Person.aggregate([ 
         {$match: searchParameters},
+        {$limit: 3},
         {$group : { _id : {streetNum: "$address.streetNum",
                            suffix: "$address.suffix",
                            prefix:  "$address.prefix",
@@ -293,12 +282,6 @@ const nonResponse = async(detail)=>{
         refused = true;
     }
 
-    /*
-    var idHistory = {scriptID: detail.script._id,
-                    idBy: detail.userID,
-                    idResponses: detail.idResponses,
-                    locationIdentified: detail.location}
-*/
     if(person.phonebankContactHistory.length === 0){
 
         var phonebankContactHistory = {
