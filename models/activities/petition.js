@@ -7,7 +7,8 @@ var PetitionSchema = new Schema(
   {
     activityMetaData: MetaData.schema,
     url: {type: String},
-    swordForm: {}
+    swordForm: {},
+    swordRecordRawId: {type: String}
   }
 );
 

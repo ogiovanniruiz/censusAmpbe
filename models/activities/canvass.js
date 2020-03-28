@@ -6,7 +6,8 @@ var MetaData = require('./metaData.js')
 var CanvassSchema = new Schema(
   {
     activityMetaData: MetaData.schema,
-    swordForm: {}
+    swordForm: {},
+    swordRecordRawId: {type: String}
   }
 );
 

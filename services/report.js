@@ -380,16 +380,6 @@ const getPetitionSummaryReport = async(details) =>{
                 'preserveNullAndEmptyArrays': false
             }
         }, {
-            '$match': {
-                'petitionContactHistory.campaignID': details.campaignID,
-                'petitionContactHistory.orgID': details.orgID
-            }
-        }, {
-            '$unwind': {
-                'path': '$petitionContactHistory.idHistory',
-                'preserveNullAndEmptyArrays': false
-            }
-        }, {
             '$facet': {
                 'identified': [
                     {
@@ -2454,6 +2444,25 @@ const getPhonebankingUserSummaryReport = async(details) =>{
                         'phonebankContactHistory.orgID': details.orgID
                     }
                 }, {
+                    '$group': {
+                        '_id': {
+                            '$concat': [
+                                '$address.streetNum', '$address.street', '$address.suffix', '$address.city', '$address.state', '$address.zip'
+                            ]
+                        },
+                        'phonebankContactHistory': {
+                            '$push': '$phonebankContactHistory'
+                        }
+                    }
+                }, {
+                    '$project': {
+                        'phonebankContactHistory': {
+                            '$arrayElemAt': [
+                                '$phonebankContactHistory', 0
+                            ]
+                        }
+                    }
+                }, {
                     '$unwind': {
                         'path': '$phonebankContactHistory',
                         'preserveNullAndEmptyArrays': false
@@ -2615,6 +2624,25 @@ const getPhonebankingUserSummaryReport = async(details) =>{
                     '$match': {
                         'phonebankContactHistory.campaignID': details.campaignID,
                         'phonebankContactHistory.orgID': details.orgID
+                    }
+                }, {
+                    '$group': {
+                        '_id': {
+                            '$concat': [
+                                '$address.streetNum', '$address.street', '$address.suffix', '$address.city', '$address.state', '$address.zip'
+                            ]
+                        },
+                        'phonebankContactHistory': {
+                            '$push': '$phonebankContactHistory'
+                        }
+                    }
+                }, {
+                    '$project': {
+                        'phonebankContactHistory': {
+                            '$arrayElemAt': [
+                                '$phonebankContactHistory', 0
+                            ]
+                        }
                     }
                 }, {
                     '$unwind': {
