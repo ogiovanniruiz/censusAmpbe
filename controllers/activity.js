@@ -56,6 +56,15 @@ const completeActivity = async (req,res,next) =>{
     }
 }
 
+const activitySwordOutreachData = async (req,res,next) =>{
+    try{
+        res.send(await activityService.activitySwordOutreachData(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 const sendSwordOutreach = async (req,res,next) =>{
     try{
         res.send(await activityService.sendSwordOutreach(req.body))
@@ -74,4 +83,4 @@ const releaseNumber = async (req,res,next) =>{
     }
 }
 
-module.exports = {createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, sendSwordOutreach, releaseNumber};
+module.exports = {createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, activitySwordOutreachData, sendSwordOutreach, releaseNumber};
