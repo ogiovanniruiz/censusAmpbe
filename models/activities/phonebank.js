@@ -7,7 +7,8 @@ var PhonebankSchema = new Schema(
   {
     activityMetaData: MetaData.schema,
     phoneNums: [{number: {type: String}, userID: {type: String}, available: {type: Boolean, default: true}}],
-    swordForm: {}
+    swordForm: {},
+    swordRecordRawId: {type: String}
   }
 );
 

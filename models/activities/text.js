@@ -12,7 +12,8 @@ var TextSchema = new Schema(
     sendReceiverName: {type: Boolean, default: true},
     sendSenderName: {type: Boolean, default: true},
     quickResponses: [{type: String}],
-    swordForm: {}
+    swordForm: {},
+    swordRecordRawId: {type: String}
   }
 );
 
