@@ -13,6 +13,7 @@ const getHouseHold = async(detail) => {
     var searchParameters = {
                             "phones.0": {$exists: true, $ne: ""},
                             "preferredMethodContact": {$not: {$elemMatch: {method: "TEXT"}}, $not: {$elemMatch: {method: "EMAIL"}}},
+                            "phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}}
                             }
 
    var targetCoordinates = [];
@@ -45,6 +46,7 @@ const getHouseHold = async(detail) => {
             for(var j = 0; j < targets[i].properties.queries.length; j++){
                 if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
                     searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
+                    console.log(detail.campaignID)
                     searchParameters["phonebankContactHistory"] = {$not: {$elemMatch: {campaignID: detail.campaignID}}}
                 }
 

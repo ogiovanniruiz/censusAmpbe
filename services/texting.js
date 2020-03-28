@@ -30,7 +30,10 @@ const lockNewPeople = async(detail) =>{
                             "preferredMethodContact": {$not: {$elemMatch: {method: "PHONE"}}, $not: {$elemMatch: {method: "EMAIL"}}},
                             "phones.0": {$exists: true, $ne: ""},
                             "textable": {$ne: "FALSE"},
-                            "phones": {$not: {$regex: "-"}}     
+                            "phones": {$not: {$regex: "-"}}, 
+                            "phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}}
+                            //"phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5dbb506c24fad5001d9c9886"}}}
+                            
                             }
 
     var targetCoordinates = []
@@ -258,10 +261,9 @@ const getTextMetaData = async(detail) =>{
 const loadLockedPeople = async(detail) =>{
 
     var people = await Person.find({"textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textSent: false }}, "textable": {$ne: "FALSE"}, "phones": {$not: {$regex: "-"}}}).limit(10); 
-    const result = people.filter(person => person.phones[0].length === 10);
-    console.log(result)
-    
-    return result
+    //const result = people.filter(person => person.phones[0].length === 10);
+    //console.log(result)
+    return people
 }
 
 const getRespondedPeople = async(detail) =>{
@@ -368,8 +370,14 @@ const sendText = async(detail) =>{
         return returnedData
 
     } catch (error){
-        console.log("HAPPENING HERE")
-        console.log(error)
+
+        for (var i = 0; i < person.textContactHistory.length; i++) {
+            if(person.textContactHistory[i].activityID === detail.activityID){
+                person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: error.message, error: error.message})
+                person.textContactHistory[i].textSent = true
+            }
+        }
+        return person.save()
     }
 }
 
