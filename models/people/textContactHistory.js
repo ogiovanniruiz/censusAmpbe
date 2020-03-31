@@ -13,7 +13,7 @@ var TextContactHistorySchema = new Schema(
         outgoingPhoneNum: {type: String},
         identified: {type: Boolean, default: false},
         refused: {type: Boolean, default: false},
-        nonResponse: {type: Boolean, deault: false},
+        nonResponse: {type: Boolean, default: false},
         complete: {type: Boolean, default: false},
         textReceived: {type: Boolean, default: false},
         textConv: [{origin: {type: String, enum: ['VOLUNTEER', 'VOTER']}, msg: {type: String}, error: {type: String, default:"NONE"}}],

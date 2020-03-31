@@ -11,5 +11,6 @@ router.post('/completeActivity', activityController.completeActivity)
 router.post('/activitySwordOutreachData', activityController.activitySwordOutreachData)
 router.post('/sendSwordOutreach', activityController.sendSwordOutreach)
 router.post('/releaseNumber', activityController.releaseNumber)
+router.post('/resetActivity', activityController.resetActivity)
 
 module.exports = router;

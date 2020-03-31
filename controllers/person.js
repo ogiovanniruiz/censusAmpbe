@@ -91,6 +91,16 @@ const assignTags = async(req,res, next) => {
     }
 }
 
+const downloadContactHistory = async(req,res, next) => {
+    try {
+        res.send(await personService.downloadContactHistory(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
 
 
-module.exports = {getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers, runMatch, finishIdentification, assignPreferredMethodOfContact, assignTags};
+
+
+module.exports = {downloadContactHistory, getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers, runMatch, finishIdentification, assignPreferredMethodOfContact, assignTags};

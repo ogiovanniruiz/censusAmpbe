@@ -11,9 +11,10 @@ var PhonebankContactHistorySchema = new Schema(
         identified: {type: Boolean, default: false},
         houseHoldComplete: {type: Boolean, default: false},
         refused: {type: Boolean, default: false},
-        nonResponse: {type: Boolean, deault: false},
+        nonResponse: {type: Boolean, default: false},
         idHistory: [idHistory.schema],
-        reserved: {type: String}
+        lockedBy: {type: String},
+        impression: {type: Boolean, default: false}
     }
 );
 
