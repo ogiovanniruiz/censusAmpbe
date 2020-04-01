@@ -31,6 +31,7 @@ const lockNewPeople = async(detail) =>{
                             "phones.0": {$exists: true, $ne: ""},
                             "textable": {$ne: "FALSE"},
                             "phones": {$not: {$regex: "-"}}, 
+                            "address.blockgroupID": {$exists: true},
                             "phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}}
                             //"phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5dbb506c24fad5001d9c9886"}}}
                             

@@ -147,6 +147,7 @@ const lockHouseHold = async(detail)=>{
                             "phones.0": {$exists: true, $ne: ""},
                             "preferredMethodContact": {$not: {$elemMatch: {method: "TEXT"}}, $not: {$elemMatch: {method: "EMAIL"}}},
                             "phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}},
+                            "address.blockgroupID": {$exists: true},
                             "phonebankContactHistory" : {$not: {$elemMatch: {activityID: detail.activityID}}}
                             }
 

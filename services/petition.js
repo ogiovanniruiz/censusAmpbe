@@ -120,8 +120,13 @@ const createPerson = async(detail) =>{
             });
 
             var tract = await CensusTract.findOne({"geometry": {$geoIntersects: { $geometry: person.address.location}}})
-            var geoid = tract.porperties.geoid
-            person.address.blockgroupID = geoid
+
+            if(tract){
+                var geoid = tract.properties.geoid
+                person.address.blockgroupID = geoid
+
+            }
+
             person.save()
 
            return {status: "NEWPERSON", person: person};
@@ -333,8 +338,11 @@ const uploadPetitions = async(data) =>{
                     let person = await Person.findOne({"_id": newPerson._id})
                     person.address.location = {coordinates: [res[0].longitude, res[0].latitude], type: "Point"}
                     var tract = await CensusTract.findOne({"geometry": {$geoIntersects: { $geometry: person.address.location}}})
-                    var geoid = tract.porperties.geoid
-                    person.address.blockgroupID = geoid
+                    if(tract){
+                        var geoid = tract.properties.geoid
+                        person.address.blockgroupID = geoid
+
+                    }
                     person.save()
                 }
                 else {
