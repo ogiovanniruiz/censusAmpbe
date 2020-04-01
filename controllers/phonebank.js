@@ -1,8 +1,8 @@
 const phonebankService = require('../services/phonebank.js')
 
-const getHouseHold = async (req,res,next) =>{
+const lockHouseHold = async (req,res,next) =>{
     try {
-        res.send(await phonebankService.getHouseHold(req.body))
+        res.send(await phonebankService.lockHouseHold(req.body))
     } catch(e) {
         console.log(e.message)
         res.sendStatus(500)
@@ -102,7 +102,7 @@ const getLockedHouseHold  = async (req, res, next) => {
 module.exports = {
                 getNumCompleted,
                 getLockedHouseHold,
-                getHouseHold, 
+                lockHouseHold, 
                  getTwilioToken, 
                  call, 
                  editPerson, 

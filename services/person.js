@@ -198,6 +198,14 @@ const uploadMembers = async(detail) =>{
                     
                     let person = await Person.findOne({"_id": newPerson._id})
                     person.address.location = {coordinates: [res[0].longitude, res[0].latitude], type: "Point"}
+                    var tract = await CensusTract.findOne({"geometry": {$geoIntersects: { $geometry: person.address.location}}})
+
+                    if(tract){
+                        var geoid = tract.properties.geoid
+                        person.address.blockgroupID = geoid
+
+                    }
+
                     person.save()
                 }
                 else {
@@ -518,8 +526,22 @@ const assignTags = async(detail) =>{
     return person.save()
 }
 
+const downloadContactHistory = async(detail) =>{
+    var searchParams = {"firstName": {$exists: true}, "lastName": {$exists: true}}
+    searchParams['$or'] = [{"canvassContactHistory.orgID": detail.orgID}, 
+                           {"petitionContactHistory.orgID": detail.orgID},
+                           {"phonebankContactHistory.orgID": detail.orgID}, 
+                           {"textContactHistory.orgID": detail.orgID}
+                        ]
 
-module.exports = {getHouseHold, 
+    var people = await Person.find(searchParams, { firstName: 1, lastName: 1, phones: 1, emails: 1, _id: 0}).lean()
+    return people
+}
+
+
+
+module.exports = {downloadContactHistory,
+                    getHouseHold, 
                   editPerson, 
                   createPerson, 
                   idPerson, 

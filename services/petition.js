@@ -5,6 +5,7 @@ var jwt = require('jsonwebtoken');
 var Campaign = require('../models/campaigns/campaign') 
 var Rdr  = require('../models/activities/rdr')
 var async = require('async');
+var CensusTract = require('../models/censustracts/censustract');
 
 const Geocodio = require('geocodio-library-node');
 const geocodio = new Geocodio('a6212ea62222f065a52228c6e5fc56ec8e5685f');
@@ -113,11 +114,20 @@ const createPerson = async(detail) =>{
                 if(err) {console.log(err)}
                 if(res) {
                     if(res[0]) {
-                        person.address.location = {coordinates: [res[0].longitude, res[0].latitude], type: "Point"}
-                        person.save()                        
+                        person.address.location = {coordinates: [res[0].longitude, res[0].latitude], type: "Point"}                
                     }
                 }
             });
+
+            var tract = await CensusTract.findOne({"geometry": {$geoIntersects: { $geometry: person.address.location}}})
+
+            if(tract){
+                var geoid = tract.properties.geoid
+                person.address.blockgroupID = geoid
+
+            }
+
+            person.save()
 
            return {status: "NEWPERSON", person: person};
         }
@@ -236,14 +246,12 @@ const uploadPetitions = async(data) =>{
             }
         }
         
-        for(var j = 0; j < headers.length; j++){  
-            //console.log(headers[j] === " firstName")     
+        for(var j = 0; j < headers.length; j++){      
             if(headers[j] === "county") {
                 personObj["address"]["county"] = currentLine[j].toUpperCase()
             }else if (headers[j] === "phones"){
                 if(currentLine[j]){personObj[headers[j]] = currentLine[j].replace("(", "").replace(")", "").replace("-","").replace("-","")}
             }else if(headers[j] === "firstName"){
-                console.log(currentLine[j])
                 personObj["firstName"] = currentLine[j]
             }else if(headers[j] === "middleName"){
                 personObj["middleName"] = currentLine[j]
@@ -288,15 +296,12 @@ const uploadPetitions = async(data) =>{
                                                               }]
                                                 }]
 
-        //console.log(personObj)
         if(personObj['firstName'] != "firstName" && personObj["firstName"] != "" && personObj ['firstName'] != undefined){
             peopleObjs.push(personObj)
         }
     }
 
-    console.log(peopleObjs)
-
-    var checkResults = await checkExisting(peopleObjs)
+    var checkResults = await checkExisting(peopleObjs, campaignID, orgID, activityID, isoDate, scriptID, userID)
 
     for(var j = 0; j < checkResults.newPeople.length; j++){
         var person = new Person(checkResults.newPeople[j])
@@ -332,6 +337,12 @@ const uploadPetitions = async(data) =>{
                     
                     let person = await Person.findOne({"_id": newPerson._id})
                     person.address.location = {coordinates: [res[0].longitude, res[0].latitude], type: "Point"}
+                    var tract = await CensusTract.findOne({"geometry": {$geoIntersects: { $geometry: person.address.location}}})
+                    if(tract){
+                        var geoid = tract.properties.geoid
+                        person.address.blockgroupID = geoid
+
+                    }
                     person.save()
                 }
                 else {
@@ -343,10 +354,10 @@ const uploadPetitions = async(data) =>{
         });
     })
 
-    return {msg: "PROCESSING",  existingPeople: checkResults.existingPeople, newPeople: checkResults.newPeople.length}
+    return {msg: "PROCESSING",  existingPeople: checkResults.existingPeople.length, newPeople: checkResults.newPeople.length}
 }
 
-const checkExisting = async(people) =>{
+const checkExisting = async(people, campaignID, orgID, activityID, isoDate, scriptID, userID) =>{
 
     var existingPeople = [];
     var newPeople = [];
@@ -356,8 +367,18 @@ const checkExisting = async(people) =>{
         let existingPerson = await Person.findOne({"firstName": people[i].firstName, "middleName": people[i].middleName, "lastName": people[i].lastName})
     
         if(existingPerson){
-            //if(existingPerson.phones.length > 0){existingPeople.push(existingPerson)
-            //}else{newPeople.push(people[i])}
+            existingPerson.petitionContactHistory.push({campaignID: campaignID, 
+                orgID: orgID, 
+                activityID: activityID, 
+                identified: true,
+                idHistory: [{date: isoDate, 
+                             scriptID: scriptID, 
+                             idBy: userID, 
+                             idResponses: [{question: "Complete the census form", responses: "Yes", idType: "POSITIVE"},
+                                           {question: "Tell friends and family about census 2020", responses: "Yes", idType: "POSITIVE"}]
+                            }]
+              })
+           existingPerson.save()
            existingPeople.push(existingPerson)
         }else{
             newPeople.push(people[i])

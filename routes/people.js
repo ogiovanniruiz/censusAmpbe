@@ -15,5 +15,6 @@ router.post('/runMatch', [upload.any(),personController.runMatch])
 router.post('/finishIdentification', personController.finishIdentification)
 router.post('/assignPreferredMethodOfContact', personController.assignPreferredMethodOfContact)
 router.post('/assignTags', personController.assignTags)
+router.post('/downloadContactHistory', personController.downloadContactHistory)
 
 module.exports = router;

@@ -30,17 +30,17 @@ const lockNewPeople = async(detail) =>{
                             "preferredMethodContact": {$not: {$elemMatch: {method: "PHONE"}}, $not: {$elemMatch: {method: "EMAIL"}}},
                             "phones.0": {$exists: true, $ne: ""},
                             "textable": {$ne: "FALSE"},
-                            "phones": {$not: {$regex: "-"}}     
+                            "phones": {$not: {$regex: "-"}}, 
+                            "address.blockgroupID": {$exists: true},
+                            "phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}}
+                            //"phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5dbb506c24fad5001d9c9886"}}}
+                            
                             }
 
-    
     var targetCoordinates = []
     var hasQueries = false;
  
      for(var i = 0; i < targets.length; i++){
-         //if(targets[i]['geometry']){ targetCoordinates.push(targets[i]['geometry']['coordinates'][0])}
-        // if(targets[i].properties.queries.length > 0){hasQueries  = true;}
-
         if(targets[i]['geometry']){ 
             if(targets[i]['properties']['params']['targetType'] === "CENSUSTRACT"){
                 targetCoordinates.push(targets[i]['properties']['params']['id'])
@@ -52,8 +52,6 @@ const lockNewPeople = async(detail) =>{
      }
  
      if(targetCoordinates.length > 0){
-         //searchParameters['address.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" , 
-         //coordinates: targetCoordinates}}}
          if(targets[0]['properties']['params']['targetType'] === "CENSUSTRACT"){
             searchParameters['address.blockgroupID'] = {$in: targetCoordinates}
         }else{
@@ -91,32 +89,25 @@ const lockNewPeople = async(detail) =>{
                 }
 
                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
-/*
-                    searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                                        {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}}]},
-                                               {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                                       {"petitionContactHistory.identified": true}]}
-                                               ]
 
-*/
 
                     searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                               {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                                               {"canvassContactHistory.refused": {$ne: true}}
-                                            
-                                            ]},
+                                                       {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                       {"canvassContactHistory.refused": {$ne: true}}
+                                                      ]},
                                                
-                                       {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                               {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                                               {"petitionContactHistory.refused": {$ne: true}}
-                                            
-                                            ]},
-                                        {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                            {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                                            {"phonebankContactHistory.refused": {$ne: true}}
-                                         
-                                         ]}
-                                       ]
+                                                {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                                        {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                        {"petitionContactHistory.refused": {$ne: true}}
+                                                       ]},
+
+                                                {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                                        {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                        {"phonebankContactHistory.refused": {$ne: true}}
+                                                        ]}    
+                                            ]
+
+                
                 }
             }                                                             
         }
@@ -163,109 +154,9 @@ const allocatePhoneNumber = async(detail) =>{
     }
 }
 
-/*
-const getTextMetaData = async(detail) =>{
-
-    var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
-    var searchParametersTotal = {"phones": { $exists: true, $not: {$size: 0}}}
-/*
-    for(var i = 0; i < targets.length; i++){
-        if(targets[i].properties.params.targetType === "ORGMEMBERS"){
-            searchParametersTotal['membership.orgID'] = targets[i].properties.params.id
-        
-        }else if (targets[i].properties.params.targetType === "SCRIPT"){
-
-            searchParametersTotal['$or'] = [{'phonebankContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
-                                                                                                                 idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}, 
-                                            {'canvassContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
-                                                                                                               idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}},
-                                            {'textContactHistory': {$elemMatch: {"idHistory": {$elemMatch: {scriptID: targets[i].properties.params.id,
-                                                                                                            idResponses: {$elemMatch: {idType: targets[i].properties.params.subParam}}}}}}}]
-        }
-    }
-
-    var targetCoordinates = []
-
-    var hasQueries = false;
- 
-     for(var i = 0; i < targets.length; i++){
-         if(targets[i]['geometry']){ targetCoordinates.push(targets[i]['geometry']['coordinates'][0])}
-         if(targets[i].properties.queries.length > 0){hasQueries  = true;}
-     }
- 
-     if(targetCoordinates.length > 0){
-        searchParametersTotal['address.location'] = {$geoIntersects: {$geometry: {type: "MultiPolygon" , 
-         coordinates: targetCoordinates}}}
-     }
- 
-     if(hasQueries){
-         for(var i = 0; i < targets.length; i++){                                   
-             for(var j = 0; j < targets[i].properties.queries.length; j++){
-                 if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
-                    searchParametersTotal['membership.orgID'] = targets[i].properties.queries[j].param
-                 }
-                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
- 
-                 }
- 
-                 if(targets[i].properties.queries[j].queryType === "TAGS"){
- 
-                 }
-             }                                                             
-         }
-     }
-
-    var totalPeople = await Person.find(searchParametersTotal).count();
-
-    const searchParametersSent = searchParametersTotal
-    const searchParametersResponded = searchParametersTotal
-    const searchParametersIdentified = searchParametersTotal
-    const searchParametersPositive = searchParametersTotal
-    const searchParametersNeutral = searchParametersTotal
-    const searchParametersNegative = searchParametersTotal
-    const searchParametersRefused = searchParametersTotal
-
-    searchParametersSent["textContactHistory"] =  {$elemMatch: {textSent : true, activityID : detail.activityID}}
-    var textsSent = await Person.find(searchParametersSent).count()
-
-    searchParametersResponded["textContactHistory"] = {$elemMatch: {textReceived : true, activityID : detail.activityID}}
-    var textsResponded = await Person.find(searchParametersResponded).count()
-
-    searchParametersIdentified["textContactHistory"] = {$elemMatch: {identified : true, activityID : detail.activityID}}
-    var identified = await Person.find(searchParametersIdentified).count()
-
-    searchParametersPositive['textContactHistory']= {$elemMatch: {activityID : detail.activityID,
-                                                                 "idHistory": {$elemMatch: {idResponses: {$elemMatch: {idType: "POSITIVE"}}}}}}
-    var positives = await Person.find(searchParametersPositive).count()
-
-    searchParametersNegative['textContactHistory']= {$elemMatch: {activityID : detail.activityID,
-                                                                 "idHistory": {$elemMatch: {idResponses: {$elemMatch: {idType: "NEGATIVE"}}}}}}
-    var negatives = await Person.find(searchParametersNegative).count()
-    
-    searchParametersNeutral['textContactHistory']= {$elemMatch: {activityID : detail.activityID,
-                                                                  "idHistory": {$elemMatch: {idResponses: {$elemMatch: {idType: "NEUTRAL"}}}}}}
-    var neutrals = await Person.find(searchParametersNeutral).count()
-
-    searchParametersRefused['textContactHistory']= {$elemMatch: {activityID : detail.activityID,
-                                                                  "idHistory": {$elemMatch: {idResponses: {$elemMatch: {idType: "REFUSED"}}}}}}
-    var refused = await Person.find(searchParametersRefused).count()
-
-
-    return {total: totalPeople, 
-            textsSent: textsSent, 
-            textsResponded: textsResponded, 
-            identified: identified, 
-            positives: positives,
-            neutrals: neutrals,
-            negatives: negatives,
-            refused: refused}
-
-}
-*/
-
 const loadLockedPeople = async(detail) =>{
 
-    var people = await Person.find({"textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textSent: false }}}).limit(10); 
+    var people = await Person.find({"textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textSent: false }}, "textable": {$ne: "FALSE"}, "phones": {$not: {$regex: "-"}}}).limit(10); 
     return people
 }
 
@@ -273,14 +164,9 @@ const getRespondedPeople = async(detail) =>{
 
     if(detail.orgLevel === "ADMINISTRATOR"){
         var people = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, textReceived: true, complete: false }}});
-
-
     }else{
         var people = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: false }}});
-
     }
-
-    //var completePeople = await Person.find({ "textContactHistory": { $elemMatch: {activityID: detail.activityID, lockedBy: detail.userID, textReceived: true, complete: false }}}).limit(5);   
     
     var peopleNames = people.map(x => {return {_id: x._id, firstName: x.firstName, lastName: x.lastName, textContactHistory: x.textContactHistory, phones: x.phones}})
     return peopleNames
@@ -373,7 +259,14 @@ const sendText = async(detail) =>{
         return returnedData
 
     } catch (error){
-        console.log(error)
+
+        for (var i = 0; i < person.textContactHistory.length; i++) {
+            if(person.textContactHistory[i].activityID === detail.activityID){
+                person.textContactHistory[i].textConv.push({origin: "VOLUNTEER", msg: error.message, error: error.message})
+                person.textContactHistory[i].textSent = true
+            }
+        }
+        return person.save()
     }
 }
 

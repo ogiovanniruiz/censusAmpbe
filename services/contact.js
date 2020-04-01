@@ -32,8 +32,9 @@ const sendEmail = async(detail) => {
                       + "Login Email: " + detail.userProfile.user.loginEmail + "<br>"
                       + "Org Name: " + org.name + "<br>"
                       + "Campaign Name: " + campaign.name + "<br>" 
-                      + "Message: " + detail.message
-                      + "Is a Bug: " + detail.isBug
+                      + "Message: " + detail.message + "<br>"
+                      + "Is a Bug: " + detail.isBug + "<br>"
+                      + "HouseHold: " + JSON.stringify(detail.houseHold)
             };
 
             transporter.sendMail(multiMailOptions, (error, info) => {
@@ -53,8 +54,9 @@ const sendEmail = async(detail) => {
               + "Login Email: " + detail.userProfile.user.loginEmail + "<br>"
               + "Org Name: " + org.name + "<br>"
               + "Campaign Name: " + campaign.name + "<br>" 
-              + "Message: " + detail.message
-              + "Is a Bug: " + detail.isBug
+              + "Message: " + detail.message + "<br>"
+              + "Is a Bug: " + detail.isBug + "<br>"
+              + "HouseHold: " + JSON.stringify(detail.houseHold)
     };
 
     transporter.sendMail(mailOptions, (error, info) => {

@@ -4,6 +4,42 @@ var CensusTract = require('../models/censustracts/censustract');
 var People = require ('../models/people/person');
 const axios = require('axios');
 
+
+const resetActivity = async(detail) =>{
+
+    if(detail.activityType === "Texting"){
+        var people = await People.find({"textContactHistory": { $elemMatch: {activityID: detail.activityID}}});
+        
+        for(var i = 0; i <  people.length; i++){
+            people[i].textable = '?'
+    
+            for(var j = 0; j < people[i].textContactHistory.length; j++){
+                if(people[i].textContactHistory[j].activityID === detail.activityID){
+                    people[i].textContactHistory.splice(j,1)
+                    people[i].save()
+                }
+            }
+        }
+
+        return people
+
+    }else if(detail.activityType === "Phonebank"){
+        var people = await People.find({"phonebankContactHistory": { $elemMatch: {activityID: detail.activityID}}});
+        for(var i = 0; i <  people.length; i++){
+    
+            for(var j = 0; j < people[i].phonebankContactHistory.length; j++){
+                if(people[i].phonebankContactHistory[j].activityID === detail.activityID){
+                    people[i].phonebankContactHistory.splice(j,1)
+                    people[i].save()
+                }
+            }
+        }
+
+        return people
+    }
+
+}
+
 const createActivity = async(detail) => {
 
     function format(value) {
@@ -651,4 +687,4 @@ const releaseNumber = async(detail) =>{
 
 }
 
-module.exports = {createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, activitySwordOutreachData, sendSwordOutreach, releaseNumber}
+module.exports = {resetActivity, createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, activitySwordOutreachData, sendSwordOutreach, releaseNumber}
