@@ -2212,6 +2212,39 @@ const getPhonebankingSummaryReport = async(details) =>{
                 'phonebankContactHistory.orgID': details.orgID
             }
         }, {
+            '$addFields': {
+                'address.streetNum': {
+                    '$ifNull': [
+                        '$address.streetNum', 'a'
+                    ]
+                },
+                'address.street': {
+                    '$ifNull': [
+                        '$address.street', 'a'
+                    ]
+                },
+                'address.suffix': {
+                    '$ifNull': [
+                        '$address.suffix', 'a'
+                    ]
+                },
+                'address.unit': {
+                    '$ifNull': [
+                        '$address.unit', 'a'
+                    ]
+                },
+                'address.city': {
+                    '$ifNull': [
+                        '$address.city', 'a'
+                    ]
+                },
+                'address.zip': {
+                    '$ifNull': [
+                        '$address.zip', 'a'
+                    ]
+                }
+            }
+        }, {
             '$group': {
                 '_id': {
                     '$concat': [
@@ -2750,6 +2783,39 @@ const getPhonebankingUserSummaryReport = async(details) =>{
                         'phonebankContactHistory.orgID': details.orgID
                     }
                 }, {
+                    '$addFields': {
+                        'address.streetNum': {
+                            '$ifNull': [
+                                '$address.streetNum', 'a'
+                            ]
+                        },
+                        'address.street': {
+                            '$ifNull': [
+                                '$address.street', 'a'
+                            ]
+                        },
+                        'address.suffix': {
+                            '$ifNull': [
+                                '$address.suffix', 'a'
+                            ]
+                        },
+                        'address.unit': {
+                            '$ifNull': [
+                                '$address.unit', 'a'
+                            ]
+                        },
+                        'address.city': {
+                            '$ifNull': [
+                                '$address.city', 'a'
+                            ]
+                        },
+                        'address.zip': {
+                            '$ifNull': [
+                                '$address.zip', 'a'
+                            ]
+                        }
+                    }
+                }, {
                     '$group': {
                         '_id': {
                             '$concat': [
@@ -3055,6 +3121,39 @@ const getPhonebankingUserSummaryReport = async(details) =>{
                     '$match': {
                         'phonebankContactHistory.campaignID': details.campaignID,
                         'phonebankContactHistory.orgID': details.orgID
+                    }
+                }, {
+                    '$addFields': {
+                        'address.streetNum': {
+                            '$ifNull': [
+                                '$address.streetNum', 'a'
+                            ]
+                        },
+                        'address.street': {
+                            '$ifNull': [
+                                '$address.street', 'a'
+                            ]
+                        },
+                        'address.suffix': {
+                            '$ifNull': [
+                                '$address.suffix', 'a'
+                            ]
+                        },
+                        'address.unit': {
+                            '$ifNull': [
+                                '$address.unit', 'a'
+                            ]
+                        },
+                        'address.city': {
+                            '$ifNull': [
+                                '$address.city', 'a'
+                            ]
+                        },
+                        'address.zip': {
+                            '$ifNull': [
+                                '$address.zip', 'a'
+                            ]
+                        }
                     }
                 }, {
                     '$group': {
