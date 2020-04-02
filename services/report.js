@@ -2238,6 +2238,11 @@ const getPhonebankingSummaryReport = async(details) =>{
                         '$address.city', 'a'
                     ]
                 },
+                'address.state': {
+                    '$ifNull': [
+                        '$address.state', 'a'
+                    ]
+                },
                 'address.zip': {
                     '$ifNull': [
                         '$address.zip', 'a'
@@ -2809,6 +2814,11 @@ const getPhonebankingUserSummaryReport = async(details) =>{
                                 '$address.city', 'a'
                             ]
                         },
+                        'address.state': {
+                            '$ifNull': [
+                                '$address.state', 'a'
+                            ]
+                        },
                         'address.zip': {
                             '$ifNull': [
                                 '$address.zip', 'a'
@@ -3147,6 +3157,11 @@ const getPhonebankingUserSummaryReport = async(details) =>{
                         'address.city': {
                             '$ifNull': [
                                 '$address.city', 'a'
+                            ]
+                        },
+                        'address.state': {
+                            '$ifNull': [
+                                '$address.state', 'a'
                             ]
                         },
                         'address.zip': {
