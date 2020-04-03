@@ -2989,7 +2989,19 @@ const getPhonebankingUserSummaryReport = async(details) =>{
                     }
                 }, {
                     '$project': {
-                        '_id': 1,
+                        '_id': {
+                            '$arrayElemAt': [
+                                {
+                                    '$arrayElemAt': [
+                                        {
+                                            '$arrayElemAt': [
+                                                '$record.v.idHistory.idBy', 0
+                                            ]
+                                        }, 0
+                                    ]
+                                }, 0
+                            ]
+                        },
                         'records': {
                             '$arrayElemAt': [
                                 {
@@ -2998,26 +3010,32 @@ const getPhonebankingUserSummaryReport = async(details) =>{
                                     ]
                                 }, 0
                             ]
+                        },
+                        'date': {
+                            '$arrayElemAt': [
+                                {
+                                    '$arrayElemAt': [
+                                        {
+                                            '$arrayElemAt': [
+                                                '$record.v.idHistory.date', 0
+                                            ]
+                                        }, 0
+                                    ]
+                                }, 0
+                            ]
                         }
                     }
                 }, {
                     '$project': {
-                        'idHistory': {
-                            '$arrayElemAt': [
-                                '$records.idHistory', 0
-                            ]
-                        },
-                        'records': 1
-                    }
-                }, {
-                    '$project': {
-                        '_id': '$idHistory.idBy',
+                        '_id': 1,
+                        'records': 1,
                         'date': {
-                            '$substr': [
-                                '$idHistory.date', 0, 10
-                            ]
-                        },
-                        'records': 1
+                            '$dateToString': {
+                                'format': '%Y-%m-%d',
+                                'date': '$date',
+                                'timezone': 'America/Los_Angeles'
+                            }
+                        }
                     }
                 }, {
                     '$match': {
@@ -3334,7 +3352,19 @@ const getPhonebankingUserSummaryReport = async(details) =>{
                     }
                 }, {
                     '$project': {
-                        '_id': 1,
+                        '_id': {
+                            '$arrayElemAt': [
+                                {
+                                    '$arrayElemAt': [
+                                        {
+                                            '$arrayElemAt': [
+                                                '$record.v.idHistory.idBy', 0
+                                            ]
+                                        }, 0
+                                    ]
+                                }, 0
+                            ]
+                        },
                         'records': {
                             '$arrayElemAt': [
                                 {
@@ -3344,25 +3374,6 @@ const getPhonebankingUserSummaryReport = async(details) =>{
                                 }, 0
                             ]
                         }
-                    }
-                }, {
-                    '$project': {
-                        'idHistory': {
-                            '$arrayElemAt': [
-                                '$records.idHistory', 0
-                            ]
-                        },
-                        'records': 1
-                    }
-                }, {
-                    '$project': {
-                        '_id': '$idHistory.idBy',
-                        'date': {
-                            '$substr': [
-                                '$idHistory.date', 0, 10
-                            ]
-                        },
-                        'records': 1
                     }
                 }, {
                     '$match': {
