@@ -327,6 +327,22 @@ const idPerson = async(detail)=>{
                      idResponses: detail.idResponses,
                      locationIdentified: detail.location}
 
+
+    for (var i = 0; i < person.textContactHistory.length; i++){
+        if(person.textContactHistory[i].activityID === detail.activityID){
+            person.textContactHistory[i].idHistory.push(idHistory)
+            person.textContactHistory[i].identified = true;
+            person.textContactHistory[i].complete = true;
+            person.textContactHistory[i].nonResponse = false;
+            person.textContactHistory[i].refused = false;
+            
+        }
+    }
+
+    return person.save()
+
+    /*
+
     if(person.textContactHistory.length === 0){
 
         var textContactHistory = {
@@ -343,16 +359,7 @@ const idPerson = async(detail)=>{
 
     }else{
 
-        for (var i = 0; i < person.textContactHistory.length; i++){
-            if(person.textContactHistory[i].activityID === detail.activityID){
-                person.textContactHistory[i].idHistory.push(idHistory)
-                person.textContactHistory[i].identified = true;
-                person.textContactHistory[i].complete = true;
-                person.textContactHistory[i].nonResponse = false;
-                person.textContactHistory[i].refused = false;
-                return person.save()
-            }
-        }
+
 
         var textContactHistory = {
                                         campaignID: detail.campaignID,
@@ -366,6 +373,8 @@ const idPerson = async(detail)=>{
         person.textContactHistory.push(textContactHistory)
         return person.save()
     }
+
+    */
 }
 
 const nonResponse = async(detail)=>{
@@ -375,6 +384,21 @@ const nonResponse = async(detail)=>{
 
 
     if(detail.idType === 'REFUSED'){refused = true;}
+
+    for (var i = 0; i < person.textContactHistory.length; i++){
+        if(person.textContactHistory[i].activityID === detail.activityID){
+            person.textContactHistory[i].idHistory = detail.idHistory
+            person.textContactHistory[i].identified = false;
+            person.textContactHistory[i].complete = true;
+            person.textContactHistory[i].nonResponse = true;
+            person.textContactHistory[i].refused = refused;
+
+        }
+    }
+
+    return person.save()
+
+    /*
 
     if(person.textContactHistory.length === 0){
 
@@ -393,17 +417,7 @@ const nonResponse = async(detail)=>{
         return person.save()
     
     }else{
-        for (var i = 0; i < person.textContactHistory.length; i++){
-            if(person.textContactHistory[i].activityID === detail.activityID){
-                person.textContactHistory[i].idHistory = detail.idHistory
-                person.textContactHistory[i].identified = false;
-                person.textContactHistory[i].complete = true;
-                person.textContactHistory[i].nonResponse = true;
-                person.textContactHistory[i].refused = refused;
 
-                return person.save()
-            }
-        }
 
         var textContactHistory = {
                                     campaignID: detail.campaignID,
@@ -419,6 +433,8 @@ const nonResponse = async(detail)=>{
         person.textContactHistory.push(textContactHistory)
         return person.save()
     }
+
+    */
 }
 
 module.exports = {loadLockedPeople, 
