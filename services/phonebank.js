@@ -15,6 +15,7 @@ const lockHouseHold = async(detail)=>{
                             "phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}},
                             "address.blockgroupID": {$exists: true},
                             "phonebankContactHistory" : {$not: {$elemMatch: {activityID: detail.activityID}}},
+                            "textContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}},
                             //"phonebankContactHistory.activityID" : {$ne : detail.activityID}
                             }
 
@@ -44,39 +45,64 @@ const lockHouseHold = async(detail)=>{
     }
 
     if(hasQueries){
-        for(var i = 0; i < targets.length; i++){                                   
+        for(var i = 0; i < targets.length; i++){ 
+            
+            var cityArray = []
             for(var j = 0; j < targets[i].properties.queries.length; j++){
                 if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
                     searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
-                    console.log(detail.campaignID)
                     searchParameters["phonebankContactHistory"] = {$not: {$elemMatch: {campaignID: detail.campaignID}}}
                 }
 
                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
 
-                    console.log(targets[i].properties.queries[j])
+                    if(targets[i].properties.queries[j].subParam === "NONRESPONSE"){
 
-                    searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                                       {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                                                       {"canvassContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
-                                                       {"canvassContactHistory.refused": {$ne: true}}
-                                                    
-                                                    ]},
-                                                       
-                                               {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                                       {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                                                       {"petitionContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
-                                                       {"petitionContactHistory.refused": {$ne: true}}
-                                                    
-                                                    ]},
-                                                {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
-                                                       {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                                                       {"phonebankContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
-                                                       {"phonebankContactHistory.refused": {$ne: true}}
-                                                    
-                                                    ]},
-                                               ]
+                        searchParameters['$or'] = [
+                        
+                        {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                                {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                {"phonebankContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                                {"phonebankContactHistory.refused": {$ne: true}}
+                     
+                                ]},
+                        ]
+                    }else if(targets[i].properties.queries[j].subParam === "POSITIVE"){
+                        searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                        {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                        {"canvassContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                        {"canvassContactHistory.refused": {$ne: true}}
+                     ]},
+                        
+                {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                        {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                        {"petitionContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                        {"petitionContactHistory.refused": {$ne: true}}
+                     
+                     ]},
+                 {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                        {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                        {"phonebankContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                        {"phonebankContactHistory.refused": {$ne: true}}
+                     
+                     ]},
+                ]
+
+                    }
+ 
                 }
+
+                var hasCities = false;
+
+                if(targets[i].properties.queries[j].queryType === "CITY"){
+                    hasCities = true;
+                    cityArray.push(targets[i].properties.queries[j].param)
+                }
+
+                if( hasCities){
+                    searchParameters["address.city"] = {$in: cityArray}
+                }
+
             }                                                             
         }
 

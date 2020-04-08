@@ -25,5 +25,6 @@ router.post('/getOrgPhoneNumbers', orgController.getOrgPhoneNumbers);
 router.post('/checkTwilioSubAccount',  orgController.checkTwilioSubAccount);
 router.post('/buyPhoneNumber', orgController.buyPhoneNumber);
 router.post('/enableTexting', orgController.enableTexting);
+router.post('/getCities', orgController.getCities);
 
 module.exports = router;

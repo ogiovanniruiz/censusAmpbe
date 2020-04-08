@@ -9,14 +9,16 @@ const resetTextBank = async(detail) =>{
     var count = 0;
     
     for(var i = 0; i <  people.length; i++){
-        people[i].textable = '?'
+        //people[i].textable = '?'
 
         for(var j = 0; j < people[i].textContactHistory.length; j++){
             if(people[i].textContactHistory[j].activityID === detail.activityID){
                 people[i].textContactHistory.splice(j,1)
-                people[i].save()
+                
             }
         }
+
+        people[i].save()
     }
 
     return {count: count}
@@ -32,6 +34,7 @@ const lockNewPeople = async(detail) =>{
                             "textable": {$ne: "FALSE"},
                             "phones": {$not: {$regex: "-"}}, 
                             "address.blockgroupID": {$exists: true},
+                            "textContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}},
                             "phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}}
                             //"phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5dbb506c24fad5001d9c9886"}}}
                             
@@ -91,21 +94,28 @@ const lockNewPeople = async(detail) =>{
                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
 
 
-                    searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                    searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
                                                        {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
                                                        {"canvassContactHistory.refused": {$ne: true}}
                                                       ]},
                                                
-                                                {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                                {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
                                                         {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
                                                         {"petitionContactHistory.refused": {$ne: true}}
                                                        ]},
 
-                                                {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                                {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
                                                         {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
                                                         {"phonebankContactHistory.refused": {$ne: true}}
-                                                        ]}    
-                                            ]
+                                                        ]},
+                                                        
+                                                        {$and: [{"textContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                                                        {"textContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                        {"textContactHistory.refused": {$ne: true}}
+                                                        ]}
+                                            
+                                            
+                                                    ]
 
                 
                 }

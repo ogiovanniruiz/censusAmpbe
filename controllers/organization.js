@@ -175,8 +175,19 @@ const enableTexting = async (req, res, next) => {
     }
 }
 
+const getCities = async (req, res, next) => {
+    try {
+        res.send(await organizationService.getCities(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
 
-module.exports = {checkTwilioSubAccount,
+
+module.exports = {
+                getCities,
+                checkTwilioSubAccount,
                 buyPhoneNumber,
                 createTwilioSubAccount,
                   createOrganization, 
