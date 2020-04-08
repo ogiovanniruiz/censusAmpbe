@@ -405,7 +405,16 @@ const enableTexting = async(detail) =>{
     }
 }
 
-module.exports = {createOrganization, 
+const getCities = async(detail) =>{
+
+    var cities = await Person.distinct("address.city", { "membership.orgID": "5d5c37c31cc3b6002356cb1c" })
+    return cities
+
+}
+
+module.exports = {
+                getCities,
+                    createOrganization, 
                   editOrganization,
                   getAllOrganizations, 
                   getOrganization, 

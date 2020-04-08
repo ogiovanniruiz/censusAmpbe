@@ -341,7 +341,6 @@ const uploadPetitions = async(data) =>{
                     if(tract){
                         var geoid = tract.properties.geoid
                         person.address.blockgroupID = geoid
-
                     }
                     person.save()
                 }
@@ -367,7 +366,8 @@ const checkExisting = async(people, campaignID, orgID, activityID, isoDate, scri
         let existingPerson = await Person.findOne({"firstName": people[i].firstName, "middleName": people[i].middleName, "lastName": people[i].lastName})
     
         if(existingPerson){
-            existingPerson.petitionContactHistory.push({campaignID: campaignID, 
+            existingPerson.petitionContactHistory.push({
+                campaignID: campaignID, 
                 orgID: orgID, 
                 activityID: activityID, 
                 identified: true,

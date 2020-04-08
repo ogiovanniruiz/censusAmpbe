@@ -9,14 +9,16 @@ const resetTextBank = async(detail) =>{
     var count = 0;
     
     for(var i = 0; i <  people.length; i++){
-        people[i].textable = '?'
+        //people[i].textable = '?'
 
         for(var j = 0; j < people[i].textContactHistory.length; j++){
             if(people[i].textContactHistory[j].activityID === detail.activityID){
                 people[i].textContactHistory.splice(j,1)
-                people[i].save()
+                
             }
         }
+
+        people[i].save()
     }
 
     return {count: count}
@@ -32,6 +34,7 @@ const lockNewPeople = async(detail) =>{
                             "textable": {$ne: "FALSE"},
                             "phones": {$not: {$regex: "-"}}, 
                             "address.blockgroupID": {$exists: true},
+                            "textContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}},
                             "phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}}
                             //"phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5dbb506c24fad5001d9c9886"}}}
                             
@@ -91,21 +94,28 @@ const lockNewPeople = async(detail) =>{
                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
 
 
-                    searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                    searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
                                                        {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
                                                        {"canvassContactHistory.refused": {$ne: true}}
                                                       ]},
                                                
-                                                {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                                {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
                                                         {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
                                                         {"petitionContactHistory.refused": {$ne: true}}
                                                        ]},
 
-                                                {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID}}},
+                                                {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
                                                         {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
                                                         {"phonebankContactHistory.refused": {$ne: true}}
-                                                        ]}    
-                                            ]
+                                                        ]},
+                                                        
+                                                        {$and: [{"textContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                                                        {"textContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                        {"textContactHistory.refused": {$ne: true}}
+                                                        ]}
+                                            
+                                            
+                                                    ]
 
                 
                 }
@@ -327,6 +337,22 @@ const idPerson = async(detail)=>{
                      idResponses: detail.idResponses,
                      locationIdentified: detail.location}
 
+
+    for (var i = 0; i < person.textContactHistory.length; i++){
+        if(person.textContactHistory[i].activityID === detail.activityID){
+            person.textContactHistory[i].idHistory.push(idHistory)
+            person.textContactHistory[i].identified = true;
+            person.textContactHistory[i].complete = true;
+            person.textContactHistory[i].nonResponse = false;
+            person.textContactHistory[i].refused = false;
+            
+        }
+    }
+
+    return person.save()
+
+    /*
+
     if(person.textContactHistory.length === 0){
 
         var textContactHistory = {
@@ -343,16 +369,7 @@ const idPerson = async(detail)=>{
 
     }else{
 
-        for (var i = 0; i < person.textContactHistory.length; i++){
-            if(person.textContactHistory[i].activityID === detail.activityID){
-                person.textContactHistory[i].idHistory.push(idHistory)
-                person.textContactHistory[i].identified = true;
-                person.textContactHistory[i].complete = true;
-                person.textContactHistory[i].nonResponse = false;
-                person.textContactHistory[i].refused = false;
-                return person.save()
-            }
-        }
+
 
         var textContactHistory = {
                                         campaignID: detail.campaignID,
@@ -366,6 +383,8 @@ const idPerson = async(detail)=>{
         person.textContactHistory.push(textContactHistory)
         return person.save()
     }
+
+    */
 }
 
 const nonResponse = async(detail)=>{
@@ -375,6 +394,21 @@ const nonResponse = async(detail)=>{
 
 
     if(detail.idType === 'REFUSED'){refused = true;}
+
+    for (var i = 0; i < person.textContactHistory.length; i++){
+        if(person.textContactHistory[i].activityID === detail.activityID){
+            person.textContactHistory[i].idHistory = detail.idHistory
+            person.textContactHistory[i].identified = false;
+            person.textContactHistory[i].complete = true;
+            person.textContactHistory[i].nonResponse = true;
+            person.textContactHistory[i].refused = refused;
+
+        }
+    }
+
+    return person.save()
+
+    /*
 
     if(person.textContactHistory.length === 0){
 
@@ -393,17 +427,7 @@ const nonResponse = async(detail)=>{
         return person.save()
     
     }else{
-        for (var i = 0; i < person.textContactHistory.length; i++){
-            if(person.textContactHistory[i].activityID === detail.activityID){
-                person.textContactHistory[i].idHistory = detail.idHistory
-                person.textContactHistory[i].identified = false;
-                person.textContactHistory[i].complete = true;
-                person.textContactHistory[i].nonResponse = true;
-                person.textContactHistory[i].refused = refused;
 
-                return person.save()
-            }
-        }
 
         var textContactHistory = {
                                     campaignID: detail.campaignID,
@@ -419,6 +443,8 @@ const nonResponse = async(detail)=>{
         person.textContactHistory.push(textContactHistory)
         return person.save()
     }
+
+    */
 }
 
 module.exports = {loadLockedPeople, 

@@ -10,7 +10,7 @@ const createTarget = async(detail) => {
                                 orgID: detail.orgID,
                                 campaignID: detail.campaignID,
                                 userID: detail.userID,
-                                params: {id: "", targetType: ""}
+                                params: {id: "", targetType: ""},
                                 },
                     geometry:{},
                   
@@ -32,36 +32,15 @@ const createTarget = async(detail) => {
         newTarget.properties.params.targetType = detail.targetType;
         newTarget.properties.queries = []
 
-
-
-        /*
-
-        if(detail.precinct != ''){
-            newTarget.properties.queries.push({queryType: "PRECINCT", param: detail.precinct})
-        }
-
-        if(detail.pav){
-            newTarget.properties.queries.push({queryType: "PAV", param: detail.pav})
-        }
-
-        if(detail.parties.length > 0){
-            for(var i = 0; i < detail.parties.length; i++){
-                newTarget.properties.queries.push({queryType: "PARTY", param: detail.parties[i]})
-            }
-        }
-
-        if(detail.hiPropensity != 100 && detail.lowPropensity != 0){
-            newTarget.properties.queries.push({queryType: "PROPENSITY", param: detail.hiPropensity, subParam: detail.lowPropensity})
-        }
-        if(detail.members){
-            newTarget.properties.queries.push({queryType: "ORGMEMBERS", param: detail.orgID})
-        }
-
-        */
-
         if(detail.scriptID != ""){
             newTarget.properties.queries.push({queryType: "SCRIPT", param: detail.scriptID, subParam: detail.scriptResponse})
         }
+
+
+        for(x in detail.cities){
+            newTarget.properties.queries.push({queryType: "CITY", param: detail.cities[x]})
+        }
+
 
     } else if(detail.type === "POLYGON"){
     

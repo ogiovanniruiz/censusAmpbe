@@ -528,13 +528,19 @@ const assignTags = async(detail) =>{
 
 const downloadContactHistory = async(detail) =>{
     var searchParams = {"firstName": {$exists: true}, "lastName": {$exists: true}}
-    searchParams['$or'] = [{"canvassContactHistory.orgID": detail.orgID}, 
-                           {"petitionContactHistory.orgID": detail.orgID},
-                           {"phonebankContactHistory.orgID": detail.orgID}, 
-                           {"textContactHistory.orgID": detail.orgID}
-                        ]
+    searchParams['$or'] = [{"canvassContactHistory.orgID": detail.orgID,"canvassContactHistory.idHistory.0": {$exists: true}}, 
+                           {"petitionContactHistory.orgID": detail.orgID,"petitionContactHistory.idHistory.0": {$exists: true}},
+                           {"phonebankContactHistory.orgID": detail.orgID,"phonebankContactHistory.idHistory.0": {$exists: true}}, 
+                           {"textContactHistory.orgID": detail.orgID,"textContactHistory.idHistory.0": {$exists: true}}
+                           ]
 
-    var people = await Person.find(searchParams, { firstName: 1, lastName: 1, phones: 1, emails: 1, _id: 0}).lean()
+    var people = await Person.find(searchParams, { firstName: 1, 
+                                                   lastName: 1, 
+                                                   phones: 1, 
+                                                   emails: 1, 
+                                                   address: 1,
+                                                   preferredMethodContact: 1,
+                                                   _id: 0}).lean()
     return people
 }
 
