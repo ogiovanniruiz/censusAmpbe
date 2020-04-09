@@ -34,8 +34,8 @@ const lockNewPeople = async(detail) =>{
                             "textable": {$ne: "FALSE"},
                             "phones": {$not: {$regex: "-"}}, 
                             "address.blockgroupID": {$exists: true},
-                            "textContactHistory.idHistory.scriptID": {$not: {$in: ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]}},
-                            "phonebankContactHistory.idHistory.scriptID": {$not: {$in: ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]}}   
+                            //"textContactHistory.idHistory.scriptID": {$not: {$in: ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]}},
+                            //"phonebankContactHistory.idHistory.scriptID": {$not: {$in: ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]}}   
                             //"textContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}},
                             //"phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}}
                             //"phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5dbb506c24fad5001d9c9886"}}}
@@ -114,7 +114,7 @@ const lockNewPeople = async(detail) =>{
                                                         {"phonebankContactHistory.refused": {$ne: true}}
                                                         ]},
                                                         
-                                                        {$and: [{"textContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                                                {$and: [{"textContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
                                                         {"textContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
                                                         {"textContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
                                                         {"textContactHistory.refused": {$ne: true}}
@@ -146,9 +146,29 @@ const lockNewPeople = async(detail) =>{
                                orgID: detail.orgID
                              }
 
+
+    
+    var scriptArray = ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]
     for(var i = 0; i < people.length; i++){
-        people[i].textContactHistory.push(textContactHistory)
-        people[i].save()
+
+        var duplicationError = false;
+        for(var j = 0; j < people[i].textContactHistory.length; j++){
+            if(people[i].textContactHistory[j].activityID === detail.activityID){
+                duplicationError = true;
+            }
+
+            for(var k = 0; k < people[i].textContactHistory[j].idHistory.length; k++){
+                if(scriptArray.includes(people[i].textContactHistory[j].idHistory[k].scriptID)){
+                    if(people[i].textContactHistory[j].idHistory[k].idType === "POSITIVE"){
+                        duplicationError = true;
+                    }
+                }
+            } 
+        }
+        if(!duplicationError){
+            people[i].textContactHistory.push(textContactHistory)
+            people[i].save()
+        }
     }  
     return {msg: "processing"}
 }
