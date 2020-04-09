@@ -11,12 +11,13 @@ const lockHouseHold = async(detail)=>{
 
     var searchParameters = {
                             "phones.0": {$exists: true, $ne: ""},
-                            "preferredMethodContact": {$not: {$elemMatch: {method: "TEXT"}}, $not: {$elemMatch: {method: "EMAIL"}}},
-                            "phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}},
+                            "preferredMethodContact": {$not: {$elemMatch: {method: "TEXT", method: "EMAIL"}}},
                             "address.blockgroupID": {$exists: true},
                             "phonebankContactHistory" : {$not: {$elemMatch: {activityID: detail.activityID}}},
-                            "textContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}},
-                            //"phonebankContactHistory.activityID" : {$ne : detail.activityID}
+                            
+                            //"textContactHistory.idHistory.scriptID": {$not: {$in: ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]}},
+                            //"phonebankContactHistory.idHistory.scriptID": {$not: {$in: ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]}}                                           
+                            
                             }
 
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
@@ -51,22 +52,23 @@ const lockHouseHold = async(detail)=>{
             for(var j = 0; j < targets[i].properties.queries.length; j++){
                 if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
                     searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
-                    searchParameters["phonebankContactHistory"] = {$not: {$elemMatch: {campaignID: detail.campaignID}}}
+                    //searchParameters["phonebankContactHistory"] = {$not: {$elemMatch: {campaignID: detail.campaignID}}}
                 }
 
                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
 
                     if(targets[i].properties.queries[j].subParam === "NONRESPONSE"){
 
-                        searchParameters['$or'] = [
+                        searchParameters['$and'] = [
                         
-                        {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
-                                {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                                {"phonebankContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
-                                {"phonebankContactHistory.refused": {$ne: true}}
-                     
-                                ]},
-                        ]
+                                        {"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                                        {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                        {"phonebankContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                                        {"phonebankContactHistory.refused": {$ne: true}},
+                                        {"phonebankContactHistory.identified": {$ne: true}}
+                         
+                                                ]
+                            
                     }else if(targets[i].properties.queries[j].subParam === "POSITIVE"){
                         searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
                         {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
@@ -110,7 +112,7 @@ const lockHouseHold = async(detail)=>{
         searchParameters['creationInfo.regType'] = "VOTERFILE"
     }
 
-    console.log(searchParameters)
+    console.debug(JSON.stringify(searchParameters))
 
     var phonebankContactHistory = {
         campaignID: detail.campaignID,
@@ -134,7 +136,11 @@ const lockHouseHold = async(detail)=>{
                     people: { $push: {_id: "$_id"}}}},{$sample: { size: 10 } }
         ]).allowDiskUse(true).limit(1)
 
+
+
     if(houseHoldToUpdate.length > 0){
+
+        var scriptArray = ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]
         for(var i = 0; i < houseHoldToUpdate[0].people.length; i++){
             var person = await Person.findOne({_id: houseHoldToUpdate[0].people[i]._id})
             var duplicationError = false;
@@ -142,6 +148,14 @@ const lockHouseHold = async(detail)=>{
                 if(person.phonebankContactHistory[i].activityID === detail.activityID){
                     duplicationError = true;
                 }
+
+                for(var j = 0; j < person.phonebankContactHistory[i].idHistory[j].length; j++){
+                    if(scriptArray.includes(person.phonebankContactHistory[i].idHistory[j].scriptID)){
+                        if(person.phonebankContactHistory[i].idHistory[j].idType != "NONRESPONSE"){
+                            duplicationError = true;
+                        }
+                    }
+                } 
             }
 
             if(!duplicationError){
