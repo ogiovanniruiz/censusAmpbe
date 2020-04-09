@@ -138,6 +138,7 @@ const lockHouseHold = async(detail)=>{
 
 
 
+
     if(houseHoldToUpdate.length > 0){
 
         var scriptArray = ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]
@@ -149,9 +150,9 @@ const lockHouseHold = async(detail)=>{
                     duplicationError = true;
                 }
 
-                for(var j = 0; j < person.phonebankContactHistory[i].idHistory[j].length; j++){
+                for(var j = 0; j < person.phonebankContactHistory[i].idHistory.length; j++){
                     if(scriptArray.includes(person.phonebankContactHistory[i].idHistory[j].scriptID)){
-                        if(person.phonebankContactHistory[i].idHistory[j].idType != "NONRESPONSE"){
+                        if(person.phonebankContactHistory[i].idHistory[j].idType === "POSITIVE"){
                             duplicationError = true;
                         }
                     }
