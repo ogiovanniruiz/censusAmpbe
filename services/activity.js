@@ -995,7 +995,7 @@ const sendSwordOutreach = async(detail) =>{
         return campaign.save()
 
     }).catch(error => {
-        //console.log(error.response.data['errorList'])
+        console.log(error.response.data['errorList'])
         return error
     });
 

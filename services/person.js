@@ -540,14 +540,17 @@ const downloadContactHistory = async(detail) =>{
                                                    emails: 1, 
                                                    address: 1,
                                                    preferredMethodContact: 1,
+                                                   canvassContactHistory: 1,
+                                                   petitionContactHistory: 1,
+                                                   textContactHistory: 1,
+                                                   phonebankContactHistory: 1,
+                                                   membership: 1,
                                                    _id: 0}).lean()
     return people
 }
 
-
-
 module.exports = {downloadContactHistory,
-                    getHouseHold, 
+                  getHouseHold, 
                   editPerson, 
                   createPerson, 
                   idPerson, 

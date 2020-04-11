@@ -15,9 +15,6 @@ const lockHouseHold = async(detail)=>{
                             "address.blockgroupID": {$exists: true},
                             "phonebankContactHistory" : {$not: {$elemMatch: {activityID: detail.activityID}}},
                             
-                            //"textContactHistory.idHistory.scriptID": {$not: {$in: ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]}},
-                            //"phonebankContactHistory.idHistory.scriptID": {$not: {$in: ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]}}                                           
-                            
                             }
 
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
@@ -67,14 +64,14 @@ const lockHouseHold = async(detail)=>{
                                         {"phonebankContactHistory.refused": {$ne: true}},
                                         {"phonebankContactHistory.identified": {$ne: true}}
                          
-                                                ]
+                                             ]
                             
                     }else if(targets[i].properties.queries[j].subParam === "POSITIVE"){
                         searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
-                        {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                        {"canvassContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
-                        {"canvassContactHistory.refused": {$ne: true}}
-                     ]},
+                                                            {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                            {"canvassContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                                                            {"canvassContactHistory.refused": {$ne: true}}
+                                                            ]},
                         
                 {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
                         {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
@@ -137,22 +134,30 @@ const lockHouseHold = async(detail)=>{
         ]).allowDiskUse(true).limit(1)
 
 
-
-
     if(houseHoldToUpdate.length > 0){
 
         var scriptArray = ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]
         for(var i = 0; i < houseHoldToUpdate[0].people.length; i++){
             var person = await Person.findOne({_id: houseHoldToUpdate[0].people[i]._id})
             var duplicationError = false;
-            for(var i = 0; i < person.phonebankContactHistory.length; i++){
-                if(person.phonebankContactHistory[i].activityID === detail.activityID){
+            for(var j = 0; j < person.phonebankContactHistory.length; j++){
+                if(person.phonebankContactHistory[j].activityID === detail.activityID){
                     duplicationError = true;
                 }
 
-                for(var j = 0; j < person.phonebankContactHistory[i].idHistory.length; j++){
-                    if(scriptArray.includes(person.phonebankContactHistory[i].idHistory[j].scriptID)){
-                        if(person.phonebankContactHistory[i].idHistory[j].idType === "POSITIVE"){
+                for(var k = 0; k < person.phonebankContactHistory[j].idHistory.length; k++){
+                    if(scriptArray.includes(person.phonebankContactHistory[j].idHistory[k].scriptID)){
+                        if(person.phonebankContactHistory[j].idHistory[k].idType === "POSITIVE"){
+                            duplicationError = true;
+                        }
+                    }
+                } 
+            }
+            
+            for(var j = 0; j < person.textContactHistory.length; j++){
+                for(var k = 0; k < person.textContactHistory[j].idHistory.length; k++){
+                    if(scriptArray.includes(person.textContactHistory[j].idHistory[k].scriptID)){
+                        if(person.textContactHistory[j].idHistory[k].idType === "POSITIVE"){
                             duplicationError = true;
                         }
                     }
@@ -237,6 +242,7 @@ const call = async(detail) =>{
     var number = detail.number;
     var twiml = new VoiceResponse();
     var dial = twiml.dial({callerId : detail.origin});
+
     dial.number(number);
 
     return twiml.toString();
