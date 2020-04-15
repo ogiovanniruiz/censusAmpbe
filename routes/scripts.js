@@ -8,5 +8,6 @@ router.post('/getScript', scriptController.getScript);
 router.post('/getAllScripts', scriptController.getAllScripts);
 router.post('/deleteScript', scriptController.deleteScript);
 router.post('/getActivityScripts', scriptController.getActivityScripts);
+router.post('/getEveryScript', scriptController.getEveryScript);
 
 module.exports = router;

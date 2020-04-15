@@ -100,7 +100,7 @@ const createPerson = async(detail) =>{
             /*
             await geocodio.geocode(addressToGeocode).then(response => {
                 console.log(response.results[0].location.lat);
-                console.log(response.results[0].accuracy_type)
+                console.log(response.results[0].accuracy_type);
                 console.log(response.results[0].location.lng);
                 person.address.location = {coordinates: [response.results[0].location.lng, response.results[0].location.lat], type: "Point"}
                 person.address.locationAccuracy = response.results[0].accuracy_type

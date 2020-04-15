@@ -54,4 +54,14 @@ const getActivityScripts = async(req,res, next)=>{
     }
 }
 
-module.exports = { createScript, getAllScripts, getScript, deleteScript, getActivityScripts, editScript};
+
+const getEveryScript = async(req,res, next)=>{
+    try{
+        res.send(await ScriptService.getEveryScript(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+module.exports = { createScript, getAllScripts, getScript, deleteScript, getActivityScripts, editScript, getEveryScript};

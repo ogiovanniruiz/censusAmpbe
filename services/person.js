@@ -6,6 +6,8 @@ const axios = require('axios');
 var parser = require('parse-address');
 var Org = require('../models/organizations/organization.js') 
 
+var CensusTract = require('../models/censustracts/censustract')
+
 var async = require('async');
 
 var options = {

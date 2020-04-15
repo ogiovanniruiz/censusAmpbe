@@ -18,6 +18,10 @@ const getAllScripts = async(detail) =>{
     return scripts
 }
 
+const getEveryScript = async()=>{
+    return Script.find()
+}
+
 const getScript = async(script) =>{
     var script = await Script.findOne({_id: script._id});
     return script
@@ -33,4 +37,4 @@ const getActivityScripts = async(scriptIDs) =>{
 }
 
 
-module.exports = {createScript, getAllScripts, getScript, deleteScript, getActivityScripts, editScript}
+module.exports = {createScript, getAllScripts, getScript, deleteScript, getActivityScripts, editScript, getEveryScript}

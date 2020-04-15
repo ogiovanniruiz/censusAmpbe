@@ -14,6 +14,7 @@ const lockHouseHold = async(detail)=>{
                             "preferredMethodContact": {$not: {$elemMatch: {method: "TEXT", method: "EMAIL"}}},
                             "address.blockgroupID": {$exists: true},
                             "phonebankContactHistory" : {$not: {$elemMatch: {activityID: detail.activityID}}},
+                            "phonebankContactHistory.refused": {$ne: true}
                             
                             }
 
@@ -78,7 +79,7 @@ const lockHouseHold = async(detail)=>{
                         {"petitionContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
                         {"petitionContactHistory.refused": {$ne: true}}
                      
-                     ]},
+                       ]},
                  {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
                         {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
                         {"phonebankContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
@@ -142,6 +143,10 @@ const lockHouseHold = async(detail)=>{
             var duplicationError = false;
             for(var j = 0; j < person.phonebankContactHistory.length; j++){
                 if(person.phonebankContactHistory[j].activityID === detail.activityID){
+                    duplicationError = true;
+                }
+
+                if(person.phonebankContactHistory[j].refused){
                     duplicationError = true;
                 }
 

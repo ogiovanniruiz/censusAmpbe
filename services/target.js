@@ -99,6 +99,10 @@ const removeTarget = async(detail) => {
             return Target.deleteOne({'_id': detail.id}).exec();
 
         }
+        if(detail.type === "NONGEOGRAPHIC"){
+            return Target.deleteOne({'_id': detail.id}).exec();
+
+        }
 
     } catch(e){
         throw new Error(e.message)
