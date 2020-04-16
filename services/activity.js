@@ -447,6 +447,7 @@ const activitySwordOutreachData = async(details) => {
                 }
             ];
         } else if (details.activityType === "Petition") {
+            console.log(details.activityID)
             return [
                 {
                     '$match': {
@@ -953,6 +954,8 @@ const activitySwordOutreachData = async(details) => {
 
 const sendSwordOutreach = async(detail) =>{
     var tokenStr = {'headers': {'Content-Type': 'application/json', 'x-auth': 'fjkcxq3908daas43980120ahdnf2084mg048201a18nffl4'}};
+
+    console.log(detail.report)
 
     var SwordOutreachResults = await axios.post("https://swordoutreachapi.azurewebsites.net/report", detail.report, tokenStr).then(async response => {
 

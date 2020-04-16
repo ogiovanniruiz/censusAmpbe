@@ -97,27 +97,27 @@ const createPerson = async(detail) =>{
             if(detail.city) addressToGeocode = addressToGeocode + " " + detail.city + " CA"
             if(detail.zip) addressToGeocode = addressToGeocode + " " + detail.zip
 
-            /*
+            
             await geocodio.geocode(addressToGeocode).then(response => {
-                console.log(response.results[0].location.lat);
-                console.log(response.results[0].accuracy_type);
-                console.log(response.results[0].location.lng);
                 person.address.location = {coordinates: [response.results[0].location.lng, response.results[0].location.lat], type: "Point"}
                 person.address.locationAccuracy = response.results[0].accuracy_type
             }).catch(err => {
-                console.log("THIS IS A TERRIBLE ERROR")
                 console.error(err);
             });
-            */
-       
-            await geocoder.geocode(addressToGeocode, function(err, res) {
-                if(err) {console.log(err)}
-                if(res) {
-                    if(res[0]) {
-                        person.address.location = {coordinates: [res[0].longitude, res[0].latitude], type: "Point"}                
+            
+
+            if(person.address.locationAccuracy != "rooftop"){
+                await geocoder.geocode(addressToGeocode, function(err, res) {
+                    if(err) {console.log(err)}
+                    if(res) {
+                        if(res[0]) {
+                            person.address.location = {coordinates: [res[0].longitude, res[0].latitude], type: "Point"}                
+                        }
                     }
-                }
-            });
+                });
+            }
+       
+
 
             var tract = await CensusTract.findOne({"geometry": {$geoIntersects: { $geometry: person.address.location}}})
 
