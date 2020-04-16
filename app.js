@@ -19,6 +19,7 @@ var phonebankRouter = require('./routes/phonebank')
 var canvassRouter = require('./routes/canvass')
 var petitionRouter = require('./routes/petition')
 var reportRouter = require('./routes/reports')
+var updateRouter = require('./routes/update')
 
 var app = express();
 
@@ -112,6 +113,7 @@ app.use('/phonebank', phonebankRouter)
 app.use('/canvass', canvassRouter)
 app.use('/petition', petitionRouter)
 app.use('/report', reportRouter)
+app.use('/update', updateRouter)
 
 
 module.exports = app;

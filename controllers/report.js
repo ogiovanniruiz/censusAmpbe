@@ -1,41 +1,5 @@
 const ReportService = require('../services/report.js')
 
-const updateReport = async (req,res,next) =>{
-    try{
-        res.send(await ReportService.updateReport(req.body))
-    } catch(e){
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
-const updateImpressions = async (req,res,next) =>{
-    try{
-        res.send(await ReportService.updateImpressions(req.body))
-    } catch(e){
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
-const updateImpressions2 = async (req,res,next) =>{
-    try{
-        res.send(await ReportService.updateImpressions2(req.body))
-    } catch(e){
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
-const updateImpressions3 = async (req,res,next) =>{
-    try{
-        res.send(await ReportService.updateImpressions3(req.body))
-    } catch(e){
-        console.log(e.message)
-        res.sendStatus(500)
-    }
-}
-
 const getCanvassSummaryReport = async (req,res,next) =>{
     try{
         res.send(await ReportService.getCanvassSummaryReport(req.body))
@@ -126,11 +90,7 @@ const getPhonebankingUserSummaryReport = async (req,res,next) =>{
     }
 }
 
-module.exports = {updateReport,
-                  updateImpressions,
-                  updateImpressions2,
-                  updateImpressions3,
-                  getCanvassSummaryReport,
+module.exports = {getCanvassSummaryReport,
                   getPetitionSummaryReport,
                   getOverallSummaryReport,
                   getEventsSummaryReport,
