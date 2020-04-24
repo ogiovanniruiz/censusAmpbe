@@ -194,7 +194,7 @@ const uploadPetitions = async(data) =>{
     var campaignID = parseInt(data.body.campaignID)
     var scriptID = data.body.scriptID
         
-    var strangeFile = data.files[0].buffer.toString('utf8')
+    var strangeFile = data.files[0].buffer.toString('utf8');
     var lines = (strangeFile).split("\n");
     var headers = lines[0].split(",");
 
@@ -240,8 +240,6 @@ const uploadPetitions = async(data) =>{
                 if(address.street) personObj.address.street = address.street.toUpperCase()
                 if(address.type) personObj.address.suffix = address.type.toUpperCase()
                 if(address.prefix) personObj.address.prefix = address.prefix.toUpperCase()
-                //if(address.sec_unit_type && address.sec_unit_num ){personObj['address']['unit'] =  address.sec_unit_type.toUpperCase() + " " + address.sec_unit_num.toUpperCase()}
-
                 break
             }
         }
@@ -262,7 +260,6 @@ const uploadPetitions = async(data) =>{
 
         var isoDate;
 
-        
         for(var k = 0; k < headers.length; k++){
             if(headers[k] === "pmc_phone"){
                 if(currentLine[k] === "Y"){
@@ -277,7 +274,6 @@ const uploadPetitions = async(data) =>{
                     personObj['preferredMethodContact'].push({orgID: orgID, optInProof: activityID, method: "TEXT"})
                 }
             } else if(headers[k] === "date"){
-                console.log( currentLine[k])
                 if(currentLine[k] != "date" && currentLine[k] != ""){
                     isoDate = new Date(currentLine[k]+"T00:00:00.000Z").toISOString()
                 }
@@ -301,18 +297,97 @@ const uploadPetitions = async(data) =>{
         }
     }
 
-    var checkResults = await checkExisting(peopleObjs, campaignID, orgID, activityID, isoDate, scriptID, userID)
+    checkExisting(peopleObjs, campaignID, orgID, activityID, isoDate, scriptID, userID)
 
-    for(var j = 0; j < checkResults.newPeople.length; j++){
-        var person = new Person(checkResults.newPeople[j])
-        person.save()
-        checkResults.newPeople[j]._id = person._id
+    return {msg: "PROCESSING", ammount: peopleObjs.length, peopleObjs: peopleObjs}
+}
+
+const checkExisting = async(people, campaignID, orgID, activityID, isoDate, scriptID, userID) =>{
+
+    for(var i = 0; i < people.length; i++){
+        console.log(i)
+
+        let existingPerson = await Person.findOne({"firstName": people[i].firstName, "middleName": people[i].middleName, "lastName": people[i].lastName})
+    
+        if(existingPerson){
+
+            var pledgeExists = false
+
+            for(var j = 0; j < existingPerson.petitionContactHistory.length; j++){
+                if ( existingPerson.petitionContactHistory[j].activityID === activityID){
+                    pledgeExists = true 
+                }
+            }
+
+            if(!pledgeExists){
+                console.log("PERSON EXISTS")
+                existingPerson.petitionContactHistory.push({
+                    campaignID: campaignID, 
+                    orgID: orgID, 
+                    activityID: activityID, 
+                    identified: true,
+                    idHistory: [{date: isoDate, 
+                                 scriptID: scriptID, 
+                                 idBy: userID, 
+                                 idResponses: [{question: "Complete the census form", responses: "Yes", idType: "POSITIVE"},
+                                               {question: "Tell friends and family about census 2020", responses: "Yes", idType: "POSITIVE"}]
+                                }]
+                  })
+               existingPerson.save()
+            }else{
+                console.log("PLEDGE EXISTS")
+            }
+
+        }else{
+            console.log("NEW PERSON")
+            var person = new Person(people[i])
+            var geocodedPerson = await geocodeOne(person)
+            console.log(geocodedPerson)
+            geocodedPerson.save()
+        } 
     }
 
+    console.log("UPLOAD COMPLETE")
+}
+
+
+const geocodeOne = async(person) =>{
+    console.log("Geocoding...")
+    let addressString = ""
+
+    if(person.address.streetNum) addressString = addressString + person.address.streetNum + " "
+    if(person.address.prefix) addressString = addressString + person.address.prefix + " "
+    if(person.address.street) addressString = addressString + person.address.street.replace(",", " ") + " "
+    if(person.address.suffix) addressString = addressString + person.address.suffix + " "
+    if(person.address.unit) addressString = addressString + person.address.unit + " "
+    if(person.address.city) addressString = addressString + person.address.city + " "
+    if(person.address.zip) addressString = addressString + person.address.zip
+
+    await geocoder.geocode(addressString, function(err, res) {
+        if(err) {console.log(err)}
+        if(res) {
+            if(res[0]) {
+                console.log("Geocode has results...")
+                person.address.location = {coordinates: [res[0].longitude, res[0].latitude], type: "Point"}
+            }
+        }
+    })
+
+    var tract = await CensusTract.findOne({"geometry": {$geoIntersects: { $geometry: person.address.location}}})
+    if(tract){
+        console.log("BlockgroupID found")
+        var geoid = tract.properties.geoid
+        person.address.blockgroupID = geoid
+    }
+
+    console.log("RETURN")
+    return person
+}
+/*
+const geocode = async(checkResults) =>{
     var fail = 0
     var success = 0
 
-    
     async.eachSeries(checkResults.newPeople, function(newPerson, next){
 
         let addressString = ""
@@ -341,6 +416,8 @@ const uploadPetitions = async(data) =>{
                     if(tract){
                         var geoid = tract.properties.geoid
                         person.address.blockgroupID = geoid
+                    }else{
+                        fail++
                     }
                     person.save()
                 }
@@ -353,39 +430,6 @@ const uploadPetitions = async(data) =>{
         });
     })
 
-    return {msg: "PROCESSING",  existingPeople: checkResults.existingPeople.length, newPeople: checkResults.newPeople.length}
 }
-
-const checkExisting = async(people, campaignID, orgID, activityID, isoDate, scriptID, userID) =>{
-
-    var existingPeople = [];
-    var newPeople = [];
-
-    for(var i = 0; i < people.length; i++){
-
-        let existingPerson = await Person.findOne({"firstName": people[i].firstName, "middleName": people[i].middleName, "lastName": people[i].lastName})
-    
-        if(existingPerson){
-            existingPerson.petitionContactHistory.push({
-                campaignID: campaignID, 
-                orgID: orgID, 
-                activityID: activityID, 
-                identified: true,
-                idHistory: [{date: isoDate, 
-                             scriptID: scriptID, 
-                             idBy: userID, 
-                             idResponses: [{question: "Complete the census form", responses: "Yes", idType: "POSITIVE"},
-                                           {question: "Tell friends and family about census 2020", responses: "Yes", idType: "POSITIVE"}]
-                            }]
-              })
-           existingPerson.save()
-           existingPeople.push(existingPerson)
-        }else{
-            newPeople.push(people[i])
-        }        
-    }
-
-    return ({existingPeople: existingPeople, newPeople: newPeople})
-}
-
+*/
 module.exports = {createPerson, updatePerson, getNumSub, generateLink, processLink, uploadPetitions}

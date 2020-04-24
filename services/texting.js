@@ -152,13 +152,11 @@ const lockNewPeople = async(detail) =>{
     for(var i = 0; i < people.length; i++){
 
         var duplicationError = false;
-        console.log(people)
+
         for(var j = 0; j < people[i].textContactHistory.length; j++){
             if(people[i].textContactHistory[j].activityID === detail.activityID){
                 duplicationError = true;
             }
-
-            console.log(people[i].textContactHistory[j].idHistory[k].scriptID)
 
             for(var k = 0; k < people[i].textContactHistory[j].idHistory.length; k++){
                 if(scriptArray.includes(people[i].textContactHistory[j].idHistory[k].scriptID)){

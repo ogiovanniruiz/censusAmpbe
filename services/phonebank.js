@@ -316,6 +316,15 @@ const nonResponse = async(detail)=>{
     if(detail.idHistory[0].idResponses[0].responses === "Left Message"){
         impression = true;
     }
+    if(detail.idHistory[0].idResponses[0].responses === "Message"){
+        impression = true;
+    }
+    if(detail.idHistory[0].idResponses[0].responses === "MESSAGE"){
+        impression = true;
+    }
+    if(detail.idHistory[0].idResponses[0].responses === "LEFT MESSAGE"){
+        impression = true;
+    }
 
     for(var i = 0; i < detail.houseHold.length; i++){
 

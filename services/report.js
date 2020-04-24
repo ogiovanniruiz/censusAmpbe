@@ -316,12 +316,12 @@ const getPetitionSummaryReport = async(details) =>{
                 'petitionContactHistory.campaignID': details.campaignID,
                 'petitionContactHistory.orgID': details.orgID,
             }
-        }, {
+        },{
             '$unwind': {
                 'path': '$petitionContactHistory',
                 'preserveNullAndEmptyArrays': false
             }
-        }, {
+        },{
             '$facet': {
                 'identified': [
                     {

@@ -2,7 +2,7 @@ var People = require ('../models/people/person');
 var Addresses = require ('../models/people/addresses');
 var CensusTract = require('../models/censustracts/censustract');
 var mongoose = require('mongoose');
-
+var async = require('async');
 const Geocodio = require('geocodio-library-node');
 const geocodio = new Geocodio('a6212ea62222f065a52228c6e5fc56ec8e5685f');
 
@@ -247,7 +247,12 @@ const updateImpressions3 = async(org) => {
 const updateAddressGeocode = async() =>{
     console.log('start')
 
-    for(var i = 0;; i++){
+    var index = 0
+
+
+    async.forever(
+
+        async function(next) {
 
         const agg = [
             {
@@ -258,113 +263,75 @@ const updateAddressGeocode = async() =>{
                 }
             }, {
                 '$limit': 100
-            }, {
-                '$project': {
-                    'address': {
-                        '$concat': [
-                            '$streetNum', {
-                                '$cond': [
-                                    {
-                                        '$eq': [
-                                            '$streetNum', ''
-                                        ]
-                                    }, '', ' '
-                                ]
-                            }, {
-                                '$rtrim': {
-                                    'input': '$prefix'
-                                }
-                            }, {
-                                '$cond': [
-                                    {
-                                        '$eq': [
-                                            '$prefix', ''
-                                        ]
-                                    }, '', ' '
-                                ]
-                            }, '$street', {
-                                '$cond': [
-                                    {
-                                        '$eq': [
-                                            '$street', ''
-                                        ]
-                                    }, '', ' '
-                                ]
-                            }, '$suffix', ', ', '$city', ', ', '$state', {
-                                '$cond': [
-                                    {
-                                        '$eq': [
-                                            '$state', ''
-                                        ]
-                                    }, '', ' '
-                                ]
-                            }, '$zip'
-                        ]
-                    }
-                }
-            }, {
-                '$group': {
-                    '_id': null,
-                    'id': {
-                        '$push': {
-                            'k': '$address',
-                            'v': '$_id'
-                        }
-                    },
-                    'addresses': {
-                        '$addToSet': '$address'
-                    }
-                }
-            }, {
-                '$project': {
-                    'id': {
-                        '$arrayToObject': '$id'
-                    },
-                    'addresses': 1
-                }
             }
         ];
+
         var address = await Addresses.aggregate(agg);
+        var addressObject = {addresses: [], id: {}}
 
-        if(address.length) {
+        for(var i = 0; i < address.length; i++){
 
-            await geocodio.geocode(address[0].addresses).then(async response => {
+            var addressString = ""
+
+            if(address[i].streetNum) {addressString = addressString + address[i].streetNum + " "}
+            if(address[i].prefix) {addressString = addressString + address[i].prefix + " "}
+            if(address[i].street) {addressString = addressString + address[i].street + " "}
+            if(address[i].suffix) {addressString = addressString + address[i].suffix + " "}
+            if(address[i].city) {addressString = addressString + address[i].city + ", CA "}
+            if(address[i].zip) {addressString = addressString + address[i].zip}
+
+            addressObject.addresses.push(addressString)
+            addressObject.id[addressString] = address[i]._id
+
+        }
+        if(address) {
+            await geocodio.geocode(addressObject.addresses).then(async response => {
 
                 var bulkArray = [];
-                for(var key in address[0].id){
+                for(var key in addressObject.id){
 
                     var index = response.results.findIndex(x => x.query === key)
 
+                    if(!response.results[index].response.results[0]){
+
+                        response.results[index].response.results.push({accuracy_type: "none",
+                                                                        location:{lat: 0, lng: 0}})
+
+                    }
+
                     bulkArray.push({ updateOne : {
-                            "filter" : { "_id" : mongoose.Types.ObjectId(address[0].id[key]) },
+                            "filter" : { "_id" : mongoose.Types.ObjectId(addressObject.id[key]) },
                             "update" : { $set : {
                                     'accuracyType': response.results[index].response.results[0].accuracy_type,
                                     'location.type': 'Point',
                                     'location.coordinates': [
-                                        response.results[index].response.results[0].location.lat,
-                                        response.results[index].response.results[0].location.lng
+                                        response.results[index].response.results[0].location.lng,
+                                        response.results[index].response.results[0].location.lat
+                                        
                                     ],
                             } }
                     }})
                 }
 
                 var updated = await Addresses.bulkWrite(bulkArray);
-
                 console.log(updated)
 
             }).catch(err => {
-                console.log("THIS IS A TERRIBLE ERROR")
                 console.error(err);
             });
 
-        } else {
-            break
-        }
-        //console.log(i+ 'LOOP')
-    }
 
-    console.log('done')
-    return {}
+            index = index + 100
+            console.log("Geocoded: ", index)
+
+        }else{
+            console.log("DONE")
+            return callback('stop')
+        } 
+          
+    })
+
+    return {msg: "PROCESSING"}  
 
 }
 
