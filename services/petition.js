@@ -200,6 +200,8 @@ const uploadPetitions = async(data) =>{
 
     var peopleObjs = []
 
+    console.log(lines.length)
+
     for(var i = 0; i < lines.length; i++ ){
         let personObj = {address: {}, preferredMethodContact: []}
         let currentLine = lines[i].split(",")
@@ -208,7 +210,8 @@ const uploadPetitions = async(data) =>{
 
         for(var j = 0; j < headers.length; j++){ 
             if(headers[j] === "city") {
-                personObj.address["city"] = currentLine[j].toUpperCase()
+                if(currentLine[j]) personObj.address["city"] = currentLine[j].toUpperCase()
+                else personObj["address"]["city"] = ""
                 break
             }
         }
@@ -222,7 +225,8 @@ const uploadPetitions = async(data) =>{
 
         for(var j = 0; j < headers.length; j++){ 
             if(headers[j] === "unit") {
-                personObj.address["unit"] = currentLine[j].toUpperCase()
+                if(currentLine[j]) personObj.address["unit"] = currentLine[j].toUpperCase()
+                else personObj["address"]["unit"] = ""
                 break;
             }
         }
@@ -234,19 +238,22 @@ const uploadPetitions = async(data) =>{
                 if(personObj["address"]["zip"]) fullAddressString + " " + personObj["address"]["zip"]
 
 
-                var address = parser.parseLocation(fullAddressString);     
-
+                var address = parser.parseLocation(fullAddressString);
+               
                 personObj.address.streetNum = address.number
                 if(address.street) personObj.address.street = address.street.toUpperCase()
                 if(address.type) personObj.address.suffix = address.type.toUpperCase()
                 if(address.prefix) personObj.address.prefix = address.prefix.toUpperCase()
+
+
                 break
             }
         }
         
         for(var j = 0; j < headers.length; j++){      
             if(headers[j] === "county") {
-                personObj["address"]["county"] = currentLine[j].toUpperCase()
+                if(currentLine[j]) personObj["address"]["county"] = currentLine[j].toUpperCase()
+                else personObj["address"]["county"] = ""
             }else if (headers[j] === "phones"){
                 if(currentLine[j]){personObj[headers[j]] = currentLine[j].replace("(", "").replace(")", "").replace("-","").replace("-","")}
             }else if(headers[j] === "firstName"){
@@ -275,7 +282,8 @@ const uploadPetitions = async(data) =>{
                 }
             } else if(headers[k] === "date"){
                 if(currentLine[k] != "date" && currentLine[k] != ""){
-                    isoDate = new Date(currentLine[k]+"T00:00:00.000Z").toISOString()
+                    if(currentLine[k]) isoDate = new Date(currentLine[k]+"T00:00:00.000Z").toISOString()
+
                 }
             }
         }
@@ -297,10 +305,14 @@ const uploadPetitions = async(data) =>{
         }
     }
 
+    console.log(peopleObjs)
+
     checkExisting(peopleObjs, campaignID, orgID, activityID, isoDate, scriptID, userID)
 
     return {msg: "PROCESSING", ammount: peopleObjs.length, peopleObjs: peopleObjs}
 }
+
+
 
 const checkExisting = async(people, campaignID, orgID, activityID, isoDate, scriptID, userID) =>{
 
@@ -320,7 +332,7 @@ const checkExisting = async(people, campaignID, orgID, activityID, isoDate, scri
             }
 
             if(!pledgeExists){
-                console.log("PERSON EXISTS")
+                console.log("PERSON EXISTS. Appending Pledge.")
                 existingPerson.petitionContactHistory.push({
                     campaignID: campaignID, 
                     orgID: orgID, 
@@ -335,7 +347,7 @@ const checkExisting = async(people, campaignID, orgID, activityID, isoDate, scri
                   })
                existingPerson.save()
             }else{
-                console.log("PLEDGE EXISTS")
+                console.log("PLEDGE EXISTS. Do Nothing.")
             }
 
         }else{

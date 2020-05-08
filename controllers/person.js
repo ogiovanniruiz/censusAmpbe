@@ -100,7 +100,17 @@ const downloadContactHistory = async(req,res, next) => {
     }
 }
 
+const downloadAllContactData= async(req,res, next) => {
+    try {
+        res.send(await personService.downloadAllContactData(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
 
 
 
-module.exports = {downloadContactHistory, getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers, runMatch, finishIdentification, assignPreferredMethodOfContact, assignTags};
+
+module.exports = {downloadAllContactData,
+    downloadContactHistory, getHouseHold, editPerson, createPerson, idPerson, getMembers, uploadMembers, runMatch, finishIdentification, assignPreferredMethodOfContact, assignTags};

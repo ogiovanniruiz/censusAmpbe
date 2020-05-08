@@ -551,7 +551,34 @@ const downloadContactHistory = async(detail) =>{
     return people
 }
 
-module.exports = {downloadContactHistory,
+const downloadAllContactData = async(detail) =>{
+    var searchParams = {"firstName": {$exists: true}, "lastName": {$exists: true}}
+    searchParams['$or'] = [{"canvassContactHistory.campaignID": detail.campaignID,"canvassContactHistory.idHistory.0": {$exists: true}}, 
+                           {"petitionContactHistory.campaignID": detail.campaignID,"petitionContactHistory.idHistory.0": {$exists: true}},
+                           {"phonebankContactHistory.campaignID": detail.campaignID,"phonebankContactHistory.idHistory.0": {$exists: true}}, 
+                           {"textContactHistory.campaignID": detail.campaignID,"textContactHistory.idHistory.0": {$exists: true}}
+                           ]
+
+    var people = await Person.find(searchParams, { firstName: 1, 
+        lastName: 1, 
+        phones: 1, 
+        emails: 1, 
+        address: 1,
+        preferredMethodContact: 1,
+        canvassContactHistory: 1,
+        petitionContactHistory: 1,
+        textContactHistory: 1,
+        phonebankContactHistory: 1,
+        membership: 1,
+        _id: 0}).lean()
+    console.log(detail)
+    return people
+
+    
+}
+
+module.exports = {downloadAllContactData,
+                    downloadContactHistory,
                   getHouseHold, 
                   editPerson, 
                   createPerson, 

@@ -34,12 +34,6 @@ const lockNewPeople = async(detail) =>{
                             "textable": {$ne: "FALSE"},
                             "phones": {$not: {$regex: "-"}}, 
                             "address.blockgroupID": {$exists: true},
-                            //"textContactHistory.idHistory.scriptID": {$not: {$in: ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]}},
-                            //"phonebankContactHistory.idHistory.scriptID": {$not: {$in: ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]}}   
-                            //"textContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}},
-                            //"phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5e6ab66a2a22d2001a04a1bb"}}}
-                            //"phonebankContactHistory.idHistory": {$not: {$elemMatch: {scriptID: "5dbb506c24fad5001d9c9886"}}}
-                            
                             }
 
     var targetCoordinates = []
@@ -118,12 +112,8 @@ const lockNewPeople = async(detail) =>{
                                                         {"textContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
                                                         {"textContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
                                                         {"textContactHistory.refused": {$ne: true}}
-                                                        ]}
-                                            
-                                            
+                                                        ]}        
                                                     ]
-
-                
                 }
             }                                                             
         }
@@ -160,7 +150,7 @@ const lockNewPeople = async(detail) =>{
 
             for(var k = 0; k < people[i].textContactHistory[j].idHistory.length; k++){
                 if(scriptArray.includes(people[i].textContactHistory[j].idHistory[k].scriptID)){
-                    if(people[i].textContactHistory[j].idHistory[k].idType === "POSITIVE"){
+                    if(people[i].textContactHistory[j].idHistory[k].idResponses[0].idType === "POSITIVE"){
                         duplicationError = true;
                     }
                 }
@@ -169,6 +159,16 @@ const lockNewPeople = async(detail) =>{
         if(!duplicationError){
             people[i].textContactHistory.push(textContactHistory)
             people[i].save()
+        }else{
+            var completedtextContactHistory = { 
+                campaignID: detail.campaignID,
+                activityID: detail.activityID,
+                lockedBy: detail.userID,
+                orgID: detail.orgID
+              }
+              people[i].textContactHistory.push(completedtextContactHistory)
+              people[i].save()
+
         }
     }  
     return {msg: "processing"}

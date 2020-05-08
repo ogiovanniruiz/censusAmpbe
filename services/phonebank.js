@@ -14,8 +14,14 @@ const lockHouseHold = async(detail)=>{
                             "preferredMethodContact": {$not: {$elemMatch: {method: "TEXT", method: "EMAIL"}}},
                             "address.blockgroupID": {$exists: true},
                             "phonebankContactHistory" : {$not: {$elemMatch: {activityID: detail.activityID}}},
-                            "phonebankContactHistory.refused": {$ne: true}
+                            "phonebankContactHistory.refused": {$ne: true},
                             
+                            $nor: [{"phonebankContactHistory.idHistory.idResponses.responses": "Wrong Number"},
+                                   {"phonebankContactHistory.idHistory.idResponses.responses": "Bad Number"},
+                                   {"phonebankContactHistory.idHistory.idResponses.responses": "Disconnected"},
+                                   {"phonebankContactHistory.idHistory.idResponses.responses": "Deceased"},
+                                   {"phonebankContactHistory.idHistory.idResponses.responses": "Moved"}
+                                    ]
                             }
 
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
@@ -47,10 +53,10 @@ const lockHouseHold = async(detail)=>{
         for(var i = 0; i < targets.length; i++){ 
             
             var cityArray = []
+            var blockgroupArray = []
             for(var j = 0; j < targets[i].properties.queries.length; j++){
                 if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
                     searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
-                    //searchParameters["phonebankContactHistory"] = {$not: {$elemMatch: {campaignID: detail.campaignID}}}
                 }
 
                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
@@ -74,19 +80,17 @@ const lockHouseHold = async(detail)=>{
                                                             {"canvassContactHistory.refused": {$ne: true}}
                                                             ]},
                         
-                {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
-                        {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                        {"petitionContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
-                        {"petitionContactHistory.refused": {$ne: true}}
-                     
-                       ]},
-                 {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
-                        {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                        {"phonebankContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
-                        {"phonebankContactHistory.refused": {$ne: true}}
-                     
-                     ]},
-                ]
+                                                   {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                                                           {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                           {"petitionContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                                                           {"petitionContactHistory.refused": {$ne: true}}                                  
+                                                          ]},
+
+                                                    {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                                                            {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                            {"phonebankContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                                                            {"phonebankContactHistory.refused": {$ne: true}}
+                                                           ]}]
 
                     }
  
@@ -101,6 +105,18 @@ const lockHouseHold = async(detail)=>{
 
                 if( hasCities){
                     searchParameters["address.city"] = {$in: cityArray}
+                }
+
+               
+                var hasBlockgroups = false;
+
+                if(targets[i].properties.queries[j].queryType === "BLOCKGROUP"){
+                    hasBlockgroups = true;
+                    blockgroupArray.push(targets[i].properties.queries[j].param)
+                }
+
+                if( hasBlockgroups){
+                    searchParameters["address.blockgroupID"] = {$in: blockgroupArray}
                 }
 
             }                                                             
@@ -152,32 +168,51 @@ const lockHouseHold = async(detail)=>{
 
                 for(var k = 0; k < person.phonebankContactHistory[j].idHistory.length; k++){
                     if(scriptArray.includes(person.phonebankContactHistory[j].idHistory[k].scriptID)){
-                        if(person.phonebankContactHistory[j].idHistory[k].idType === "POSITIVE"){
-                            duplicationError = true;
+
+                        if(person.phonebankContactHistory[j].idHistory[k].idResponses){
+                            if(person.phonebankContactHistory[j].idHistory[k].idResponses[0]){
+                                if(person.phonebankContactHistory[j].idHistory[k].idResponses[0].idType === "POSITIVE"){
+                                    duplicationError = true;
+                                }
+                            }
                         }
                     }
                 } 
             }
             
+          /*
             for(var j = 0; j < person.textContactHistory.length; j++){
                 for(var k = 0; k < person.textContactHistory[j].idHistory.length; k++){
                     if(scriptArray.includes(person.textContactHistory[j].idHistory[k].scriptID)){
-                        if(person.textContactHistory[j].idHistory[k].idType === "POSITIVE"){
+                        if(person.textContactHistory[j].idHistory[k].idResponses[0].idType === "POSITIVE"){
                             duplicationError = true;
                         }
                     }
                 } 
             }
-
+*/
             if(!duplicationError){
                 person.phonebankContactHistory.push(phonebankContactHistory)
                 person.save()
+            }else{
+                
+                var completedphonebankContactHistory = {
+                    campaignID: detail.campaignID,
+                    activityID: detail.activityID,
+                    lockedBy: detail.userID,
+                    orgID: detail.orgID,
+                    houseHoldComplete: true,
+                  }
+                person.phonebankContactHistory.push(completedphonebankContactHistory)
+                person.save()
+
             }
         }
     
         return {status: true}
 
     }else{
+        console.log("NOTHING AVAILABLE")
         return {status: false}
     }
 }
@@ -270,7 +305,7 @@ const idPerson = async(detail)=>{
                     person.phonebankContactHistory[j].nonResponse = false;
                     person.phonebankContactHistory[j].refused = false;
                     person.phonebankContactHistory[j].houseHoldComplete = true;
-                    person.phonebankContactHistory[j].impression = true;
+                    //person.phonebankContactHistory[j].impression = true;
                     updateSuccess = true
                 }
             }
@@ -383,5 +418,3 @@ module.exports = {
                     nonResponse, 
                     allocatePhoneNumber
                  }
-
-

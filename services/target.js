@@ -41,6 +41,10 @@ const createTarget = async(detail) => {
             newTarget.properties.queries.push({queryType: "CITY", param: detail.cities[x]})
         }
 
+        for(x in detail.blockgroups){
+            newTarget.properties.queries.push({queryType: "BLOCKGROUP", param: detail.blockgroups[x]})
+        }
+
 
     } else if(detail.type === "POLYGON"){
     
