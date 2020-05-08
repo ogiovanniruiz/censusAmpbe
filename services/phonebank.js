@@ -14,10 +14,14 @@ const lockHouseHold = async(detail)=>{
                             "preferredMethodContact": {$not: {$elemMatch: {method: "TEXT", method: "EMAIL"}}},
                             "address.blockgroupID": {$exists: true},
                             "phonebankContactHistory" : {$not: {$elemMatch: {activityID: detail.activityID}}},
+                            "phonebankContactHistory.refused": {$ne: true},
                             
-                            //"textContactHistory.idHistory.scriptID": {$not: {$in: ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]}},
-                            //"phonebankContactHistory.idHistory.scriptID": {$not: {$in: ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]}}                                           
-                            
+                            $nor: [{"phonebankContactHistory.idHistory.idResponses.responses": "Wrong Number"},
+                                   {"phonebankContactHistory.idHistory.idResponses.responses": "Bad Number"},
+                                   {"phonebankContactHistory.idHistory.idResponses.responses": "Disconnected"},
+                                   {"phonebankContactHistory.idHistory.idResponses.responses": "Deceased"},
+                                   {"phonebankContactHistory.idHistory.idResponses.responses": "Moved"}
+                                    ]
                             }
 
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
@@ -49,10 +53,10 @@ const lockHouseHold = async(detail)=>{
         for(var i = 0; i < targets.length; i++){ 
             
             var cityArray = []
+            var blockgroupArray = []
             for(var j = 0; j < targets[i].properties.queries.length; j++){
                 if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
                     searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
-                    //searchParameters["phonebankContactHistory"] = {$not: {$elemMatch: {campaignID: detail.campaignID}}}
                 }
 
                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
@@ -67,28 +71,26 @@ const lockHouseHold = async(detail)=>{
                                         {"phonebankContactHistory.refused": {$ne: true}},
                                         {"phonebankContactHistory.identified": {$ne: true}}
                          
-                                                ]
+                                             ]
                             
                     }else if(targets[i].properties.queries[j].subParam === "POSITIVE"){
                         searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
-                        {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                        {"canvassContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
-                        {"canvassContactHistory.refused": {$ne: true}}
-                     ]},
+                                                            {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                            {"canvassContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                                                            {"canvassContactHistory.refused": {$ne: true}}
+                                                            ]},
                         
-                {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
-                        {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                        {"petitionContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
-                        {"petitionContactHistory.refused": {$ne: true}}
-                     
-                     ]},
-                 {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
-                        {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                        {"phonebankContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
-                        {"phonebankContactHistory.refused": {$ne: true}}
-                     
-                     ]},
-                ]
+                                                   {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                                                           {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                           {"petitionContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                                                           {"petitionContactHistory.refused": {$ne: true}}                                  
+                                                          ]},
+
+                                                    {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                                                            {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                                                            {"phonebankContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                                                            {"phonebankContactHistory.refused": {$ne: true}}
+                                                           ]}]
 
                     }
  
@@ -103,6 +105,18 @@ const lockHouseHold = async(detail)=>{
 
                 if( hasCities){
                     searchParameters["address.city"] = {$in: cityArray}
+                }
+
+               
+                var hasBlockgroups = false;
+
+                if(targets[i].properties.queries[j].queryType === "BLOCKGROUP"){
+                    hasBlockgroups = true;
+                    blockgroupArray.push(targets[i].properties.queries[j].param)
+                }
+
+                if( hasBlockgroups){
+                    searchParameters["address.blockgroupID"] = {$in: blockgroupArray}
                 }
 
             }                                                             
@@ -137,37 +151,68 @@ const lockHouseHold = async(detail)=>{
         ]).allowDiskUse(true).limit(1)
 
 
-
-
     if(houseHoldToUpdate.length > 0){
 
         var scriptArray = ["5e6ab66a2a22d2001a04a1bb","5e7e8f2846de27001ac2beba", "5e6fca54ae6cdf001901b7c1"]
         for(var i = 0; i < houseHoldToUpdate[0].people.length; i++){
             var person = await Person.findOne({_id: houseHoldToUpdate[0].people[i]._id})
             var duplicationError = false;
-            for(var i = 0; i < person.phonebankContactHistory.length; i++){
-                if(person.phonebankContactHistory[i].activityID === detail.activityID){
+            for(var j = 0; j < person.phonebankContactHistory.length; j++){
+                if(person.phonebankContactHistory[j].activityID === detail.activityID){
                     duplicationError = true;
                 }
 
-                for(var j = 0; j < person.phonebankContactHistory[i].idHistory.length; j++){
-                    if(scriptArray.includes(person.phonebankContactHistory[i].idHistory[j].scriptID)){
-                        if(person.phonebankContactHistory[i].idHistory[j].idType === "POSITIVE"){
+                if(person.phonebankContactHistory[j].refused){
+                    duplicationError = true;
+                }
+
+                for(var k = 0; k < person.phonebankContactHistory[j].idHistory.length; k++){
+                    if(scriptArray.includes(person.phonebankContactHistory[j].idHistory[k].scriptID)){
+
+                        if(person.phonebankContactHistory[j].idHistory[k].idResponses){
+                            if(person.phonebankContactHistory[j].idHistory[k].idResponses[0]){
+                                if(person.phonebankContactHistory[j].idHistory[k].idResponses[0].idType === "POSITIVE"){
+                                    duplicationError = true;
+                                }
+                            }
+                        }
+                    }
+                } 
+            }
+            
+          /*
+            for(var j = 0; j < person.textContactHistory.length; j++){
+                for(var k = 0; k < person.textContactHistory[j].idHistory.length; k++){
+                    if(scriptArray.includes(person.textContactHistory[j].idHistory[k].scriptID)){
+                        if(person.textContactHistory[j].idHistory[k].idResponses[0].idType === "POSITIVE"){
                             duplicationError = true;
                         }
                     }
                 } 
             }
-
+*/
             if(!duplicationError){
                 person.phonebankContactHistory.push(phonebankContactHistory)
                 person.save()
+            }else{
+                
+                var completedphonebankContactHistory = {
+                    campaignID: detail.campaignID,
+                    activityID: detail.activityID,
+                    lockedBy: detail.userID,
+                    orgID: detail.orgID,
+                    houseHoldComplete: true,
+                  }
+                person.phonebankContactHistory.push(completedphonebankContactHistory)
+                person.save()
+
             }
         }
     
         return {status: true}
 
     }else{
+        console.log("NOTHING AVAILABLE")
         return {status: false}
     }
 }
@@ -237,6 +282,7 @@ const call = async(detail) =>{
     var number = detail.number;
     var twiml = new VoiceResponse();
     var dial = twiml.dial({callerId : detail.origin});
+
     dial.number(number);
 
     return twiml.toString();
@@ -259,7 +305,7 @@ const idPerson = async(detail)=>{
                     person.phonebankContactHistory[j].nonResponse = false;
                     person.phonebankContactHistory[j].refused = false;
                     person.phonebankContactHistory[j].houseHoldComplete = true;
-                    person.phonebankContactHistory[j].impression = true;
+                    //person.phonebankContactHistory[j].impression = true;
                     updateSuccess = true
                 }
             }
@@ -303,6 +349,15 @@ const nonResponse = async(detail)=>{
     }
 
     if(detail.idHistory[0].idResponses[0].responses === "Left Message"){
+        impression = true;
+    }
+    if(detail.idHistory[0].idResponses[0].responses === "Message"){
+        impression = true;
+    }
+    if(detail.idHistory[0].idResponses[0].responses === "MESSAGE"){
+        impression = true;
+    }
+    if(detail.idHistory[0].idResponses[0].responses === "LEFT MESSAGE"){
         impression = true;
     }
 
@@ -363,5 +418,3 @@ module.exports = {
                     nonResponse, 
                     allocatePhoneNumber
                  }
-
-

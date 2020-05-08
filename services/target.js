@@ -41,6 +41,10 @@ const createTarget = async(detail) => {
             newTarget.properties.queries.push({queryType: "CITY", param: detail.cities[x]})
         }
 
+        for(x in detail.blockgroups){
+            newTarget.properties.queries.push({queryType: "BLOCKGROUP", param: detail.blockgroups[x]})
+        }
+
 
     } else if(detail.type === "POLYGON"){
     
@@ -96,6 +100,10 @@ const removeTarget = async(detail) => {
         }
 
         if(detail.type === "POLYGON"){
+            return Target.deleteOne({'_id': detail.id}).exec();
+
+        }
+        if(detail.type === "NONGEOGRAPHIC"){
             return Target.deleteOne({'_id': detail.id}).exec();
 
         }
