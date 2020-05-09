@@ -74,6 +74,24 @@ const sendSwordOutreach = async (req,res,next) =>{
     }
 }
 
+const activityTextImpressionsSwordOutreachData = async (req,res,next) =>{
+    try{
+        res.send(await activityService.activityTextImpressionsSwordOutreachData(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
+const sendTextImpressionsSwordOutreach = async (req,res,next) =>{
+    try{
+        res.send(await activityService.sendTextImpressionsSwordOutreach(req.body))
+    } catch(e){
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 const releaseNumber = async (req,res,next) =>{
     try{
         res.send(await activityService.releaseNumber(req.body))
@@ -92,4 +110,4 @@ const resetActivity = async (req,res,next) =>{
     }
 }
 
-module.exports = {resetActivity, createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, activitySwordOutreachData, sendSwordOutreach, releaseNumber};
+module.exports = {resetActivity, createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, activitySwordOutreachData, activityTextImpressionsSwordOutreachData, sendSwordOutreach, sendTextImpressionsSwordOutreach, releaseNumber};

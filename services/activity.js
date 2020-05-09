@@ -1005,6 +1005,109 @@ const sendSwordOutreach = async(detail) =>{
     return SwordOutreachResults
 }
 
+
+
+
+const activityTextImpressionsSwordOutreachData = async(details) => {
+    console.log(details)
+
+    const agg = (() => {
+        return [
+            {
+                '$match': {
+                    'textContactHistory.campaignID': details.campaignID,
+                    'textContactHistory.orgID': details.orgID,
+                    'textContactHistory.activityID': {
+                        '$in': details.activityID
+                    },
+                    'address.blockgroupID': {
+                        '$exists': true
+                    }
+                }
+            }, {
+                '$unwind': {
+                    'path': '$textContactHistory',
+                    'preserveNullAndEmptyArrays': false
+                }
+            }, {
+                '$match': {
+                    'textContactHistory.campaignID': details.campaignID,
+                    'textContactHistory.orgID': details.orgID,
+                    'textContactHistory.activityID': {
+                        '$in': details.activityID
+                    },
+                    'address.blockgroupID': {
+                        '$exists': true
+                    }
+                }
+            }, {
+                '$match': {
+                    'textContactHistory.idHistory.0.idResponses.0': {
+                        '$exists': false
+                    }
+                }
+            }, {
+                '$project': {
+                    '_id': '$address.blockgroupID',
+                    'impression': '$textContactHistory.impression',
+                }
+            }, {
+                '$project': {
+                    'impressions': {
+                        '$cond': {
+                            'if': {
+                                '$eq': [
+                                    '$impression', true
+                                ]
+                            },
+                            'then': 1,
+                            'else': 0
+                        }
+                    }
+                }
+            }, {
+                '$group': {
+                    '_id': '$_id',
+                    'impressions': {
+                        '$sum': {
+                            '$add': [
+                                '$impressions'
+                            ]
+                        }
+                    }
+                }
+            }, {
+                '$project': {
+                    'blockGroup': '$_id',
+                    'impressions': 1
+                }
+            }
+        ];
+    })();
+    var record = await People.aggregate(agg);
+
+    return record;
+
+}
+
+const sendTextImpressionsSwordOutreach = async(detail) =>{
+    var tokenStr = {'headers': {'Content-Type': 'application/json', 'x-auth': 'fjkcxq3908daas43980120ahdnf2084mg048201a18nffl4'}};
+
+    var SwordOutreachResults = await axios.post("https://swordoutreachapi.azurewebsites.net/report", detail.report, tokenStr).then(async response => {
+        console.log(response)
+        return response
+
+    }).catch(error => {
+        console.log(error.response.data['errorList'])
+        return error
+    });
+
+    return SwordOutreachResults
+}
+
+
+
+
 const getActivities = async(detail) =>{
     var campaign = await Campaign.findOne({campaignID: detail.campaignID})
     var activities = []
@@ -1177,4 +1280,4 @@ const releaseNumber = async(detail) =>{
 
 }
 
-module.exports = {resetActivity, createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, activitySwordOutreachData, sendSwordOutreach, releaseNumber}
+module.exports = {resetActivity, createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, activitySwordOutreachData, activityTextImpressionsSwordOutreachData, sendSwordOutreach, sendTextImpressionsSwordOutreach, releaseNumber}
