@@ -836,13 +836,13 @@ const activitySwordOutreachData = async(details) => {
                             '$exists': true
                         }
                     }
-                }, {
+                },/* {
                     '$match': {
                         'textContactHistory.idHistory.0.idResponses.0': {
                             '$exists': true
                         }
                     }
-                }, {
+                },*/ {
                     '$project': {
                         '_id': '$address.blockgroupID',
                         'impression': '$textContactHistory.impression',
@@ -1011,8 +1011,7 @@ const sendSwordOutreach = async(detail) =>{
 const activityTextImpressionsSwordOutreachData = async(details) => {
     console.log(details)
 
-    const agg = (() => {
-        return [
+    const agg = [
             {
                 '$match': {
                     'textContactHistory.campaignID': details.campaignID,
@@ -1082,8 +1081,9 @@ const activityTextImpressionsSwordOutreachData = async(details) => {
                     'impressions': 1
                 }
             }
-        ];
-    })();
+        ]
+
+        console.log(agg)
     var record = await People.aggregate(agg);
 
     return record;
@@ -1093,14 +1093,17 @@ const activityTextImpressionsSwordOutreachData = async(details) => {
 const sendTextImpressionsSwordOutreach = async(detail) =>{
     var tokenStr = {'headers': {'Content-Type': 'application/json', 'x-auth': 'fjkcxq3908daas43980120ahdnf2084mg048201a18nffl4'}};
 
+    console.log("RIGHT BEFORE AXIOS")
+
     var SwordOutreachResults = await axios.post("https://swordoutreachapi.azurewebsites.net/report", detail.report, tokenStr).then(async response => {
         console.log(response)
-        return response
+        return {}
 
     }).catch(error => {
         console.log(error.response.data['errorList'])
         return error
     });
+    console.log("RIGHT AFTER AXIOS")
 
     return SwordOutreachResults
 }
