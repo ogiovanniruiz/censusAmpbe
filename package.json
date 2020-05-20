@@ -26,6 +26,7 @@
     "node-geocoder": "^3.25.0",
     "nodemailer": "^6.3.1",
     "nodemon": "^1.19.4",
+    "npm": "^6.14.5",
     "parse-address": "^1.1.2",
     "parse-address-string": "0.0.3",
     "passport": "^0.4.0",

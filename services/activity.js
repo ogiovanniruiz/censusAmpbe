@@ -40,6 +40,8 @@ const resetActivity = async(detail) =>{
 
 }
 
+
+
 const createActivity = async(detail) => {
 
     function format(value) {
@@ -1108,6 +1110,15 @@ const sendTextImpressionsSwordOutreach = async(detail) =>{
     return SwordOutreachResults
 }
 
+const getEvents = async(detail) => {
+    var campaign = await Campaign.findOne({campaignID: detail.campaignID})
+    console.log(detail.date)
+
+    console.log(campaign.eventActivities)
+
+    return campaign.eventActivities;
+
+}
 
 
 
@@ -1283,4 +1294,4 @@ const releaseNumber = async(detail) =>{
 
 }
 
-module.exports = {resetActivity, createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, activitySwordOutreachData, activityTextImpressionsSwordOutreachData, sendSwordOutreach, sendTextImpressionsSwordOutreach, releaseNumber}
+module.exports = {getEvents, resetActivity, createActivity, getActivities, editActivity, deleteActivity, getActivity, completeActivity, activitySwordOutreachData, activityTextImpressionsSwordOutreachData, sendSwordOutreach, sendTextImpressionsSwordOutreach, releaseNumber}

@@ -14,5 +14,5 @@ router.post('/activityTextImpressionsSwordOutreachData', activityController.acti
 router.post('/sendTextImpressionsSwordOutreach', activityController.sendTextImpressionsSwordOutreach)
 router.post('/releaseNumber', activityController.releaseNumber)
 router.post('/resetActivity', activityController.resetActivity)
-
+router.post('/getEvents', activityController.getEvents)
 module.exports = router;
