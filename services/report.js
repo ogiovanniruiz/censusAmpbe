@@ -965,7 +965,26 @@ const getEventsSummaryReport = async(details) =>{
         if (!events[eventName]) {
             events[eventName] = [];
         }
-        events[eventName].push(eventActivities[i]);
+
+        var itemDate = new Date(eventActivities[i].activityMetaData.date.toISOString().split('T')[0]).getTime();
+        var itemDateStart = new Date(details.dates.dateStart).getTime();
+        var itemDateEnd = new Date(details.dates.dateEnd).getTime();
+
+        if (details.dates.dateStart && details.dates.dateEnd){
+            if (itemDate >= itemDateStart && itemDate <= itemDateEnd) {
+                events[eventName].push(eventActivities[i]);
+            }
+        } else if (details.dates.dateStart && !details.dates.dateEnd) {
+            if (itemDate >= itemDateStart) {
+                events[eventName].push(eventActivities[i]);
+            }
+        } else if (!details.dates.dateStart && details.dates.dateEnd) {
+            if (itemDate <= itemDateEnd) {
+                events[eventName].push(eventActivities[i]);
+            }
+        } else {
+            events[eventName].push(eventActivities[i]);
+        }
     }
 
     var eventsPerOrg = [];
