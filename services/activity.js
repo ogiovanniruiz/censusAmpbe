@@ -1112,15 +1112,8 @@ const sendTextImpressionsSwordOutreach = async(detail) =>{
 
 const getEvents = async(detail) => {
     var campaign = await Campaign.findOne({campaignID: detail.campaignID})
-    console.log(detail.date)
-
-    console.log(campaign.eventActivities)
-
     return campaign.eventActivities;
-
 }
-
-
 
 const getActivities = async(detail) =>{
     var campaign = await Campaign.findOne({campaignID: detail.campaignID})
