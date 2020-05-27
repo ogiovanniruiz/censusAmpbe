@@ -146,6 +146,15 @@ const getOrgPhoneNumbers = async (req, res, next) => {
     }
 }
 
+const getOrgPhoneNumbersFilter = async (req, res, next) => {
+    try {
+        res.send(await organizationService.getOrgPhoneNumbersFilter(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 const checkTwilioSubAccount = async (req, res, next) => {
     try {
         res.send(await organizationService.checkTwilioSubAccount(req.body))
@@ -201,4 +210,4 @@ module.exports = {
                   dbPatch,
                   editOrganization,  
                   enableTexting,                  
-                  getOrgPhoneNumbers, createTag, getOrgTags, uploadLogo, getOrgLogo};
+                  getOrgPhoneNumbers, getOrgPhoneNumbersFilter, createTag, getOrgTags, uploadLogo, getOrgLogo};
