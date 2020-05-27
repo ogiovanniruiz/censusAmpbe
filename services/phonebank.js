@@ -361,6 +361,12 @@ const nonResponse = async(detail)=>{
         impression = true;
     }
 
+    var index = detail.idHistory[0].idResponses[0].responses.indexOf("Message")
+
+    if(index !== -1){
+        impression = true;
+    }
+
     for(var i = 0; i < detail.houseHold.length; i++){
 
         var person = await Person.findOne({"_id": detail.houseHold[i]._id});
