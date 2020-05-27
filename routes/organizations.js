@@ -22,6 +22,7 @@ router.post('/getOrgLogo',  orgController.getOrgLogo);
 
 router.post('/createTwilioSubAccount',  orgController.createTwilioSubAccount);
 router.post('/getOrgPhoneNumbers', orgController.getOrgPhoneNumbers);
+router.post('/getOrgPhoneNumbersFilter', orgController.getOrgPhoneNumbersFilter);
 router.post('/checkTwilioSubAccount',  orgController.checkTwilioSubAccount);
 router.post('/buyPhoneNumber', orgController.buyPhoneNumber);
 router.post('/enableTexting', orgController.enableTexting);

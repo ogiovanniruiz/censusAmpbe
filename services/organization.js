@@ -320,7 +320,6 @@ const createTwilioSubAccount = async(orgID) =>{
     }
 }
 
-
 const getOrgPhoneNumbers = async(detail) =>{
 
     var org = await Organization.findOne({"_id": detail.orgID})
@@ -338,6 +337,41 @@ const getOrgPhoneNumbers = async(detail) =>{
 
     return null
 }
+
+const getOrgPhoneNumbersFilter = async(detail) =>{
+    const agg = [
+        {
+            '$match': {
+                'orgIDs': detail.orgID
+            }
+        }, {
+            '$unwind': {
+                'path': '$textActivities'
+            }
+        }, {
+            '$unwind': {
+                'path': '$textActivities.phoneNums'
+            }
+        }, {
+            '$match': {
+                'textActivities.phoneNums.number': {
+                    '$in': detail.numbers
+                },
+                'textActivities.activityMetaData.complete': true
+            }
+        }, {
+            '$group': {
+                '_id': null,
+                'filteredNums': {
+                    '$push': '$$ROOT.textActivities.phoneNums.number'
+                }
+            }
+        }
+    ];
+
+    var numbers = await Campaign.aggregate(agg);
+    return numbers
+};
 
 const checkTwilioSubAccount = async(detail) =>{
     var org = await Organization.findOne({"_id": detail.orgID})
@@ -425,5 +459,6 @@ module.exports = {
                   getCampaignOrgs,
                   dbPatch,                  
                   getOrgPhoneNumbers,
+                  getOrgPhoneNumbersFilter,
                   enableTexting,
                   createTag, getOrgTags, uploadLogo, getOrgLogo, createTwilioSubAccount, checkTwilioSubAccount, buyPhoneNumber}
