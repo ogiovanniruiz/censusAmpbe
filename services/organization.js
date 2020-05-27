@@ -357,7 +357,7 @@ const getOrgPhoneNumbersFilter = async(detail) =>{
                 'textActivities.phoneNums.number': {
                     '$in': detail.numbers
                 },
-                'textActivities.activityMetaData.complete': true
+                'textActivities.activityMetaData.complete': false
             }
         }, {
             '$group': {
