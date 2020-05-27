@@ -17,5 +17,6 @@ router.post('/idPerson', textingController.idPerson)
 router.post('/nonResponse', textingController.nonResponse)
 router.post('/completePerson', textingController.completePerson)
 router.post('/getConversation', textingController.getConversation)
+router.post('/pullTexts', textingController.pullTexts)
 
 module.exports = router;

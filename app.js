@@ -34,7 +34,7 @@ var corsOptions = { methods: 'GET,POST,PATCH,DELETE,OPTIONS',
                     origin: ""
                   }
 
-process.env.version = "0.8.5"
+process.env.version = "0.8.9"
 
 if(app.get('env') === 'census'){
   process.env.app_sid =  'APcfa84370fade47d9de6493f08e73b6fa'
@@ -74,7 +74,7 @@ if(app.get('env') === 'census'){
   process.env.accountSid = 'ACaa2284052d10b1610817013666b0ca9d'
   process.env.authToken = 'cb57765af76625d6ed79376cc411a2ca'
   process.env.fe = 'http://localhost:4200'
-  process.env.be = 'https://71481f78.ngrok.io'
+  process.env.be = 'https://6e7bf4dc.ngrok.io'
 
   mongoDB = 'mongodb://127.0.0.1:27017/v2db?authSource=v2db&w=1';
   corsOptions.origin = 'http://localhost:4200'

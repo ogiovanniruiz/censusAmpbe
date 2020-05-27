@@ -131,7 +131,17 @@ const getConversation = async (req,res,next) =>{
     }
 }
 
+const pullTexts = async (req,res,next) =>{
+    try {
+        res.send(await textingService.pullTexts(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 module.exports = {loadLockedPeople, 
+    pullTexts,
     sendText, 
     lockNewPeople, 
     getRespondedPeople, 

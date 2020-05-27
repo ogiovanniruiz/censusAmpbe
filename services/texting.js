@@ -318,7 +318,6 @@ const receiveTexts = async(incoming) =>{
         console.log(incoming)
 
         var activeActivityID = ""
-
         var campaigns = await Campaign.find()
 
         for(var k = 0; k < campaigns.length; k++){
@@ -474,6 +473,43 @@ const nonResponse = async(detail)=>{
     */
 }
 
+const pullTexts = async(detail)=>{
+    var org = await Organization.findOne({"_id": detail.orgID})
+
+    if(org.twilioAccount.sid && org.twilioAccount.authToken){
+        const client = require('twilio')(org.twilioAccount.sid, org.twilioAccount.authToken);
+
+        var numbers = await client.incomingPhoneNumbers.list({limit: 20}).then(incomingPhoneNumbers => {return incomingPhoneNumbers});
+
+        for(var i = 0; i < numbers.length; i++){
+            var messages = await client.messages.list({to: numbers[i].phoneNumber,}).then(messages => {return messages});
+
+
+            var people = await Person.find({"textContactHistory.outgoingPhoneNum": numbers[i].phoneNumber, 
+                                            "textContactHistory.textReceived": false,
+                                            "textContactHistory.textConv.1": {$exists: false}})
+
+            
+            for(var j = 0; j < messages.length; j++){
+                for(var k = 0; k < people.length; k++){
+                    if(people[k].phones[0] === messages[j].from.substring(2)){
+                        for(var l = 0; l < people[k].textContactHistory.length; l++){
+                            if(people[k].textContactHistory[l].textConv.length === 1){
+                                people[k].textContactHistory[l].textReceived = true;
+                                people[k].textContactHistory[l].textConv.push({origin: "VOTER", msg: messages[j].body}) 
+                            }
+                        }
+                        people[k].save()
+                        break
+                    }
+                }
+            }
+        }
+
+        return {msg: "Done."}
+    }
+}
+
 module.exports = {loadLockedPeople, 
                   getRespondedPeople, 
                   lockNewPeople, 
@@ -482,6 +518,7 @@ module.exports = {loadLockedPeople,
                   updateConversation, 
                   idPerson,
                   nonResponse,
+                  pullTexts,
                   //getTextMetaData,
                   getIdentifiedPeople, 
                   allocatePhoneNumber,
