@@ -36,7 +36,11 @@ const createTarget = async(detail) => {
             newTarget.properties.queries.push({queryType: "SCRIPT", param: detail.scriptID, subParam: detail.scriptResponse})
         }
 
+        if(detail.prevIDChecked){
+            newTarget.properties.queries.push({queryType: "prevID"})
+        }
 
+    
         for(x in detail.cities){
             newTarget.properties.queries.push({queryType: "CITY", param: detail.cities[x]})
         }

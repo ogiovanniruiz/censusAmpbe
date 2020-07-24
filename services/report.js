@@ -1403,7 +1403,7 @@ const getBlockGroupOverallSummaryReport = async(details) =>{
                                 }
                             }
                         ]
-                    }, /*{
+                    }, {
                         $and: [
                             {
                                 'textContactHistory.campaignID': details.campaignID,
@@ -1415,7 +1415,7 @@ const getBlockGroupOverallSummaryReport = async(details) =>{
                                 }
                             }
                         ]
-                    }*/
+                    }
                 ]
             }
         }, {
@@ -1803,7 +1803,7 @@ const getBlockGroupOverallSummaryReport = async(details) =>{
                         }
                     }
                 ],
-                /*'text': [
+                'text': [
                     {
                         '$match': {
                             'textContactHistory.campaignID': details.campaignID,
@@ -1955,7 +1955,7 @@ const getBlockGroupOverallSummaryReport = async(details) =>{
                             'total': 1
                         }
                     }
-                ]*/
+                ]
             }
         }, {
             '$project': {

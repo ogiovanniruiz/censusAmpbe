@@ -34,6 +34,14 @@ const lockNewPeople = async(detail) =>{
                             "textable": {$ne: "FALSE"},
                             "phones": {$not: {$regex: "-"}}, 
                             "address.blockgroupID": {$exists: true},
+                            $nor: [{"phonebankContactHistory.idHistory.idResponses.responses": "Wrong Number"},
+                                    {"phonebankContactHistory.idHistory.idResponses.responses": "wrong number"},
+                                    {"phonebankContactHistory.idHistory.idResponses.responses": "Bad Number"},
+                                    {"phonebankContactHistory.idHistory.idResponses.responses": "Disconnected"},
+                                    {"phonebankContactHistory.idHistory.idResponses.responses": "Deceased"},
+                                    {"phonebankContactHistory.idHistory.idResponses.responses": "Moved"},
+                                    {"textContactHistory.idHistory.idResponses.responses": "Wrong Number"},
+                                    ]
                             }
 
     var targetCoordinates = []
@@ -60,67 +68,95 @@ const lockNewPeople = async(detail) =>{
      }
  
      if(hasQueries){
-        var hasParties = false
-        var parties = []
-        for(var i = 0; i < targets.length; i++){                                   
+
+        for(var i = 0; i < targets.length; i++){  
+            var cityArray = []
+            var blockgroupArray = []                                 
             for(var j = 0; j < targets[i].properties.queries.length; j++){
+
+                if(targets[i].properties.queries[j].queryType === 'prevID'){
+                    searchParameters['identified'] = {$exists: true}
+                    searchParameters['identified.finished'] = false
+                }
                 if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
                     searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
                 }
 
-                if(targets[i].properties.queries[j].queryType === "PAV"){
-                    searchParameters['voterInfo.pav'] = targets[i].properties.queries[j].param
-                }
-
-                if(targets[i].properties.queries[j].queryType === "PRECINCT"){
-                    searchParameters['voterInfo.precinct'] = {$regex: targets[i].properties.queries[j].param}
-                }
-
-                if(targets[i].properties.queries[j].queryType === "PROPENSITY"){
-                    var low = targets[i].properties.queries[j].subParam
-                    var hi = targets[i].properties.queries[j].param
-                    searchParameters['voterInfo.propensity'] = { $gte :  low/100, $lte : hi/100}
-                }
-
-                if(targets[i].properties.queries[j].queryType === "PARTY"){
-                    hasParties = true;
-                    parties.push(targets[i].properties.queries[j].param)
-                }
-
                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
 
+                    if(targets[i].properties.queries[j].subParam === "NONRESPONSE"){
 
-                    searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
-                                                       {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                                                       {"canvassContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
-                                                       {"canvassContactHistory.refused": {$ne: true}}
-                                                      ]},
-                                               
-                                                {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
-                                                        {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                                                        {"petitionContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
-                                                        {"petitionContactHistory.refused": {$ne: true}}
-                                                       ]},
+                        searchParameters['$and'] = [
+                        
+                            {"textContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                            {"textContactHistory.textConv.1": {$exists: false}},
+                            {"textContactHistory.textReceived": false},
+                            {"textContactHistory.textSent": true},
+                            //{"textContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                            //{"textContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                            {"textContactHistory.refused": {$ne: true}},
+                           {"textContactHistory.identified": {$ne: true}}
+             
+                                ]
 
-                                                {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
-                                                        {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                                                        {"phonebankContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
-                                                        {"phonebankContactHistory.refused": {$ne: true}}
-                                                        ]},
-                                                        
-                                                {$and: [{"textContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
-                                                        {"textContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
-                                                        {"textContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
-                                                        {"textContactHistory.refused": {$ne: true}}
-                                                        ]}        
-                                                    ]
+                    }else if (targets[i].properties.queries[j].subParam === "POSITIVE"){
+
+                        searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                        {"canvassContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                        {"canvassContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                        {"canvassContactHistory.refused": {$ne: true}}
+                       ]},
+                
+                 {$and: [{"petitionContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                         {"petitionContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                         {"petitionContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                         {"petitionContactHistory.refused": {$ne: true}}
+                        ]},
+
+                 {$and: [{"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                         {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                         {"phonebankContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                         {"phonebankContactHistory.refused": {$ne: true}}
+                         ]},
+                         
+                 {$and: [{"textContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
+                         {"textContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
+                         {"textContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
+                         {"textContactHistory.refused": {$ne: true}}
+                         ]}        
+                     ]
+
+                    }
+                }
+
+
+
+                var hasCities = false;
+
+                if(targets[i].properties.queries[j].queryType === "CITY"){
+                    hasCities = true;
+                    cityArray.push(targets[i].properties.queries[j].param)
+                }
+        
+                if( hasCities){
+                    searchParameters["address.city"] = {$in: cityArray}
+                }
+        
+               
+                var hasBlockgroups = false;
+        
+                if(targets[i].properties.queries[j].queryType === "BLOCKGROUP"){
+                    hasBlockgroups = true;
+                    blockgroupArray.push(targets[i].properties.queries[j].param)
+                }
+        
+                if( hasBlockgroups){
+                    searchParameters["address.blockgroupID"] = {$in: blockgroupArray}
                 }
             }                                                             
         }
 
-        if(hasParties){
-            searchParameters['voterInfo.party'] = {$in: parties}
-        }
+
      }else{
         searchParameters['creationInfo.regType'] = "VOTERFILE"
     }
@@ -375,6 +411,8 @@ const idPerson = async(detail)=>{
         }
     }
 
+    person['identified'].finished = true;
+
     return person.save()
 
     /*
@@ -432,45 +470,9 @@ const nonResponse = async(detail)=>{
         }
     }
 
+    person['identified'].finished = true;
+
     return person.save()
-
-    /*
-
-    if(person.textContactHistory.length === 0){
-
-        var textContactHistory = {
-                                        campaignID: detail.campaignID,
-                                        activityID: detail.activityID,
-                                        orgID: detail.orgID,
-                                        refused: refused,
-                                        nonResponse: true,
-                                        identified: false,
-                                        complete: true,
-                                        idHistory: detail.idHistory
-                                }
-
-        person.textContactHistory.push(textContactHistory)
-        return person.save()
-    
-    }else{
-
-
-        var textContactHistory = {
-                                    campaignID: detail.campaignID,
-                                    activityID: detail.activityID,
-                                    orgID: detail.orgID,
-                                    refused: refused,
-                                    complete: true,
-                                    nonResponse: true,
-                                    identified: false,
-                                    idHistory: detail.idHistory
-                                }
-    
-        person.textContactHistory.push(textContactHistory)
-        return person.save()
-    }
-
-    */
 }
 
 const pullTexts = async(detail)=>{

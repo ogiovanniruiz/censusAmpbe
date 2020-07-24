@@ -17,6 +17,7 @@ const lockHouseHold = async(detail)=>{
                             "phonebankContactHistory.refused": {$ne: true},
                             
                             $nor: [{"phonebankContactHistory.idHistory.idResponses.responses": "Wrong Number"},
+                                   {"phonebankContactHistory.idHistory.idResponses.responses": "wrong number"},
                                    {"phonebankContactHistory.idHistory.idResponses.responses": "Bad Number"},
                                    {"phonebankContactHistory.idHistory.idResponses.responses": "Disconnected"},
                                    {"phonebankContactHistory.idHistory.idResponses.responses": "Deceased"},
@@ -55,6 +56,11 @@ const lockHouseHold = async(detail)=>{
             var cityArray = []
             var blockgroupArray = []
             for(var j = 0; j < targets[i].properties.queries.length; j++){
+
+                if(targets[i].properties.queries[j].queryType === 'prevID'){
+                    searchParameters['identified'] = {$exists: true}
+                    searchParameters['identified.finished'] = false
+                }
                 if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
                     searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
                 }
@@ -62,16 +68,16 @@ const lockHouseHold = async(detail)=>{
                 if(targets[i].properties.queries[j].queryType === "SCRIPT"){
 
                     if(targets[i].properties.queries[j].subParam === "NONRESPONSE"){
-
+                    
                         searchParameters['$and'] = [
                         
                                         {"phonebankContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
                                         {"phonebankContactHistory.idHistory.idResponses": {$elemMatch: {idType: targets[i].properties.queries[j].subParam}}},
                                         {"phonebankContactHistory.idHistory": {$elemMatch: {scriptID: targets[i].properties.queries[j].param}}},
                                         {"phonebankContactHistory.refused": {$ne: true}},
-                                        {"phonebankContactHistory.identified": {$ne: true}}
+                                       {"phonebankContactHistory.identified": {$ne: true}}
                          
-                                             ]
+                                            ]
                             
                     }else if(targets[i].properties.queries[j].subParam === "POSITIVE"){
                         searchParameters['$or'] = [{$and: [{"canvassContactHistory": {$elemMatch: {orgID: targets[i].properties.orgID, campaignID: targets[i].properties.campaignID}}},
@@ -126,6 +132,7 @@ const lockHouseHold = async(detail)=>{
         searchParameters['creationInfo.regType'] = "VOTERFILE"
     }
 
+
     console.debug(JSON.stringify(searchParameters))
 
     var phonebankContactHistory = {
@@ -160,10 +167,12 @@ const lockHouseHold = async(detail)=>{
             for(var j = 0; j < person.phonebankContactHistory.length; j++){
                 if(person.phonebankContactHistory[j].activityID === detail.activityID){
                     duplicationError = true;
+                    console.log("1")
                 }
 
                 if(person.phonebankContactHistory[j].refused){
                     duplicationError = true;
+                    console.log("2")
                 }
 
                 for(var k = 0; k < person.phonebankContactHistory[j].idHistory.length; k++){
@@ -173,6 +182,7 @@ const lockHouseHold = async(detail)=>{
                             if(person.phonebankContactHistory[j].idHistory[k].idResponses[0]){
                                 if(person.phonebankContactHistory[j].idHistory[k].idResponses[0].idType === "POSITIVE"){
                                     duplicationError = true;
+                                    console.log("3")
                                 }
                             }
                         }
@@ -243,6 +253,7 @@ const getLockedHouseHold = async(detail)=>{
                                           phonebankContactHistory: '$phonebankContactHistory',
                                           canvassContactHistory: '$canvassContactHistory',
                                           petitionContactHistory: '$petitionContactHistory',
+                                          identified: '$identified',
                                           voterInfo: '$voterInfo',
                                           _id: "$_id"}}}},{$sample: { size: 10 } }
             ]).allowDiskUse(true).limit(1)
@@ -300,15 +311,19 @@ const idPerson = async(detail)=>{
             var person = await Person.findOne({"_id": detail.houseHold[i]._id});
             for (var j = 0; j < person.phonebankContactHistory.length; j++){
                 if(person.phonebankContactHistory[j].activityID === detail.activityID){
-                    person.phonebankContactHistory[j].idHistory = detail.idHistory
+                    person.phonebankContactHistory[j].idHistory = detail.idHistory;
                     person.phonebankContactHistory[j].identified = true;
                     person.phonebankContactHistory[j].nonResponse = false;
                     person.phonebankContactHistory[j].refused = false;
                     person.phonebankContactHistory[j].houseHoldComplete = true;
                     //person.phonebankContactHistory[j].impression = true;
+                    
                     updateSuccess = true
                 }
             }
+            console.log(person)
+
+            person['identified'].finished = true;
 
             person.save()
             houseHoldCompleted.push(person)
@@ -383,6 +398,8 @@ const nonResponse = async(detail)=>{
 
             }
         }
+
+        person['identified'].finished = true;
 
         person.save()
         houseHoldCompleted.push(person)
