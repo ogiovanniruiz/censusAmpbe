@@ -59,8 +59,12 @@ const lockHouseHold = async(detail)=>{
 
                 if(targets[i].properties.queries[j].queryType === 'prevID'){
                     searchParameters['identified'] = {$exists: true}
+                    searchParameters['identified.identified'] = true
+
                     searchParameters['identified.finished'] = false
+                    searchParameters['identified.locked'] = false
                 }
+
                 if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
                     searchParameters['membership.orgID'] = targets[i].properties.queries[j].param
                 }
@@ -203,7 +207,9 @@ const lockHouseHold = async(detail)=>{
 */
             if(!duplicationError){
                 person.phonebankContactHistory.push(phonebankContactHistory)
+                person.identified.locked = true;
                 person.save()
+                console.log(person)
             }else{
                 
                 var completedphonebankContactHistory = {
@@ -214,7 +220,9 @@ const lockHouseHold = async(detail)=>{
                     houseHoldComplete: true,
                   }
                 person.phonebankContactHistory.push(completedphonebankContactHistory)
+                person.identified.locked = true;
                 person.save()
+                console.log(person)
 
             }
         }

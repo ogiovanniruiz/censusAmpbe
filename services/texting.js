@@ -76,6 +76,8 @@ const lockNewPeople = async(detail) =>{
 
                 if(targets[i].properties.queries[j].queryType === 'prevID'){
                     searchParameters['identified'] = {$exists: true}
+                    searchParameters['identified.identified'] = true
+                    searchParameters['identified.locked'] = false
                     searchParameters['identified.finished'] = false
                 }
                 if(targets[i].properties.queries[j].queryType === "ORGMEMBERS"){
@@ -194,6 +196,7 @@ const lockNewPeople = async(detail) =>{
         }
         if(!duplicationError){
             people[i].textContactHistory.push(textContactHistory)
+            people[i].identified.locked = true;
             people[i].save()
         }else{
             var completedtextContactHistory = { 
@@ -203,6 +206,7 @@ const lockNewPeople = async(detail) =>{
                 orgID: detail.orgID
               }
               people[i].textContactHistory.push(completedtextContactHistory)
+              people[i].identified.locked = true;
               people[i].save()
 
         }
