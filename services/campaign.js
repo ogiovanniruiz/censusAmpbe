@@ -9,6 +9,7 @@ const createCampaign = async(newCampaignDetail) =>{
                           description: newCampaignDetail.description,
                           orgIDs: [newCampaignDetail.orgID],
                           dataManagers: [newCampaignDetail.userID],
+                          thirdParty: newCampaignDetail.thirdParty
 
     }
 

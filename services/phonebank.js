@@ -9,6 +9,9 @@ var ClientCapability = require('twilio').jwt.ClientCapability;
 
 const lockHouseHold = async(detail)=>{
 
+    var campaign = await Campaign.findOne({campaignID: detail.campaignID})
+    console.log('Consumer: ', campaign.thirdParty)
+
     var searchParameters = {
                             "phones.0": {$exists: true, $ne: ""},
                             "preferredMethodContact": {$not: {$elemMatch: {method: "TEXT", method: "EMAIL"}}},
@@ -24,6 +27,9 @@ const lockHouseHold = async(detail)=>{
                                    {"phonebankContactHistory.idHistory.idResponses.responses": "Moved"}
                                     ]
                             }
+    if(campaign.thirdParty){
+        //searchParameters['consumerData.consumer'] = true
+    }
 
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
 
@@ -209,7 +215,7 @@ const lockHouseHold = async(detail)=>{
                 person.phonebankContactHistory.push(phonebankContactHistory)
                 person.identified.locked = true;
                 person.save()
-                console.log(person)
+                //console.log(person)
             }else{
                 
                 var completedphonebankContactHistory = {
@@ -222,7 +228,7 @@ const lockHouseHold = async(detail)=>{
                 person.phonebankContactHistory.push(completedphonebankContactHistory)
                 person.identified.locked = true;
                 person.save()
-                console.log(person)
+                //console.log(person)
 
             }
         }

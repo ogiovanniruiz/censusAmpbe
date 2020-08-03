@@ -32,7 +32,8 @@ var PersonSchema = new Schema(
     preferredMethodContact: [PreferredMethodContact.schema],
     clientID: {type: String},
     textable: {type: String, default: '?', enum: ['?', 'TRUE','FALSE']},
-    identified: {identified: {type: Boolean, default: false}, locked: {type: Boolean, default: false}, finished: {type: Boolean, default: false}}
+    identified: {identified: {type: Boolean, default: false}, locked: {type: Boolean, default: false}, finished: {type: Boolean, default: false}},
+    consumerData: {consumer: {type: Boolean, default: false}}
   }//,{ collection : 'voterfile' }
 );
 

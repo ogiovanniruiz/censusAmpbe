@@ -5,6 +5,7 @@ var Organization = require('../models/organizations/organization');
 
 const resetTextBank = async(detail) =>{
 
+
     var people = await Person.find({"textContactHistory": { $elemMatch: {activityID: detail.activityID}}});
     var count = 0;
     
@@ -27,6 +28,9 @@ const resetTextBank = async(detail) =>{
 const lockNewPeople = async(detail) =>{
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
 
+    var campaign = await Campaign.findOne({campaignID: detail.campaignID})
+    console.log('Consumer: ', campaign.thirdParty)
+
     var searchParameters = {
                             "textContactHistory": {$not: {$elemMatch: {activityID : detail.activityID}}},     
                             "preferredMethodContact": {$not: {$elemMatch: {method: "PHONE"}}, $not: {$elemMatch: {method: "EMAIL"}}},
@@ -43,6 +47,9 @@ const lockNewPeople = async(detail) =>{
                                     {"textContactHistory.idHistory.idResponses.responses": "Wrong Number"},
                                     ]
                             }
+    if(campaign.thirdParty){
+        searchParameters['consumerData.consumer'] = true
+    }
 
     var targetCoordinates = []
     var hasQueries = false;
