@@ -959,10 +959,12 @@ const activitySwordOutreachData = async(details) => {
 const sendSwordOutreach = async(detail) =>{
     var tokenStr = {'headers': {'Content-Type': 'application/json', 'x-auth': 'fjkcxq3908daas43980120ahdnf2084mg048201a18nffl4'}};
 
-    console.log(detail.report)
+    //console.log(detail.report)
 
     var SwordOutreachResults = await axios.post("https://swordoutreachapi.azurewebsites.net/report", detail.report, tokenStr).then(async response => {
 
+        console.log(response)
+        
         var campaign = await Campaign.findOne({campaignID: detail.campaignID})
         if (detail.activityType === "Canvass"){
             for(var i = 0; i < campaign.canvassActivities.length; i++){

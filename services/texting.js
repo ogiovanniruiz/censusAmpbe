@@ -173,7 +173,7 @@ const lockNewPeople = async(detail) =>{
         searchParameters['creationInfo.regType'] = "VOTERFILE"
     }
 
-    console.log(searchParameters)
+    //console.log(searchParameters)
 
     var people = await Person.find(searchParameters).limit(5); 
     
@@ -328,7 +328,7 @@ const sendText = async(detail) =>{
             from: detail.phoneNum,
             to: '+1' + number,
         }).then(message => {
-            console.log("Success", message)
+            //console.log("Success", message)
             
             for(var i = 0; i < person.textContactHistory.length; i++){
                 if(person.textContactHistory[i].activityID === detail.activityID){
@@ -371,7 +371,7 @@ const receiveTexts = async(incoming) =>{
 
     try{
 
-        console.log(incoming)
+        //console.log(incoming)
 
         var activeActivityID = ""
         var campaigns = await Campaign.find()
@@ -472,7 +472,7 @@ const idPerson = async(detail)=>{
 }
 
 const nonResponse = async(detail)=>{
-    console.log(detail)
+    //console.log(detail)
     var person = await Person.findOne({"_id": detail.person._id});
     var refused = false;
 

@@ -145,7 +145,7 @@ const lockHouseHold = async(detail)=>{
     }
 
 
-    console.debug(JSON.stringify(searchParameters))
+    //console.debug(JSON.stringify(searchParameters))
 
     var phonebankContactHistory = {
         campaignID: detail.campaignID,
@@ -179,12 +179,12 @@ const lockHouseHold = async(detail)=>{
             for(var j = 0; j < person.phonebankContactHistory.length; j++){
                 if(person.phonebankContactHistory[j].activityID === detail.activityID){
                     duplicationError = true;
-                    console.log("1")
+                    //console.log("1")
                 }
 
                 if(person.phonebankContactHistory[j].refused){
                     duplicationError = true;
-                    console.log("2")
+                   // console.log("2")
                 }
 
                 for(var k = 0; k < person.phonebankContactHistory[j].idHistory.length; k++){
@@ -194,7 +194,7 @@ const lockHouseHold = async(detail)=>{
                             if(person.phonebankContactHistory[j].idHistory[k].idResponses[0]){
                                 if(person.phonebankContactHistory[j].idHistory[k].idResponses[0].idType === "POSITIVE"){
                                     duplicationError = true;
-                                    console.log("3")
+                                    //console.log("3")
                                 }
                             }
                         }
@@ -217,7 +217,7 @@ const lockHouseHold = async(detail)=>{
                 person.phonebankContactHistory.push(phonebankContactHistory)
                 person.identified.locked = true;
                 person.save()
-                console.log(person)
+                //console.log(person)
             }else{
                 
                 var completedphonebankContactHistory = {
@@ -230,7 +230,7 @@ const lockHouseHold = async(detail)=>{
                 person.phonebankContactHistory.push(completedphonebankContactHistory)
                 person.identified.locked = true;
                 person.save()
-                console.log(person)
+               // console.log(person)
 
             }
         }
@@ -337,7 +337,7 @@ const idPerson = async(detail)=>{
                     updateSuccess = true
                 }
             }
-            console.log(person)
+            //console.log(person)
 
             person['identified'].finished = true;
 
