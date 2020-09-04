@@ -175,6 +175,15 @@ const buyPhoneNumber = async (req, res, next) => {
     }
 }
 
+const releasePhoneNumber = async (req, res, next) => {
+    try {
+        res.send(await organizationService.releasePhoneNumber(req.body))
+    } catch(e) {
+        console.log(e.message)
+        res.sendStatus(500)
+    }
+}
+
 const enableTexting = async (req, res, next) => {
     try {
         res.send(await organizationService.enableTexting(req.body))
@@ -194,7 +203,7 @@ const getCities = async (req, res, next) => {
 }
 
 
-module.exports = {
+module.exports = {releasePhoneNumber,
                 getCities,
                 checkTwilioSubAccount,
                 buyPhoneNumber,

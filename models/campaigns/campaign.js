@@ -26,7 +26,7 @@ var CampaignSchema = new Schema(
     phonebankActivities: [PhonebankActivity.schema],
     petitionActivities: [PetitionActivity.schema],
     targets: [Target.schema],
-    thirdParty: {type: Boolean, default: false}
+    //thirdParty: {type: Boolean, default: false}
   }
 );
 

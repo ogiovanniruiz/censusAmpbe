@@ -21,11 +21,11 @@ const sendEmail = async(detail) => {
         }
     });
 
-    if(!detail.isBug){
-        for(var i = 0; i < dataManagersEmails.length; i++){
+    //if(!detail.isBug){
+        //for(var i = 0; i < dataManagersEmails.length; i++){
 
             let multiMailOptions = {
-                to: dataManagersEmails[i],
+                to: 'luistirado79@gmail.com',
                 subject: detail.subject,
                 html:   "First Name: " + detail.userProfile.firstName + "<br>"
                       + "Last Name: " + detail.userProfile.lastName + "<br>"
@@ -44,8 +44,8 @@ const sendEmail = async(detail) => {
                 }
                 console.log('Message %s sent: %s', info.messageId, info.response);
             });
-        }
-    }
+        //}
+    //}
 
     let mailOptions = {
         to: 'support@ieunited.org',

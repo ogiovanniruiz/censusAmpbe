@@ -409,6 +409,19 @@ const buyPhoneNumber = async(detail) =>{
     return { msg: "Success", status: true}
 }
 
+const releasePhoneNumber = async(detail) =>{
+    console.log(detail)
+    
+    var org = await Organization.findOne({"_id": detail.orgID})
+
+    if(org.twilioAccount.sid && org.twilioAccount.authToken){
+        const client = require('twilio')(org.twilioAccount.sid, org.twilioAccount.authToken);
+        await client.incomingPhoneNumbers(detail.phoneNumber.sid).remove();
+    }
+
+    return { msg: "Success", status: true}
+}
+
 const enableTexting = async(detail) =>{
     var org = await Organization.findOne({"_id": detail.orgID})
 
@@ -446,7 +459,7 @@ const getCities = async(detail) =>{
 
 }
 
-module.exports = {
+module.exports = {releasePhoneNumber,
                 getCities,
                     createOrganization, 
                   editOrganization,
@@ -461,4 +474,4 @@ module.exports = {
                   getOrgPhoneNumbers,
                   getOrgPhoneNumbersFilter,
                   enableTexting,
-                  createTag, getOrgTags, uploadLogo, getOrgLogo, createTwilioSubAccount, checkTwilioSubAccount, buyPhoneNumber}
+                  createTag, getOrgTags, uploadLogo, getOrgLogo, createTwilioSubAccount, checkTwilioSubAccount, buyPhoneNumber, buyPhoneNumber}

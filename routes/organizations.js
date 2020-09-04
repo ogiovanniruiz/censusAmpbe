@@ -25,6 +25,7 @@ router.post('/getOrgPhoneNumbers', orgController.getOrgPhoneNumbers);
 router.post('/getOrgPhoneNumbersFilter', orgController.getOrgPhoneNumbersFilter);
 router.post('/checkTwilioSubAccount',  orgController.checkTwilioSubAccount);
 router.post('/buyPhoneNumber', orgController.buyPhoneNumber);
+router.post('/releasePhoneNumber', orgController.releasePhoneNumber);
 router.post('/enableTexting', orgController.enableTexting);
 router.post('/getCities', orgController.getCities);
 

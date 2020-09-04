@@ -9,8 +9,8 @@ var ClientCapability = require('twilio').jwt.ClientCapability;
 
 const lockHouseHold = async(detail)=>{
 
-    var campaign = await Campaign.findOne({campaignID: detail.campaignID})
-    console.log('Consumer: ', campaign.thirdParty)
+    //var campaign = await Campaign.findOne({campaignID: detail.campaignID})
+    //console.log('Consumer: ', campaign.thirdParty)
 
     var searchParameters = {
                             "phones.0": {$exists: true, $ne: ""},
@@ -18,18 +18,20 @@ const lockHouseHold = async(detail)=>{
                             "address.blockgroupID": {$exists: true},
                             "phonebankContactHistory" : {$not: {$elemMatch: {activityID: detail.activityID}}},
                             "phonebankContactHistory.refused": {$ne: true},
+                            "textContactHistory.refused": {$ne: true},
                             
                             $nor: [{"phonebankContactHistory.idHistory.idResponses.responses": "Wrong Number"},
                                    {"phonebankContactHistory.idHistory.idResponses.responses": "wrong number"},
                                    {"phonebankContactHistory.idHistory.idResponses.responses": "Bad Number"},
                                    {"phonebankContactHistory.idHistory.idResponses.responses": "Disconnected"},
                                    {"phonebankContactHistory.idHistory.idResponses.responses": "Deceased"},
-                                   {"phonebankContactHistory.idHistory.idResponses.responses": "Moved"}
+                                   {"phonebankContactHistory.idHistory.idResponses.responses": "Moved"},
+                                   {"phonebankContactHistory.idHistory.idResponses.responses": "Already completed census form"}
                                     ]
                             }
-    if(campaign.thirdParty){
-        //searchParameters['consumerData.consumer'] = true
-    }
+    //if(campaign.thirdParty){
+    //searchParameters['consumerData.consumer'] = true
+    //}
 
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
 
@@ -215,7 +217,7 @@ const lockHouseHold = async(detail)=>{
                 person.phonebankContactHistory.push(phonebankContactHistory)
                 person.identified.locked = true;
                 person.save()
-                //console.log(person)
+                console.log(person)
             }else{
                 
                 var completedphonebankContactHistory = {
@@ -228,7 +230,7 @@ const lockHouseHold = async(detail)=>{
                 person.phonebankContactHistory.push(completedphonebankContactHistory)
                 person.identified.locked = true;
                 person.save()
-                //console.log(person)
+                console.log(person)
 
             }
         }

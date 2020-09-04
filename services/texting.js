@@ -28,8 +28,8 @@ const resetTextBank = async(detail) =>{
 const lockNewPeople = async(detail) =>{
     var targets = await Target.find({"_id":{ $in: detail.targetIDs}})
 
-    var campaign = await Campaign.findOne({campaignID: detail.campaignID})
-    console.log('Consumer: ', campaign.thirdParty)
+    //var campaign = await Campaign.findOne({campaignID: detail.campaignID})
+    //console.log('Consumer: ', campaign.thirdParty)
 
     var searchParameters = {
                             "textContactHistory": {$not: {$elemMatch: {activityID : detail.activityID}}},     
@@ -38,6 +38,8 @@ const lockNewPeople = async(detail) =>{
                             "textable": {$ne: "FALSE"},
                             "phones": {$not: {$regex: "-"}}, 
                             "address.blockgroupID": {$exists: true},
+                            "textContactHistory.refused": {$ne: true},
+                            "phonebankContactHistory.refused": {$ne: true},
                             $nor: [{"phonebankContactHistory.idHistory.idResponses.responses": "Wrong Number"},
                                     {"phonebankContactHistory.idHistory.idResponses.responses": "wrong number"},
                                     {"phonebankContactHistory.idHistory.idResponses.responses": "Bad Number"},
@@ -45,11 +47,12 @@ const lockNewPeople = async(detail) =>{
                                     {"phonebankContactHistory.idHistory.idResponses.responses": "Deceased"},
                                     {"phonebankContactHistory.idHistory.idResponses.responses": "Moved"},
                                     {"textContactHistory.idHistory.idResponses.responses": "Wrong Number"},
+                                    {"textContactHistory.idHistory.idResponses.responses": "Already completed census form"}
                                     ]
                             }
-    if(campaign.thirdParty){
-        searchParameters['consumerData.consumer'] = true
-    }
+    //if(campaign.thirdParty){
+    //    searchParameters['consumerData.consumer'] = true
+    //}
 
     var targetCoordinates = []
     var hasQueries = false;
@@ -195,9 +198,15 @@ const lockNewPeople = async(detail) =>{
 
             for(var k = 0; k < people[i].textContactHistory[j].idHistory.length; k++){
                 if(scriptArray.includes(people[i].textContactHistory[j].idHistory[k].scriptID)){
-                    if(people[i].textContactHistory[j].idHistory[k].idResponses[0].idType === "POSITIVE"){
-                        duplicationError = true;
+                    if(people[i].textContactHistory[j].idHistory.idResponses){
+                        if(people[i].textContactHistory[j].idHistory.idResponses[0]){
+                            if(people[i].textContactHistory[j].idHistory[k].idResponses[0].idType === "POSITIVE"){
+                                duplicationError = true;
+                            }
+                        }
+
                     }
+
                 }
             } 
         }

@@ -1961,7 +1961,7 @@ const getBlockGroupOverallSummaryReport = async(details) =>{
             '$project': {
                 'blockGroupRecord': {
                     '$setUnion': [
-                        '$canvass', '$petitions', '$phonebank', //'$text'
+                        '$canvass', '$petitions', '$phonebank', '$text'
                     ]
                 }
             }

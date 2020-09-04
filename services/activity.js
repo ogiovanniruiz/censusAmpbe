@@ -139,7 +139,9 @@ const createActivity = async(detail) => {
         }
 
         var org = await Organization.findOne({"_id": detail.orgID})
-        var blockGroup = await CensusTract.findOne({"geometry": {$geoIntersects: { $geometry: detail.parcelData.geometry}}})
+
+        
+        var blockGroup = await CensusTract.findOne({"geometry": {$geoIntersects: { $geometry: detail.parcelData.properties.location}}})
 
         var newActivity = {activityMetaData:{},
                            address: detail.parcelData.properties.address,
